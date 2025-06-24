@@ -1,15 +1,23 @@
 import { Module } from '@nestjs/common';
+import { JwtModule } from '@nestjs/jwt';
 
 import { createClient } from '@supabase/supabase-js';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UserController } from './interface/controllers/user.controller';
+import { AuthController } from './interface/controllers/auth.controller';
 import { UserRepositoryAdapter } from './infrastructure/database/user.repository.adapter';
 import { UserUseCase } from './core/application/user.use-case';
+import { AuthUseCase } from './core/application/auth.use-case';
 
 @Module({
-  imports: [],
-  controllers: [AppController, UserController],
+  imports: [
+    JwtModule.register({
+      secret: process.env.JWT_SECRET as string,
+      signOptions: { expiresIn: '1d' },
+    }),
+  ],
+  controllers: [AppController, UserController, AuthController],
   providers: [
     AppService,
     {
@@ -24,6 +32,7 @@ import { UserUseCase } from './core/application/user.use-case';
     { provide: 'UserRepository', useClass: UserRepositoryAdapter },
     // Use Cases
     UserUseCase,
+    AuthUseCase,
   ],
 })
 export class AppModule {}
