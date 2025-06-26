@@ -85,6 +85,39 @@ CREATE TABLE password_resets (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- ROLE & PERMISSION MANAGEMENT TABLES
+
+CREATE TABLE roles (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(50) UNIQUE NOT NULL,
+    description TEXT,
+    is_system BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE user_roles (
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    role_id UUID NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
+    granted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    granted_by UUID REFERENCES users(id),
+    PRIMARY KEY (user_id, role_id)
+);
+
+CREATE TABLE permissions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    key VARCHAR(100) UNIQUE NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE role_permissions (
+    role_id UUID NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
+    permission_id UUID NOT NULL REFERENCES permissions(id) ON DELETE CASCADE,
+    PRIMARY KEY (role_id, permission_id)
+);
+
 -- DESTINATIONS & LOCATIONS TABLES
 
 CREATE TABLE destination_categories (
@@ -509,6 +542,10 @@ CREATE INDEX idx_analytics_events_user_id ON analytics_events(user_id);
 CREATE INDEX idx_analytics_events_created_at ON analytics_events(created_at);
 CREATE INDEX idx_page_views_created_at ON page_views(created_at);
 
+-- Role indexes
+CREATE INDEX idx_user_roles_user_id ON user_roles(user_id);
+CREATE INDEX idx_user_roles_role_id ON user_roles(role_id);
+
 -- Notifications indexes
 CREATE INDEX idx_notifications_user_id ON notifications(user_id);
 CREATE INDEX idx_notifications_is_read ON notifications(is_read);
@@ -540,6 +577,9 @@ CREATE TRIGGER update_trip_plan_items_updated_at BEFORE UPDATE ON trip_plan_item
 CREATE TRIGGER update_trip_plan_notes_updated_at BEFORE UPDATE ON trip_plan_notes FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_articles_updated_at BEFORE UPDATE ON articles FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_notification_settings_updated_at BEFORE UPDATE ON notification_settings FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_roles_updated_at BEFORE UPDATE ON roles FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_permissions_updated_at BEFORE UPDATE ON permissions FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- CREATE FUNCTIONS FOR RATING CALCULATION
 
@@ -652,6 +692,12 @@ INSERT INTO article_categories (name, slug, description, color, sort_order) VALU
 ('Kuliner', 'kuliner', 'Review dan panduan kuliner', '#EF4444', 4),
 ('Berita Wisata', 'berita-wisata', 'Berita terkini dunia pariwisata', '#8B5CF6', 5);
 
+-- Seed default roles
+INSERT INTO roles (name, description) VALUES
+    ('user',  'Pengguna biasa yang dapat mem-booking perjalanan'),
+    ('admin', 'Administrator yang dapat menambah/kelola informasi perjalanan')
+ON CONFLICT (name) DO NOTHING;
+
 -- Insert default system settings
 INSERT INTO system_settings (key, value, type, description, is_public) VALUES
 ('site_name', 'Sangihe Trip', 'string', 'Nama website', true),
@@ -662,5 +708,3 @@ INSERT INTO system_settings (key, value, type, description, is_public) VALUES
 ('supported_image_types', '["jpg", "jpeg", "png", "webp"]', 'json', 'Tipe gambar yang didukung', false),
 ('default_pagination_limit', '20', 'integer', 'Limit default untuk pagination', false),
 ('review_moderation_enabled', 'true', 'boolean', 'Aktifkan moderasi review', false);
-
-COMMENT ON DATABASE CURRENT_DATABASE() IS 'Sangihe Trip - Platform Wisata Kepulauan Sangihe';
