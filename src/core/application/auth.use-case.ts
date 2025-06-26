@@ -1,6 +1,7 @@
-import { Inject, Injectable, ConflictException } from '@nestjs/common';
+import { Inject, Injectable, ConflictException, UnauthorizedException } from '@nestjs/common';
 import { SupabaseClient } from '@supabase/supabase-js';
 import * as bcrypt from 'bcryptjs';
+import { JwtService } from '@nestjs/jwt';
 import { v4 as uuidv4 } from 'uuid';
 
 import { User } from '../domain/user.entity';
@@ -14,6 +15,7 @@ import { User } from '../domain/user.entity';
 export class AuthUseCase {
   constructor(
     @Inject('SUPABASE_CLIENT') private readonly client: SupabaseClient,
+    private readonly jwt: JwtService,
   ) {}
 
   private mapRowToUser(row: any): User {
@@ -48,5 +50,56 @@ export class AuthUseCase {
 
     const user = this.mapRowToUser(created);
     return user;
+  }
+
+  async login(dto: { email: string; password: string }): Promise<{ access_token: string; refresh_token: string }> {
+    const { email, password } = dto;
+    const { data: row } = await this.client
+      .from('users')
+      .select('id, first_name, last_name, email, password_hash')
+      .eq('email', email)
+      .single();
+
+    if (!row) {
+      throw new UnauthorizedException('Email atau password salah');
+    }
+
+    const isMatch = await bcrypt.compare(password, row.password_hash);
+    if (!isMatch) {
+      throw new UnauthorizedException('Email atau password salah');
+    }
+
+    const name = `${row.first_name ?? ''} ${row.last_name ?? ''}`.trim();
+    const issuer = process.env.JWT_ISSUER ?? 'sangihe-trip';
+    const audience = process.env.JWT_AUDIENCE ?? 'sangihe-trip';
+
+    const accessPayload = {
+      id: row.id,
+      name,
+      email: row.email,
+      iss: issuer,
+      aud: audience,
+      type: 'access',
+    } as const;
+
+    const refreshPayload = {
+      iss: issuer,
+      aud: audience,
+      type: 'refresh',
+    } as const;
+
+    const access_token = this.jwt.sign(accessPayload, {
+      issuer,
+      audience,
+      expiresIn: process.env.JWT_ACCESS_EXPIRES_IN ?? '15m',
+    });
+
+    const refresh_token = this.jwt.sign(refreshPayload, {
+      issuer,
+      audience,
+      expiresIn: process.env.JWT_REFRESH_EXPIRES_IN ?? '7d',
+    });
+
+    return { access_token, refresh_token };
   }
 }

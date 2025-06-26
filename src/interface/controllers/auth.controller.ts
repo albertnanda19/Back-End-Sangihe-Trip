@@ -2,6 +2,7 @@ import { Body, Controller, HttpCode, Post } from '@nestjs/common';
 import { ResponseMessage } from '../../common/decorators/response.decorator';
 import { AuthUseCase } from '../../core/application/auth.use-case';
 import { LoginDto } from '../dtos/auth/login.dto';
+import { RegisterDto } from '../dtos/auth/register.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -10,7 +11,7 @@ export class AuthController {
   @Post('register')
   @HttpCode(200)
   @ResponseMessage('Berhasil mendaftarkan akun. Silahkan melakukan login')
-  async register(@Body() body: LoginDto) {
+  async register(@Body() body: RegisterDto) {
     const user = await this.authUseCase.execute(body);
     return {
       id: user.id,
@@ -18,4 +19,13 @@ export class AuthController {
       email: user.email,
     };
   }
+
+  @Post('login')
+  @HttpCode(200)
+  @ResponseMessage('Berhasil melakukan login!')
+  async login(@Body() body: LoginDto) {
+    const tokens = await this.authUseCase.login(body);
+    return tokens;
+  }
+
 }
