@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 
 import { createClient } from '@supabase/supabase-js';
 import { AppController } from './app.controller';
@@ -13,8 +15,11 @@ import { AuthUseCase } from './core/application/auth.use-case';
 @Module({
   imports: [
     JwtModule.register({
-      secret: process.env.JWT_SECRET as string,
-      signOptions: { expiresIn: '1d' },
+      privateKey: readFileSync(join(__dirname, '..', 'private.pem')),
+      publicKey: readFileSync(join(__dirname, '..', 'public.pem')),
+      signOptions: {
+        algorithm: 'RS256',
+      },
     }),
   ],
   controllers: [AppController, UserController, AuthController],

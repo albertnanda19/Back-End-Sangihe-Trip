@@ -5,7 +5,7 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Create ENUM types
-CREATE TYPE user_type_enum AS ENUM ('tourist', 'guide', 'admin', 'business_owner');
+
 CREATE TYPE user_status_enum AS ENUM ('active', 'inactive', 'banned', 'pending');
 CREATE TYPE gender_enum AS ENUM ('male', 'female', 'other', 'prefer_not_to_say');
 CREATE TYPE destination_status_enum AS ENUM ('active', 'inactive', 'pending', 'rejected');
@@ -38,7 +38,8 @@ CREATE TABLE users (
     bio TEXT,
     avatar_url VARCHAR(500),
     gender gender_enum,
-    user_type user_type_enum DEFAULT 'tourist',
+    role_id UUID REFERENCES roles(id),
+
     status user_status_enum DEFAULT 'active',
     email_verified BOOLEAN DEFAULT FALSE,
     email_verified_at TIMESTAMP,
@@ -117,6 +118,10 @@ CREATE TABLE role_permissions (
     permission_id UUID NOT NULL REFERENCES permissions(id) ON DELETE CASCADE,
     PRIMARY KEY (role_id, permission_id)
 );
+
+
+-- Index for lookups
+CREATE INDEX idx_users_role_id ON users(role_id);
 
 -- DESTINATIONS & LOCATIONS TABLES
 

@@ -56,7 +56,7 @@ export class AuthUseCase {
     const { email, password } = dto;
     const { data: row } = await this.client
       .from('users')
-      .select('id, first_name, last_name, email, password_hash')
+      .select('id, first_name, last_name, email, password_hash, role_id')
       .eq('email', email)
       .single();
 
@@ -69,6 +69,15 @@ export class AuthUseCase {
       throw new UnauthorizedException('Email atau password salah');
     }
 
+    // Fetch role name based on user's role_id
+    const { data: roleRow } = await this.client
+      .from('roles')
+      .select('name')
+      .eq('id', row.role_id)
+      .single();
+
+    const role = roleRow?.name ?? null;
+
     const name = `${row.first_name ?? ''} ${row.last_name ?? ''}`.trim();
     const issuer = process.env.JWT_ISSUER ?? 'sangihe-trip';
     const audience = process.env.JWT_AUDIENCE ?? 'sangihe-trip';
@@ -77,6 +86,7 @@ export class AuthUseCase {
       id: row.id,
       name,
       email: row.email,
+      role,
       iss: issuer,
       aud: audience,
       type: 'access',
@@ -89,14 +99,10 @@ export class AuthUseCase {
     } as const;
 
     const access_token = this.jwt.sign(accessPayload, {
-      issuer,
-      audience,
       expiresIn: process.env.JWT_ACCESS_EXPIRES_IN ?? '15m',
     });
 
     const refresh_token = this.jwt.sign(refreshPayload, {
-      issuer,
-      audience,
       expiresIn: process.env.JWT_REFRESH_EXPIRES_IN ?? '7d',
     });
 
