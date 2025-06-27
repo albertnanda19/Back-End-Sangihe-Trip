@@ -30,6 +30,14 @@ let DestinationUseCase = class DestinationUseCase {
             throw new common_1.InternalServerErrorException(e.message);
         }
     }
+    async findAll(query) {
+        try {
+            return await this.repository.findAll(query);
+        }
+        catch (e) {
+            throw new common_1.InternalServerErrorException(e.message);
+        }
+    }
 };
 exports.DestinationUseCase = DestinationUseCase;
 exports.DestinationUseCase = DestinationUseCase = __decorate([

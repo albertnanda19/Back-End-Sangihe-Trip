@@ -5,6 +5,10 @@ import {
   UseGuards,
   Inject,
   Req,
+  Get,
+  Query,
+  Param,
+  Res,
 } from '@nestjs/common';
 import { FastifyRequest } from 'fastify';
 import { ResponseMessage } from '../../common/decorators/response.decorator';
@@ -14,6 +18,7 @@ import { randomUUID } from 'crypto';
 import { writeFile, unlink } from 'fs/promises';
 import { join } from 'path';
 import { CreateDestinationDto } from '../dtos/destination/create-destination.dto';
+import { GetDestinationsQueryDto, GetDestinationsResponseDto } from '../dtos/destination/get-destinations.dto';
 import { plainToInstance } from 'class-transformer';
 import { validateOrReject } from 'class-validator';
 
@@ -92,4 +97,61 @@ export class DestinationController {
       throw err;
     }
   }
+
+  @ResponseMessage('Berhasil mendapatkan data daftar destinasi')
+  @Get()
+  @HttpCode(200)
+  async getDestinations(@Query() query: GetDestinationsQueryDto, @Req() req: any): Promise<GetDestinationsResponseDto> {
+    const result = await this.destinationUseCase.findAll(query);
+    const { data, totalItems } = result;
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 12;
+    const totalPages = Math.ceil(totalItems / pageSize);
+
+    // Build base URL from request
+    const baseUrl = `${req.protocol}://${req.headers.host}/image/`;
+
+    return {
+      data: data.map((d: any) => {
+        let imageFiles: string[] = [];
+        if (Array.isArray(d.images)) {
+          imageFiles = d.images;
+        } else if (typeof d.images === 'string') {
+          imageFiles = d.images
+            .replace(/^{|}$/g, '')
+            .split(',')
+            .map((s: string) => s.trim().replace(/^"|"$/g, ''))
+            .filter(Boolean);
+        }
+        // Only map to valid image links (skip empty/undefined)
+        const imageLinks = imageFiles
+          .filter((img: string) => !!img)
+          .map((img: string) => `${req.protocol}://${req.headers.host}/image/${img}`);
+        return {
+          id: d.id,
+          name: d.name,
+          category: d.category,
+          rating: 0,
+          totalReviews: 0,
+          location: d.location.address,
+          price: d.price,
+          image: imageLinks[0] ?? '',
+          images: imageLinks,
+          facilities: Array.isArray(d.facilities)
+            ? d.facilities.map((f: any) => typeof f === 'string' ? f : f.icon || f.name)
+            : [],
+          description: d.description,
+        };
+      }),
+      meta: {
+        page,
+        pageSize,
+        totalItems,
+        totalPages,
+      },
+    };
+  }
+
+
 }
+

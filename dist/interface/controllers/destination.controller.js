@@ -21,6 +21,7 @@ const crypto_1 = require("crypto");
 const promises_1 = require("fs/promises");
 const path_1 = require("path");
 const create_destination_dto_1 = require("../dtos/destination/create-destination.dto");
+const get_destinations_dto_1 = require("../dtos/destination/get-destinations.dto");
 const class_transformer_1 = require("class-transformer");
 const class_validator_1 = require("class-validator");
 let DestinationController = class DestinationController {
@@ -82,6 +83,53 @@ let DestinationController = class DestinationController {
             throw err;
         }
     }
+    async getDestinations(query, req) {
+        const result = await this.destinationUseCase.findAll(query);
+        const { data, totalItems } = result;
+        const page = query.page ?? 1;
+        const pageSize = query.pageSize ?? 12;
+        const totalPages = Math.ceil(totalItems / pageSize);
+        const baseUrl = `${req.protocol}://${req.headers.host}/image/`;
+        return {
+            data: data.map((d) => {
+                let imageFiles = [];
+                if (Array.isArray(d.images)) {
+                    imageFiles = d.images;
+                }
+                else if (typeof d.images === 'string') {
+                    imageFiles = d.images
+                        .replace(/^{|}$/g, '')
+                        .split(',')
+                        .map((s) => s.trim().replace(/^"|"$/g, ''))
+                        .filter(Boolean);
+                }
+                const imageLinks = imageFiles
+                    .filter((img) => !!img)
+                    .map((img) => `${req.protocol}://${req.headers.host}/image/${img}`);
+                return {
+                    id: d.id,
+                    name: d.name,
+                    category: d.category,
+                    rating: 0,
+                    totalReviews: 0,
+                    location: d.location.address,
+                    price: d.price,
+                    image: imageLinks[0] ?? '',
+                    images: imageLinks,
+                    facilities: Array.isArray(d.facilities)
+                        ? d.facilities.map((f) => typeof f === 'string' ? f : f.icon || f.name)
+                        : [],
+                    description: d.description,
+                };
+            }),
+            meta: {
+                page,
+                pageSize,
+                totalItems,
+                totalPages,
+            },
+        };
+    }
 };
 exports.DestinationController = DestinationController;
 __decorate([
@@ -94,6 +142,16 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], DestinationController.prototype, "createDestination", null);
+__decorate([
+    (0, response_decorator_1.ResponseMessage)('Berhasil mendapatkan data daftar destinasi'),
+    (0, common_1.Get)(),
+    (0, common_1.HttpCode)(200),
+    __param(0, (0, common_1.Query)()),
+    __param(1, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [get_destinations_dto_1.GetDestinationsQueryDto, Object]),
+    __metadata("design:returntype", Promise)
+], DestinationController.prototype, "getDestinations", null);
 exports.DestinationController = DestinationController = __decorate([
     (0, common_1.Controller)('destination'),
     __param(1, (0, common_1.Inject)('STORAGE_PATH')),

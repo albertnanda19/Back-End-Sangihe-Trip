@@ -7,6 +7,7 @@ import {
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 import multipart from '@fastify/multipart';
+
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 
 async function bootstrap() {
@@ -15,11 +16,9 @@ async function bootstrap() {
     new FastifyAdapter({ logger: true }),
   );
 
-  // Cast to `any` because Nest's Fastify type definitions differ slightly from
-  // the ones expected by @fastify/multipart. Runtime behaviour is unaffected.
   await app.register(multipart as unknown as any, {
     limits: {
-      fileSize: 10 * 1024 * 1024, // 10MB per file
+      fileSize: 10 * 1024 * 1024,
     },
   });
 
@@ -36,6 +35,14 @@ async function bootstrap() {
     new ValidationPipe({ transform: true, whitelist: true }),
   );
   app.useGlobalInterceptors(new ResponseInterceptor(new Reflector()));
+
+  const fastifyStatic = require('@fastify/static');
+  const { join } = require('path');
+  app.register(fastifyStatic, {
+    root: join(__dirname, '..', 'storage'),
+    prefix: '/image/',
+    decorateReply: false,
+  });
 
   await app.listen(process.env.PORT ? Number(process.env.PORT) : 3000, '0.0.0.0');
 }

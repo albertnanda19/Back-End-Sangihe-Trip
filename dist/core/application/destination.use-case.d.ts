@@ -18,5 +18,9 @@ export declare class DestinationUseCase {
     private readonly repository;
     constructor(repository: DestinationRepositoryPort);
     execute(payload: CreateDestinationInput): Promise<Destination>;
+    findAll(query: import('../domain/destination.repository.port').DestinationQuery): Promise<{
+        data: Destination[];
+        totalItems: number;
+    }>;
 }
 export {};

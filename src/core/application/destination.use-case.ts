@@ -47,4 +47,12 @@ export class DestinationUseCase {
       throw new InternalServerErrorException(e.message);
     }
   }
+
+  async findAll(query: import('../domain/destination.repository.port').DestinationQuery) {
+    try {
+      return await this.repository.findAll(query);
+    } catch (e) {
+      throw new InternalServerErrorException(e.message);
+    }
+  }
 }

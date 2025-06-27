@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.DestinationRepositoryAdapter = void 0;
 const common_1 = require("@nestjs/common");
 const supabase_js_1 = require("@supabase/supabase-js");
+const destination_entity_1 = require("../../core/domain/destination.entity");
 let DestinationRepositoryAdapter = class DestinationRepositoryAdapter {
     client;
     constructor(client) {
@@ -31,10 +32,14 @@ let DestinationRepositoryAdapter = class DestinationRepositoryAdapter {
             latitude: location.lat,
             longitude: location.lng,
             opening_hours: openHours,
+            price,
             entry_fee: price,
             category,
-            facilities,
+            facilities: Array.isArray(facilities) ? facilities : [],
+            images: Array.isArray(images) ? images : [],
+            video: video ?? null,
             created_at: createdAt.toISOString(),
+            updated_at: createdAt.toISOString(),
         };
     }
     async save(destination, uploadedBy) {
@@ -63,6 +68,74 @@ let DestinationRepositoryAdapter = class DestinationRepositoryAdapter {
             throw imgErr;
         }
         return destination;
+    }
+    async findAll(query) {
+        const { search, category, location, minRating, priceMin, priceMax, sortBy = 'popular', page = 1, pageSize = 12, } = query;
+        let supabaseQuery = this.client
+            .from('destinations')
+            .select(`id, name, category, address, price, images, facilities, description, created_at`, { count: 'exact' });
+        if (search) {
+            supabaseQuery = supabaseQuery.ilike('name', `%${search}%`);
+        }
+        if (category) {
+            supabaseQuery = supabaseQuery.eq('category', category);
+        }
+        if (location) {
+            supabaseQuery = supabaseQuery.ilike('address', `%${location}%`);
+        }
+        if (typeof priceMin === 'number') {
+            supabaseQuery = supabaseQuery.gte('price', priceMin);
+        }
+        if (typeof priceMax === 'number') {
+            supabaseQuery = supabaseQuery.lte('price', priceMax);
+        }
+        switch (sortBy) {
+            case 'price-low':
+                supabaseQuery = supabaseQuery.order('price', { ascending: true });
+                break;
+            case 'newest':
+                supabaseQuery = supabaseQuery.order('created_at', { ascending: false });
+                break;
+            case 'popular':
+            case 'rating':
+            default:
+                supabaseQuery = supabaseQuery.order('created_at', { ascending: false });
+        }
+        const safePageSize = Math.min(Math.max(pageSize, 1), 50);
+        const from = (page - 1) * safePageSize;
+        const to = from + safePageSize - 1;
+        supabaseQuery = supabaseQuery.range(from, to);
+        const { data, count, error } = await supabaseQuery;
+        if (error) {
+            throw new Error(error.message);
+        }
+        function parsePgArray(str) {
+            if (!str)
+                return [];
+            return str
+                .replace(/^{|}$/g, '')
+                .split(',')
+                .map(s => s.trim().replace(/^"|"$/g, ''))
+                .filter(Boolean);
+        }
+        const mapped = (data || []).map((row) => {
+            let imagesArr = [];
+            if (Array.isArray(row.images)) {
+                imagesArr = row.images;
+            }
+            else if (typeof row.images === 'string') {
+                imagesArr = parsePgArray(row.images);
+            }
+            return new destination_entity_1.Destination(row.id, row.name, row.category, {
+                address: row.address,
+                lat: row.latitude ?? 0,
+                lng: row.longitude ?? 0,
+            }, row.distance_km ?? 0, row.price, row.opening_hours ?? '', row.description, row.facilities ?? [], [], imagesArr, undefined, row.created_at ? new Date(row.created_at) : new Date());
+        });
+        return {
+            data: mapped,
+            totalItems: count || 0,
+        };
     }
 };
 exports.DestinationRepositoryAdapter = DestinationRepositoryAdapter;
