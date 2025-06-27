@@ -46,7 +46,7 @@ export class DestinationRepositoryAdapter implements DestinationRepositoryPort {
     };
   }
 
-  async save(destination: Destination): Promise<Destination> {
+  async save(destination: Destination, uploadedBy: string): Promise<Destination> {
     const { error } = await this.client
       .from('destinations') // DB table name
       .insert(this.toRow(destination)).select('id').single();
@@ -61,6 +61,7 @@ export class DestinationRepositoryAdapter implements DestinationRepositoryPort {
         const rows = destination.images.map((img) => ({
           destination_id: destination.id,
           image_url: img,
+          uploaded_by: uploadedBy,
         }));
         const { error: imgError } = await this.client
           .from('destination_images')

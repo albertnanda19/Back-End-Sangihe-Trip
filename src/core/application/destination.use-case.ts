@@ -15,6 +15,7 @@ interface CreateDestinationInput {
   tips: string[];
   images: string[]; // stored filenames
   video?: string;
+  uploaderId: string;
 }
 
 @Injectable()
@@ -41,7 +42,7 @@ export class DestinationUseCase {
     );
 
     try {
-      return await this.repository.save(dest);
+      return await this.repository.save(dest, payload.uploaderId);
     } catch (e) {
       throw new InternalServerErrorException(e.message);
     }

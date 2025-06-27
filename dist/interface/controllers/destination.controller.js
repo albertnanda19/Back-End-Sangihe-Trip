@@ -73,6 +73,7 @@ let DestinationController = class DestinationController {
                 ...dto,
                 images: files,
                 video: videoFile,
+                uploaderId: req.user.id,
             });
             return result;
         }

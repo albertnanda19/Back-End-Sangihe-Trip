@@ -24,7 +24,7 @@ let DestinationUseCase = class DestinationUseCase {
     async execute(payload) {
         const dest = new destination_entity_1.Destination((0, crypto_1.randomUUID)(), payload.name, payload.category, payload.location, payload.distanceKm, payload.price, payload.openHours, payload.description, payload.facilities, payload.tips, payload.images, payload.video);
         try {
-            return await this.repository.save(dest);
+            return await this.repository.save(dest, payload.uploaderId);
         }
         catch (e) {
             throw new common_1.InternalServerErrorException(e.message);

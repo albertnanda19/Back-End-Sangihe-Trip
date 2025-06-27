@@ -80,6 +80,7 @@ export class DestinationController {
         ...dto,
         images: files,
         video: videoFile,
+        uploaderId: (req as any).user.id,
       });
 
       return result;

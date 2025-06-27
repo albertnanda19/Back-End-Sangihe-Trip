@@ -5,5 +5,5 @@ export declare class DestinationRepositoryAdapter implements DestinationReposito
     private readonly client;
     constructor(client: SupabaseClient);
     private toRow;
-    save(destination: Destination): Promise<Destination>;
+    save(destination: Destination, uploadedBy: string): Promise<Destination>;
 }

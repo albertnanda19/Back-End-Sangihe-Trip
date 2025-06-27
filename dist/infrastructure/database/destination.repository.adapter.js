@@ -37,7 +37,7 @@ let DestinationRepositoryAdapter = class DestinationRepositoryAdapter {
             created_at: createdAt.toISOString(),
         };
     }
-    async save(destination) {
+    async save(destination, uploadedBy) {
         const { error } = await this.client
             .from('destinations')
             .insert(this.toRow(destination)).select('id').single();
@@ -49,6 +49,7 @@ let DestinationRepositoryAdapter = class DestinationRepositoryAdapter {
                 const rows = destination.images.map((img) => ({
                     destination_id: destination.id,
                     image_url: img,
+                    uploaded_by: uploadedBy,
                 }));
                 const { error: imgError } = await this.client
                     .from('destination_images')

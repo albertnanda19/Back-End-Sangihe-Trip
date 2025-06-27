@@ -12,6 +12,7 @@ interface CreateDestinationInput {
     tips: string[];
     images: string[];
     video?: string;
+    uploaderId: string;
 }
 export declare class DestinationUseCase {
     private readonly repository;
