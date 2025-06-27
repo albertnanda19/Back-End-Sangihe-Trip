@@ -13,6 +13,11 @@ async function bootstrap() {
     AppModule,
     new FastifyAdapter({ logger: true }),
   );
+  
+  app.enableCors({
+    origin: true,
+    credentials: true,
+  });
 
   app.setGlobalPrefix('api');
   app.useGlobalPipes(

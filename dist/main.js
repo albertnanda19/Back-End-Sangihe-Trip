@@ -8,6 +8,10 @@ const app_module_1 = require("./app.module");
 const response_interceptor_1 = require("./common/interceptors/response.interceptor");
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule, new platform_fastify_1.FastifyAdapter({ logger: true }));
+    app.enableCors({
+        origin: true,
+        credentials: true,
+    });
     app.setGlobalPrefix('api');
     app.useGlobalPipes(new common_1.ValidationPipe({ transform: true, whitelist: true }));
     app.useGlobalInterceptors(new response_interceptor_1.ResponseInterceptor(new core_1.Reflector()));
