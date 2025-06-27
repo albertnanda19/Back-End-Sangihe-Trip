@@ -6,6 +6,7 @@ import {
 } from '@nestjs/platform-fastify';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
+import multipart from '@fastify/multipart';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 
 async function bootstrap() {
@@ -13,6 +14,14 @@ async function bootstrap() {
     AppModule,
     new FastifyAdapter({ logger: true }),
   );
+
+  // Cast to `any` because Nest's Fastify type definitions differ slightly from
+  // the ones expected by @fastify/multipart. Runtime behaviour is unaffected.
+  await app.register(multipart as unknown as any, {
+    limits: {
+      fileSize: 10 * 1024 * 1024, // 10MB per file
+    },
+  });
 
   app.enableCors({
     origin: '*',

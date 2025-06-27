@@ -1,0 +1,21 @@
+import { Destination, Facility, Location } from '../domain/destination.entity';
+import { DestinationRepositoryPort } from '../domain/destination.repository.port';
+interface CreateDestinationInput {
+    name: string;
+    category: string;
+    location: Location;
+    distanceKm: number;
+    price: number;
+    openHours: string;
+    description: string;
+    facilities: Facility[];
+    tips: string[];
+    images: string[];
+    video?: string;
+}
+export declare class DestinationUseCase {
+    private readonly repository;
+    constructor(repository: DestinationRepositoryPort);
+    execute(payload: CreateDestinationInput): Promise<Destination>;
+}
+export {};

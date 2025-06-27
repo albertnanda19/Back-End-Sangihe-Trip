@@ -15,9 +15,12 @@ const supabase_js_1 = require("@supabase/supabase-js");
 const app_controller_1 = require("./app.controller");
 const app_service_1 = require("./app.service");
 const user_controller_1 = require("./interface/controllers/user.controller");
+const destination_controller_1 = require("./interface/controllers/destination.controller");
 const auth_controller_1 = require("./interface/controllers/auth.controller");
 const user_repository_adapter_1 = require("./infrastructure/database/user.repository.adapter");
+const destination_repository_adapter_1 = require("./infrastructure/database/destination.repository.adapter");
 const user_use_case_1 = require("./core/application/user.use-case");
+const destination_use_case_1 = require("./core/application/destination.use-case");
 const auth_use_case_1 = require("./core/application/auth.use-case");
 let AppModule = class AppModule {
 };
@@ -33,7 +36,7 @@ exports.AppModule = AppModule = __decorate([
                 },
             }),
         ],
-        controllers: [app_controller_1.AppController, user_controller_1.UserController, auth_controller_1.AuthController],
+        controllers: [app_controller_1.AppController, user_controller_1.UserController, auth_controller_1.AuthController, destination_controller_1.DestinationController],
         providers: [
             app_service_1.AppService,
             {
@@ -41,8 +44,14 @@ exports.AppModule = AppModule = __decorate([
                 useFactory: () => (0, supabase_js_1.createClient)(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY),
             },
             { provide: 'UserRepository', useClass: user_repository_adapter_1.UserRepositoryAdapter },
+            { provide: 'DestinationRepository', useClass: destination_repository_adapter_1.DestinationRepositoryAdapter },
             user_use_case_1.UserUseCase,
             auth_use_case_1.AuthUseCase,
+            destination_use_case_1.DestinationUseCase,
+            {
+                provide: 'STORAGE_PATH',
+                useValue: (0, path_1.join)(__dirname, '..', 'storage'),
+            },
         ],
     })
 ], AppModule);

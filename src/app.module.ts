@@ -7,9 +7,12 @@ import { createClient } from '@supabase/supabase-js';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UserController } from './interface/controllers/user.controller';
+import { DestinationController } from './interface/controllers/destination.controller';
 import { AuthController } from './interface/controllers/auth.controller';
 import { UserRepositoryAdapter } from './infrastructure/database/user.repository.adapter';
+import { DestinationRepositoryAdapter } from './infrastructure/database/destination.repository.adapter';
 import { UserUseCase } from './core/application/user.use-case';
+import { DestinationUseCase } from './core/application/destination.use-case';
 import { AuthUseCase } from './core/application/auth.use-case';
 
 @Module({
@@ -22,7 +25,7 @@ import { AuthUseCase } from './core/application/auth.use-case';
       },
     }),
   ],
-  controllers: [AppController, UserController, AuthController],
+  controllers: [AppController, UserController, AuthController, DestinationController],
   providers: [
     AppService,
     {
@@ -35,9 +38,15 @@ import { AuthUseCase } from './core/application/auth.use-case';
     },
     // Ports & Adapters
     { provide: 'UserRepository', useClass: UserRepositoryAdapter },
+    { provide: 'DestinationRepository', useClass: DestinationRepositoryAdapter },
     // Use Cases
     UserUseCase,
     AuthUseCase,
+    DestinationUseCase,
+    {
+      provide: 'STORAGE_PATH',
+      useValue: join(__dirname, '..', 'storage'),
+    },
   ],
 })
 export class AppModule {}
