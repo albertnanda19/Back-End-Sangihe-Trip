@@ -9,8 +9,11 @@ const response_interceptor_1 = require("./common/interceptors/response.intercept
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule, new platform_fastify_1.FastifyAdapter({ logger: true }));
     app.enableCors({
-        origin: true,
-        credentials: true,
+        origin: '*',
+        methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+        preflightContinue: false,
+        optionsSuccessStatus: 204,
     });
     app.setGlobalPrefix('api');
     app.useGlobalPipes(new common_1.ValidationPipe({ transform: true, whitelist: true }));
