@@ -1,3 +1,3 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-//# sourceMappingURL=destination.repository.port.js.map
+//# sourceMappingURL=get-destination-detail.dto.js.map
