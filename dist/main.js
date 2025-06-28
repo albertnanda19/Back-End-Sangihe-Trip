@@ -14,12 +14,10 @@ async function bootstrap() {
             fileSize: 10 * 1024 * 1024,
         },
     });
-    app.enableCors({
+    await app.register(require('@fastify/cors'), {
         origin: '*',
         methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
         allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
-        preflightContinue: false,
-        optionsSuccessStatus: 204,
     });
     app.setGlobalPrefix('api');
     app.useGlobalPipes(new common_1.ValidationPipe({ transform: true, whitelist: true }));

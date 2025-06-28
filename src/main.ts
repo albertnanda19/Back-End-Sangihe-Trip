@@ -22,17 +22,16 @@ async function bootstrap() {
     },
   });
 
-  app.enableCors({
-    origin: '*',
-    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
-    preflightContinue: false,
-    optionsSuccessStatus: 204,
-  });
+  // Gunakan @fastify/cors untuk konfigurasi CORS pada Fastify
+await app.register(require('@fastify/cors'), {
+  origin: '*', // Mengizinkan semua domain (wildcard)
+  methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+});
 
   app.setGlobalPrefix('api');
   app.useGlobalPipes(
-    new ValidationPipe({ transform: true, whitelist: true }),
+    new ValidationPipe({ transform: true, whitelist: true })
   );
   app.useGlobalInterceptors(new ResponseInterceptor(new Reflector()));
 
