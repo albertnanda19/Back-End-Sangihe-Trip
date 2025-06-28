@@ -12,6 +12,7 @@ const jwt_1 = require("@nestjs/jwt");
 const fs_1 = require("fs");
 const path_1 = require("path");
 const supabase_js_1 = require("@supabase/supabase-js");
+const config_1 = require("@nestjs/config");
 const app_controller_1 = require("./app.controller");
 const app_service_1 = require("./app.service");
 const user_controller_1 = require("./interface/controllers/user.controller");
@@ -22,12 +23,14 @@ const destination_repository_adapter_1 = require("./infrastructure/database/dest
 const user_use_case_1 = require("./core/application/user.use-case");
 const destination_use_case_1 = require("./core/application/destination.use-case");
 const auth_use_case_1 = require("./core/application/auth.use-case");
+const firebase_module_1 = require("./infrastructure/firebase/firebase.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
 exports.AppModule = AppModule = __decorate([
     (0, common_1.Module)({
         imports: [
+            config_1.ConfigModule.forRoot({ isGlobal: true }),
             jwt_1.JwtModule.register({
                 privateKey: (0, fs_1.readFileSync)((0, path_1.join)(__dirname, '..', 'private.pem')),
                 publicKey: (0, fs_1.readFileSync)((0, path_1.join)(__dirname, '..', 'public.pem')),
@@ -35,19 +38,25 @@ exports.AppModule = AppModule = __decorate([
                     algorithm: 'RS256',
                 },
             }),
+            firebase_module_1.FirebaseModule,
         ],
-        controllers: [app_controller_1.AppController, user_controller_1.UserController, auth_controller_1.AuthController, destination_controller_1.DestinationController],
+        controllers: [
+            app_controller_1.AppController,
+            auth_controller_1.AuthController,
+            user_controller_1.UserController,
+            destination_controller_1.DestinationController,
+        ],
         providers: [
             app_service_1.AppService,
+            auth_use_case_1.AuthUseCase,
+            user_use_case_1.UserUseCase,
+            destination_use_case_1.DestinationUseCase,
             {
                 provide: 'SUPABASE_CLIENT',
                 useFactory: () => (0, supabase_js_1.createClient)(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY),
             },
             { provide: 'UserRepository', useClass: user_repository_adapter_1.UserRepositoryAdapter },
             { provide: 'DestinationRepository', useClass: destination_repository_adapter_1.DestinationRepositoryAdapter },
-            user_use_case_1.UserUseCase,
-            auth_use_case_1.AuthUseCase,
-            destination_use_case_1.DestinationUseCase,
             {
                 provide: 'STORAGE_PATH',
                 useValue: (0, path_1.join)(__dirname, '..', 'storage'),

@@ -49,32 +49,18 @@ export class DestinationRepositoryAdapter implements DestinationRepositoryPort {
     };
   }
 
-  async save(destination: Destination, uploadedBy: string): Promise<Destination> {
+  async save(destination: Destination): Promise<Destination> {
+    const rowData = this.toRow(destination);
+
     const { error } = await this.client
-      .from('destinations') // DB table name
-      .insert(this.toRow(destination)).select('id').single();
+      .from('destinations')
+      .insert(rowData)
+      .select('id')
+      .single();
 
     if (error) {
+      // The controller will catch this and trigger the Firebase rollback
       throw new Error(error.message);
-    }
-
-    // save images separately only if destination saved successfully
-    try {
-      if (destination.images.length) {
-        const rows = destination.images.map((img) => ({
-          destination_id: destination.id,
-          image_url: img,
-          uploaded_by: uploadedBy,
-        }));
-        const { error: imgError } = await this.client
-          .from('destination_images')
-          .insert(rows);
-        if (imgError) throw new Error(imgError.message);
-      }
-    } catch (imgErr) {
-      // rollback destination record to keep consistency
-      await this.client.from('destinations').delete().eq('id', destination.id);
-      throw imgErr;
     }
 
     return destination;

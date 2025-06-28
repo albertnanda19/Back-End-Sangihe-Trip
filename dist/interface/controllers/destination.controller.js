@@ -18,68 +18,69 @@ const response_decorator_1 = require("../../common/decorators/response.decorator
 const destination_use_case_1 = require("../../core/application/destination.use-case");
 const admin_guard_1 = require("../../common/guards/admin.guard");
 const crypto_1 = require("crypto");
-const promises_1 = require("fs/promises");
-const path_1 = require("path");
+const storage_1 = require("firebase/storage");
+const firebase_provider_1 = require("../../infrastructure/firebase/firebase.provider");
 const create_destination_dto_1 = require("../dtos/destination/create-destination.dto");
 const get_destinations_dto_1 = require("../dtos/destination/get-destinations.dto");
 const class_transformer_1 = require("class-transformer");
 const class_validator_1 = require("class-validator");
 let DestinationController = class DestinationController {
     destinationUseCase;
-    storagePath;
-    constructor(destinationUseCase, storagePath) {
+    storage;
+    constructor(destinationUseCase, storage) {
         this.destinationUseCase = destinationUseCase;
-        this.storagePath = storagePath;
+        this.storage = storage;
     }
     async createDestination(req) {
-        const files = [];
-        const savedFilePaths = [];
-        let videoFile;
+        const uploadedImageRefs = [];
         let payloadJson = '';
         try {
             const parts = req.parts();
+            const uploadedImageUrls = [];
+            let videoUrl;
+            const fileProcessingPromises = [];
             for await (const part of parts) {
                 if (part.type === 'file') {
+                    const buffer = await part.toBuffer();
                     const extension = (part.filename?.split('.').pop() ?? '').toLowerCase();
                     const filename = `${(0, crypto_1.randomUUID)()}.${extension}`;
-                    const filepath = (0, path_1.join)(this.storagePath, filename);
-                    await (0, promises_1.writeFile)(filepath, await part.toBuffer());
-                    savedFilePaths.push(filepath);
-                    if (part.fieldname === 'images') {
-                        files.push(filename);
-                    }
-                    else if (part.fieldname === 'video') {
-                        videoFile = filename;
-                    }
+                    const storageRef = (0, storage_1.ref)(this.storage, `destinations/${filename}`);
+                    const uploadPromise = (0, storage_1.uploadBytes)(storageRef, buffer, {
+                        contentType: part.mimetype,
+                    }).then(async (snapshot) => {
+                        uploadedImageRefs.push(snapshot.ref);
+                        const url = await (0, storage_1.getDownloadURL)(snapshot.ref);
+                        if (part.fieldname === 'images') {
+                            uploadedImageUrls.push(url);
+                        }
+                        else if (part.fieldname === 'video') {
+                            videoUrl = url;
+                        }
+                    });
+                    fileProcessingPromises.push(uploadPromise);
                 }
                 else if (part.type === 'field' && part.fieldname === 'payload') {
                     payloadJson = part.value;
                 }
             }
+            await Promise.all(fileProcessingPromises);
             if (!payloadJson) {
                 throw new Error('Missing payload field');
             }
-            let parsed;
-            try {
-                parsed = JSON.parse(payloadJson);
-            }
-            catch {
-                throw new Error('Invalid JSON in payload field');
-            }
-            const dto = (0, class_transformer_1.plainToInstance)(create_destination_dto_1.CreateDestinationDto, parsed, {
+            const dto = (0, class_transformer_1.plainToInstance)(create_destination_dto_1.CreateDestinationDto, JSON.parse(payloadJson), {
                 enableImplicitConversion: true,
             });
             await (0, class_validator_1.validateOrReject)(dto, { whitelist: true });
             const result = await this.destinationUseCase.execute({
                 ...dto,
-                images: files,
-                video: videoFile,
+                images: uploadedImageUrls,
+                video: videoUrl,
                 uploaderId: req.user.id,
             });
             return result;
         }
         catch (err) {
-            await Promise.all(savedFilePaths.map((p) => (0, promises_1.unlink)(p).catch(() => undefined)));
+            await Promise.all(uploadedImageRefs.map((fileRef) => (0, storage_1.deleteObject)(fileRef).catch(console.error)));
             throw err;
         }
     }
@@ -89,37 +90,23 @@ let DestinationController = class DestinationController {
         const page = query.page ?? 1;
         const pageSize = query.pageSize ?? 12;
         const totalPages = Math.ceil(totalItems / pageSize);
-        const baseUrl = `${req.protocol}://${req.headers.host}/image/`;
         return {
-            data: data.map((d) => {
-                let imageFiles = [];
-                if (Array.isArray(d.images)) {
-                    imageFiles = d.images;
-                }
-                else if (typeof d.images === 'string') {
-                    imageFiles = d.images
-                        .replace(/^{|}$/g, '')
-                        .split(',')
-                        .map((s) => s.trim().replace(/^"|"$/g, ''))
-                        .filter(Boolean);
-                }
-                const imageLinks = imageFiles
-                    .filter((img) => !!img)
-                    .map((img) => `${req.protocol}://${req.headers.host}/image/${img}`);
+            data: data.map((destination) => {
+                const images = destination.images ?? [];
                 return {
-                    id: d.id,
-                    name: d.name,
-                    category: d.category,
+                    id: destination.id,
+                    name: destination.name,
+                    category: destination.category,
                     rating: 0,
                     totalReviews: 0,
-                    location: d.location.address,
-                    price: d.price,
-                    image: imageLinks[0] ?? '',
-                    images: imageLinks,
-                    facilities: Array.isArray(d.facilities)
-                        ? d.facilities.map((f) => typeof f === 'string' ? f : f.icon || f.name)
+                    location: destination.location.address,
+                    price: destination.price,
+                    image: images[0] ?? '',
+                    images: images,
+                    facilities: Array.isArray(destination.facilities)
+                        ? destination.facilities.map((f) => f.name || f.icon || f)
                         : [],
-                    description: d.description,
+                    description: destination.description,
                 };
             }),
             meta: {
@@ -154,7 +141,7 @@ __decorate([
 ], DestinationController.prototype, "getDestinations", null);
 exports.DestinationController = DestinationController = __decorate([
     (0, common_1.Controller)('destination'),
-    __param(1, (0, common_1.Inject)('STORAGE_PATH')),
-    __metadata("design:paramtypes", [destination_use_case_1.DestinationUseCase, String])
+    __param(1, (0, common_1.Inject)(firebase_provider_1.FIREBASE_STORAGE)),
+    __metadata("design:paramtypes", [destination_use_case_1.DestinationUseCase, Object])
 ], DestinationController);
 //# sourceMappingURL=destination.controller.js.map

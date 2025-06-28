@@ -35,13 +35,6 @@ await app.register(require('@fastify/cors'), {
   );
   app.useGlobalInterceptors(new ResponseInterceptor(new Reflector()));
 
-  const fastifyStatic = require('@fastify/static');
-  const { join } = require('path');
-  app.register(fastifyStatic, {
-    root: join(__dirname, '..', 'storage'),
-    prefix: '/image/',
-    decorateReply: false,
-  });
 
   await app.listen(process.env.PORT ? Number(process.env.PORT) : 3000, '0.0.0.0');
 }

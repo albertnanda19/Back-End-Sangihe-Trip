@@ -4,6 +4,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 
 import { createClient } from '@supabase/supabase-js';
+import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UserController } from './interface/controllers/user.controller';
@@ -14,9 +15,11 @@ import { DestinationRepositoryAdapter } from './infrastructure/database/destinat
 import { UserUseCase } from './core/application/user.use-case';
 import { DestinationUseCase } from './core/application/destination.use-case';
 import { AuthUseCase } from './core/application/auth.use-case';
+import { FirebaseModule } from './infrastructure/firebase/firebase.module';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
     JwtModule.register({
       privateKey: readFileSync(join(__dirname, '..', 'private.pem')),
       publicKey: readFileSync(join(__dirname, '..', 'public.pem')),
@@ -24,10 +27,19 @@ import { AuthUseCase } from './core/application/auth.use-case';
         algorithm: 'RS256',
       },
     }),
+    FirebaseModule,
   ],
-  controllers: [AppController, UserController, AuthController, DestinationController],
+  controllers: [
+    AppController,
+    AuthController,
+    UserController,
+    DestinationController,
+  ],
   providers: [
     AppService,
+    AuthUseCase,
+    UserUseCase,
+    DestinationUseCase,
     {
       provide: 'SUPABASE_CLIENT',
       useFactory: () =>
@@ -36,13 +48,8 @@ import { AuthUseCase } from './core/application/auth.use-case';
           process.env.SUPABASE_SERVICE_ROLE_KEY as string,
         ),
     },
-    // Ports & Adapters
     { provide: 'UserRepository', useClass: UserRepositoryAdapter },
     { provide: 'DestinationRepository', useClass: DestinationRepositoryAdapter },
-    // Use Cases
-    UserUseCase,
-    AuthUseCase,
-    DestinationUseCase,
     {
       provide: 'STORAGE_PATH',
       useValue: join(__dirname, '..', 'storage'),

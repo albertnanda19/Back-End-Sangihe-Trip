@@ -22,13 +22,6 @@ async function bootstrap() {
     app.setGlobalPrefix('api');
     app.useGlobalPipes(new common_1.ValidationPipe({ transform: true, whitelist: true }));
     app.useGlobalInterceptors(new response_interceptor_1.ResponseInterceptor(new core_1.Reflector()));
-    const fastifyStatic = require('@fastify/static');
-    const { join } = require('path');
-    app.register(fastifyStatic, {
-        root: join(__dirname, '..', 'storage'),
-        prefix: '/image/',
-        decorateReply: false,
-    });
     await app.listen(process.env.PORT ? Number(process.env.PORT) : 3000, '0.0.0.0');
 }
 bootstrap();

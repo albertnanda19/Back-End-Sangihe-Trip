@@ -42,30 +42,15 @@ let DestinationRepositoryAdapter = class DestinationRepositoryAdapter {
             updated_at: createdAt.toISOString(),
         };
     }
-    async save(destination, uploadedBy) {
+    async save(destination) {
+        const rowData = this.toRow(destination);
         const { error } = await this.client
             .from('destinations')
-            .insert(this.toRow(destination)).select('id').single();
+            .insert(rowData)
+            .select('id')
+            .single();
         if (error) {
             throw new Error(error.message);
-        }
-        try {
-            if (destination.images.length) {
-                const rows = destination.images.map((img) => ({
-                    destination_id: destination.id,
-                    image_url: img,
-                    uploaded_by: uploadedBy,
-                }));
-                const { error: imgError } = await this.client
-                    .from('destination_images')
-                    .insert(rows);
-                if (imgError)
-                    throw new Error(imgError.message);
-            }
-        }
-        catch (imgErr) {
-            await this.client.from('destinations').delete().eq('id', destination.id);
-            throw imgErr;
         }
         return destination;
     }
