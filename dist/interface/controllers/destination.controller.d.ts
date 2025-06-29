@@ -5,7 +5,6 @@ import { GetDestinationsQueryDto, GetDestinationsResponseDto } from '../dtos/des
 export declare class DestinationController {
     private readonly destinationUseCase;
     private readonly storage;
-    getDestinationDetail(id: string): Promise<import("../../core/domain/destination.entity").Destination>;
     constructor(destinationUseCase: DestinationUseCase, storage: FirebaseStorage);
     createDestination(req: FastifyRequest): Promise<import("../../core/domain/destination.entity").Destination>;
     getDestinations(query: GetDestinationsQueryDto, req: any): Promise<GetDestinationsResponseDto>;

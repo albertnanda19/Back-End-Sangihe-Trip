@@ -16,7 +16,6 @@ interface CreateDestinationInput {
 }
 export declare class DestinationUseCase {
     private readonly repository;
-    getDetail(id: string): Promise<Destination>;
     constructor(repository: DestinationRepositoryPort);
     execute(payload: CreateDestinationInput): Promise<Destination>;
     findAll(query: import('../domain/destination.repository.port').DestinationQuery): Promise<{

@@ -3,7 +3,6 @@ import { Destination } from '../../core/domain/destination.entity';
 import { DestinationRepositoryPort } from '../../core/domain/destination.repository.port';
 export declare class DestinationRepositoryAdapter implements DestinationRepositoryPort {
     private readonly client;
-    findById(id: string): Promise<Destination | null>;
     constructor(client: SupabaseClient);
     private toRow;
     save(destination: Destination): Promise<Destination>;

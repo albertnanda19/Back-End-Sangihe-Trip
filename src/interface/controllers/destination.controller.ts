@@ -31,13 +31,6 @@ import { validateOrReject } from 'class-validator';
 
 @Controller('destination')
 export class DestinationController {
-  @Get(':id')
-  @HttpCode(200)
-  @ResponseMessage('Berhasil mendapatkan detail destinasi')
-  async getDestinationDetail(@Param('id') id: string) {
-    const detail = await this.destinationUseCase.getDetail(id);
-    return detail;
-  }
   constructor(
     private readonly destinationUseCase: DestinationUseCase,
     @Inject(FIREBASE_STORAGE) private readonly storage: FirebaseStorage,

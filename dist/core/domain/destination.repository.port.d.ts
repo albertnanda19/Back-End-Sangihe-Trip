@@ -16,5 +16,4 @@ export interface DestinationRepositoryPort {
         data: Destination[];
         totalItems: number;
     }>;
-    findById(id: string): Promise<Destination | null>;
 }

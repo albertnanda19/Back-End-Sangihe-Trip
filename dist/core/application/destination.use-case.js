@@ -18,17 +18,6 @@ const crypto_1 = require("crypto");
 const destination_entity_1 = require("../domain/destination.entity");
 let DestinationUseCase = class DestinationUseCase {
     repository;
-    async getDetail(id) {
-        try {
-            const detail = await this.repository.findById(id);
-            if (!detail)
-                throw new Error('Destination not found');
-            return detail;
-        }
-        catch (e) {
-            throw new common_1.InternalServerErrorException(e.message);
-        }
-    }
     constructor(repository) {
         this.repository = repository;
     }

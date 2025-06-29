@@ -27,10 +27,6 @@ const class_validator_1 = require("class-validator");
 let DestinationController = class DestinationController {
     destinationUseCase;
     storage;
-    async getDestinationDetail(id) {
-        const detail = await this.destinationUseCase.getDetail(id);
-        return detail;
-    }
     constructor(destinationUseCase, storage) {
         this.destinationUseCase = destinationUseCase;
         this.storage = storage;
@@ -123,15 +119,6 @@ let DestinationController = class DestinationController {
     }
 };
 exports.DestinationController = DestinationController;
-__decorate([
-    (0, common_1.Get)(':id'),
-    (0, common_1.HttpCode)(200),
-    (0, response_decorator_1.ResponseMessage)('Berhasil mendapatkan detail destinasi'),
-    __param(0, (0, common_1.Param)('id')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", Promise)
-], DestinationController.prototype, "getDestinationDetail", null);
 __decorate([
     (0, common_1.Post)(),
     (0, common_1.HttpCode)(200),

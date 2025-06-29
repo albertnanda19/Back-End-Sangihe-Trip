@@ -14,6 +14,5 @@ export interface DestinationQuery {
 
 export interface DestinationRepositoryPort {
   save(destination: Destination, uploadedBy: string): Promise<Destination>;
-  findAll(query: DestinationQuery): Promise<{ data: Destination[]; totalItems: number }>;
-  findById(id: string): Promise<Destination | null>;
+  findAll(query: DestinationQuery): Promise<{ data: Destination[]; totalItems: number }>; 
 }

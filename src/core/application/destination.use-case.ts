@@ -20,15 +20,6 @@ interface CreateDestinationInput {
 
 @Injectable()
 export class DestinationUseCase {
-  async getDetail(id: string) {
-    try {
-      const detail = await this.repository.findById(id);
-      if (!detail) throw new Error('Destination not found');
-      return detail;
-    } catch (e) {
-      throw new InternalServerErrorException(e.message);
-    }
-  }
   constructor(
     @Inject('DestinationRepository')
     private readonly repository: DestinationRepositoryPort,
