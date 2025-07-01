@@ -17,13 +17,18 @@ const app_controller_1 = require("./app.controller");
 const app_service_1 = require("./app.service");
 const user_controller_1 = require("./interface/controllers/user.controller");
 const destination_controller_1 = require("./interface/controllers/destination.controller");
+const article_controller_1 = require("./interface/controllers/article.controller");
 const auth_controller_1 = require("./interface/controllers/auth.controller");
 const user_repository_adapter_1 = require("./infrastructure/database/user.repository.adapter");
 const destination_repository_adapter_1 = require("./infrastructure/database/destination.repository.adapter");
+const article_repository_adapter_1 = require("./infrastructure/database/article.repository.adapter");
 const user_use_case_1 = require("./core/application/user.use-case");
 const destination_use_case_1 = require("./core/application/destination.use-case");
+const create_article_use_case_1 = require("./core/application/create-article.use-case");
+const list_articles_use_case_1 = require("./core/application/list-articles.use-case");
 const auth_use_case_1 = require("./core/application/auth.use-case");
 const firebase_module_1 = require("./infrastructure/firebase/firebase.module");
+const jwt_admin_guard_1 = require("./common/guards/jwt-admin.guard");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -45,18 +50,23 @@ exports.AppModule = AppModule = __decorate([
             auth_controller_1.AuthController,
             user_controller_1.UserController,
             destination_controller_1.DestinationController,
+            article_controller_1.ArticleController,
         ],
         providers: [
             app_service_1.AppService,
             auth_use_case_1.AuthUseCase,
             user_use_case_1.UserUseCase,
             destination_use_case_1.DestinationUseCase,
+            create_article_use_case_1.CreateArticleUseCase,
+            list_articles_use_case_1.ListArticlesUseCase,
+            jwt_admin_guard_1.JwtAdminGuard,
             {
                 provide: 'SUPABASE_CLIENT',
                 useFactory: () => (0, supabase_js_1.createClient)(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY),
             },
             { provide: 'UserRepository', useClass: user_repository_adapter_1.UserRepositoryAdapter },
             { provide: 'DestinationRepository', useClass: destination_repository_adapter_1.DestinationRepositoryAdapter },
+            { provide: 'ArticleRepository', useClass: article_repository_adapter_1.ArticleRepositoryAdapter },
             {
                 provide: 'STORAGE_PATH',
                 useValue: (0, path_1.join)(__dirname, '..', 'storage'),

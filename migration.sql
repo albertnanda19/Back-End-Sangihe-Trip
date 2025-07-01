@@ -689,6 +689,26 @@ INSERT INTO destination_facilities (name, icon, description, category) VALUES
 ('ATM', 'credit-card', 'Mesin ATM', 'financial'),
 ('Toko Souvenir', 'shopping-bag', 'Toko oleh-oleh', 'shopping');
 
+-- ARTICLES TABLE
+
+CREATE TABLE articles (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    title VARCHAR(255) NOT NULL,
+    slug VARCHAR(255) UNIQUE NOT NULL,
+    category_id UUID REFERENCES article_categories(id),
+    author_id UUID NOT NULL REFERENCES users(id),
+    publish_date DATE NOT NULL,
+    reading_time INTEGER CHECK (reading_time > 0),
+    content TEXT NOT NULL,
+    tags TEXT[] DEFAULT '{}',
+    related_article_ids UUID[] DEFAULT '{}',
+    status article_status_enum DEFAULT 'draft',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_articles_slug ON articles(slug);
+
 -- Insert default article categories
 INSERT INTO article_categories (name, slug, description, color, sort_order) VALUES
 ('Tips Perjalanan', 'tips-perjalanan', 'Tips dan panduan perjalanan', '#3B82F6', 1),
