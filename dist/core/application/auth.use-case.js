@@ -90,7 +90,7 @@ let AuthUseCase = class AuthUseCase {
             type: 'refresh',
         };
         const access_token = this.jwt.sign(accessPayload, {
-            expiresIn: process.env.JWT_ACCESS_EXPIRES_IN ?? '15m',
+            expiresIn: process.env.JWT_ACCESS_EXPIRES_IN ?? '2h',
         });
         const refresh_token = this.jwt.sign(refreshPayload, {
             expiresIn: process.env.JWT_REFRESH_EXPIRES_IN ?? '7d',

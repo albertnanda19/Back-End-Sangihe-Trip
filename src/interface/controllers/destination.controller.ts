@@ -52,29 +52,38 @@ export class DestinationController {
       const fileProcessingPromises: Promise<void>[] = [];
 
       for await (const part of parts) {
+        // Handle nested "parts" streams concurrently without blocking iteration
         if (part.type === 'file') {
-          const buffer = await part.toBuffer();
-          const extension = (part.filename?.split('.').pop() ?? '').toLowerCase();
-          const filename = `${randomUUID()}.${extension}`;
-          const storageRef = ref(this.storage, `destinations/${filename}`);
+          // Launch an async task quickly so that the iterator can continue
+          const task = (async () => {
+            const buffer = await part.toBuffer();
 
-          const uploadPromise = uploadBytes(storageRef, buffer, {
-            contentType: part.mimetype,
-          }).then(async (snapshot) => {
-            uploadedImageRefs.push(snapshot.ref); // For rollback
-            const url = await getDownloadURL(snapshot.ref);
-            if (part.fieldname === 'images') {
-              uploadedImageUrls.push(url);
-            } else if (part.fieldname === 'video') {
+            const extension = (part.filename?.split('.').pop() ?? '').toLowerCase();
+            const filename = `${randomUUID()}.${extension}`;
+            const storageRef = ref(this.storage, `destinations/${filename}`);
+
+            await uploadBytes(storageRef, buffer, { contentType: part.mimetype });
+
+            // Keep reference for rollback *after* successful upload
+            uploadedImageRefs.push(storageRef);
+
+            const url = await getDownloadURL(storageRef);
+
+            if (part.fieldname === 'video') {
               videoUrl = url;
+            } else if (part.fieldname.startsWith('images')) {
+              // Handles: images, images[], images[0], images1, etc.
+              uploadedImageUrls.push(url);
             }
-          });
-          fileProcessingPromises.push(uploadPromise);
+          })();
+
+          fileProcessingPromises.push(task);
         } else if (part.type === 'field' && part.fieldname === 'payload') {
           payloadJson = part.value as string;
         }
       }
 
+      // Wait until *every* upload is finished before moving on
       await Promise.all(fileProcessingPromises);
 
       if (!payloadJson) {

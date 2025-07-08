@@ -41,23 +41,22 @@ let DestinationController = class DestinationController {
             const fileProcessingPromises = [];
             for await (const part of parts) {
                 if (part.type === 'file') {
-                    const buffer = await part.toBuffer();
-                    const extension = (part.filename?.split('.').pop() ?? '').toLowerCase();
-                    const filename = `${(0, crypto_1.randomUUID)()}.${extension}`;
-                    const storageRef = (0, storage_1.ref)(this.storage, `destinations/${filename}`);
-                    const uploadPromise = (0, storage_1.uploadBytes)(storageRef, buffer, {
-                        contentType: part.mimetype,
-                    }).then(async (snapshot) => {
-                        uploadedImageRefs.push(snapshot.ref);
-                        const url = await (0, storage_1.getDownloadURL)(snapshot.ref);
-                        if (part.fieldname === 'images') {
-                            uploadedImageUrls.push(url);
-                        }
-                        else if (part.fieldname === 'video') {
+                    const task = (async () => {
+                        const buffer = await part.toBuffer();
+                        const extension = (part.filename?.split('.').pop() ?? '').toLowerCase();
+                        const filename = `${(0, crypto_1.randomUUID)()}.${extension}`;
+                        const storageRef = (0, storage_1.ref)(this.storage, `destinations/${filename}`);
+                        await (0, storage_1.uploadBytes)(storageRef, buffer, { contentType: part.mimetype });
+                        uploadedImageRefs.push(storageRef);
+                        const url = await (0, storage_1.getDownloadURL)(storageRef);
+                        if (part.fieldname === 'video') {
                             videoUrl = url;
                         }
-                    });
-                    fileProcessingPromises.push(uploadPromise);
+                        else if (part.fieldname.startsWith('images')) {
+                            uploadedImageUrls.push(url);
+                        }
+                    })();
+                    fileProcessingPromises.push(task);
                 }
                 else if (part.type === 'field' && part.fieldname === 'payload') {
                     payloadJson = part.value;
