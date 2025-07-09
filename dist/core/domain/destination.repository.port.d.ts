@@ -16,4 +16,5 @@ export interface DestinationRepositoryPort {
         data: Destination[];
         totalItems: number;
     }>;
+    delete(id: string): Promise<Destination>;
 }

@@ -5,9 +5,10 @@ export declare class DestinationRepositoryAdapter implements DestinationReposito
     private readonly client;
     constructor(client: SupabaseClient);
     private toRow;
-    save(destination: Destination): Promise<Destination>;
+    save(destination: Destination, _uploadedBy: string): Promise<Destination>;
     findAll(query: import('../../core/domain/destination.repository.port').DestinationQuery): Promise<{
         data: Destination[];
         totalItems: number;
     }>;
+    delete(id: string): Promise<Destination>;
 }

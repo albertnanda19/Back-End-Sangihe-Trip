@@ -24,6 +24,7 @@ const destination_repository_adapter_1 = require("./infrastructure/database/dest
 const article_repository_adapter_1 = require("./infrastructure/database/article.repository.adapter");
 const user_use_case_1 = require("./core/application/user.use-case");
 const destination_use_case_1 = require("./core/application/destination.use-case");
+const delete_destination_use_case_1 = require("./core/application/delete-destination.use-case");
 const create_article_use_case_1 = require("./core/application/create-article.use-case");
 const list_articles_use_case_1 = require("./core/application/list-articles.use-case");
 const auth_use_case_1 = require("./core/application/auth.use-case");
@@ -57,6 +58,7 @@ exports.AppModule = AppModule = __decorate([
             auth_use_case_1.AuthUseCase,
             user_use_case_1.UserUseCase,
             destination_use_case_1.DestinationUseCase,
+            delete_destination_use_case_1.DeleteDestinationUseCase,
             create_article_use_case_1.CreateArticleUseCase,
             list_articles_use_case_1.ListArticlesUseCase,
             jwt_admin_guard_1.JwtAdminGuard,

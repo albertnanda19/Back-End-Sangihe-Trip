@@ -24,11 +24,24 @@ let ResponseInterceptor = class ResponseInterceptor {
         const httpContext = context.switchToHttp();
         const response = httpContext.getResponse();
         const statusCode = response.statusCode;
-        return next.handle().pipe((0, operators_1.map)((data) => ({
-            status: statusCode,
-            message: message,
-            data: data || null,
-        })));
+        return next.handle().pipe((0, operators_1.map)((data) => {
+            let finalMessage = message;
+            let hasReplacement = false;
+            if (data && typeof data === 'object') {
+                finalMessage = message.replace(/\{(\w+)\}/g, (_, key) => {
+                    if (key in data) {
+                        hasReplacement = true;
+                        return String(data[key]);
+                    }
+                    return `{${key}}`;
+                });
+            }
+            return {
+                status: statusCode,
+                message: finalMessage,
+                data: hasReplacement ? null : (data || null),
+            };
+        }));
     }
 };
 exports.ResponseInterceptor = ResponseInterceptor;

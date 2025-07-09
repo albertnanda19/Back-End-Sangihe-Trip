@@ -25,11 +25,33 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, ResponseDto<T>
     const statusCode = response.statusCode;
 
     return next.handle().pipe(
-      map((data) => ({
-        status: statusCode,
-        message: message,
-        data: data || null,
-      })),
+      map((data) => {
+        // Support dynamic placeholders in the message, e.g. "Berhasil ... {name}!"
+        // Any placeholder found will be replaced with a matching property from the
+        // data object (if present). When at least one replacement happens we set
+        // the final data payload to null, allowing controllers to return only the
+        // values needed for interpolation while still producing the desired
+        // response shape.
+        let finalMessage = message;
+        let hasReplacement = false;
+
+        if (data && typeof data === 'object') {
+          finalMessage = message.replace(/\{(\w+)\}/g, (_, key: string) => {
+            if (key in (data as Record<string, any>)) {
+              hasReplacement = true;
+              return String((data as Record<string, any>)[key]);
+            }
+            // If the key isn't found, keep the placeholder as-is
+            return `{${key}}`;
+          });
+        }
+
+        return {
+          status: statusCode,
+          message: finalMessage,
+          data: hasReplacement ? null : (data || null),
+        } as ResponseDto<T>;
+      }),
     );
   }
 }

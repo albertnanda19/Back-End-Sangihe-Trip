@@ -49,7 +49,7 @@ export class DestinationRepositoryAdapter implements DestinationRepositoryPort {
     };
   }
 
-  async save(destination: Destination): Promise<Destination> {
+  async save(destination: Destination, _uploadedBy: string): Promise<Destination> {
     const rowData = this.toRow(destination);
 
     const { error } = await this.client
@@ -158,7 +158,7 @@ export class DestinationRepositoryAdapter implements DestinationRepositoryPort {
           lat: row.latitude ?? 0,
           lng: row.longitude ?? 0,
         },
-        row.distance_km ?? 0,
+        0,
         row.price,
         row.opening_hours ?? '',
         row.description,
@@ -176,5 +176,56 @@ export class DestinationRepositoryAdapter implements DestinationRepositoryPort {
       data: mapped,
       totalItems: count || 0,
     };
+  }
+
+  /**
+   * Delete a destination by id and return the deleted Destination entity.
+   * Throws an error if the destination is not found or the deletion fails.
+   */
+  async delete(id: string): Promise<Destination> {
+    // Fetch the destination first to map it back to the domain entity after deletion
+    const { data: row, error: fetchError } = await this.client
+      .from('destinations')
+      .select(
+        'id, name, category, address, latitude, longitude, price, opening_hours, description, facilities, images, video, created_at'
+      )
+      .eq('id', id)
+      .single();
+
+    if (fetchError || !row) {
+      throw new Error(fetchError?.message || 'Destination not found');
+    }
+
+    const destination = new Destination(
+      row.id,
+      row.name,
+      row.category,
+      {
+        address: row.address,
+        lat: row.latitude ?? 0,
+        lng: row.longitude ?? 0,
+      },
+      0,
+      row.price,
+      row.opening_hours ?? '',
+      row.description,
+      row.facilities ?? [],
+      [],
+      row.images ?? [],
+      row.video ?? undefined,
+      row.created_at ? new Date(row.created_at) : new Date(),
+    );
+
+    // Perform the deletion
+    const { error: deleteError } = await this.client
+      .from('destinations')
+      .delete()
+      .eq('id', id);
+
+    if (deleteError) {
+      throw new Error(deleteError.message);
+    }
+
+    return destination;
   }
 }

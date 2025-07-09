@@ -16,6 +16,7 @@ exports.DestinationController = void 0;
 const common_1 = require("@nestjs/common");
 const response_decorator_1 = require("../../common/decorators/response.decorator");
 const destination_use_case_1 = require("../../core/application/destination.use-case");
+const delete_destination_use_case_1 = require("../../core/application/delete-destination.use-case");
 const admin_guard_1 = require("../../common/guards/admin.guard");
 const crypto_1 = require("crypto");
 const storage_1 = require("firebase/storage");
@@ -26,9 +27,11 @@ const class_transformer_1 = require("class-transformer");
 const class_validator_1 = require("class-validator");
 let DestinationController = class DestinationController {
     destinationUseCase;
+    deleteDestinationUc;
     storage;
-    constructor(destinationUseCase, storage) {
+    constructor(destinationUseCase, deleteDestinationUc, storage) {
         this.destinationUseCase = destinationUseCase;
+        this.deleteDestinationUc = deleteDestinationUc;
         this.storage = storage;
     }
     async createDestination(req) {
@@ -116,6 +119,10 @@ let DestinationController = class DestinationController {
             },
         };
     }
+    async deleteDestination(id) {
+        const deleted = await this.deleteDestinationUc.execute(id);
+        return { name: deleted.name };
+    }
 };
 exports.DestinationController = DestinationController;
 __decorate([
@@ -138,9 +145,19 @@ __decorate([
     __metadata("design:paramtypes", [get_destinations_dto_1.GetDestinationsQueryDto, Object]),
     __metadata("design:returntype", Promise)
 ], DestinationController.prototype, "getDestinations", null);
+__decorate([
+    (0, common_1.Delete)(':id'),
+    (0, common_1.HttpCode)(200),
+    (0, response_decorator_1.ResponseMessage)('Berhasil menghapus destinasi {name}!'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], DestinationController.prototype, "deleteDestination", null);
 exports.DestinationController = DestinationController = __decorate([
     (0, common_1.Controller)('destination'),
-    __param(1, (0, common_1.Inject)(firebase_provider_1.FIREBASE_STORAGE)),
-    __metadata("design:paramtypes", [destination_use_case_1.DestinationUseCase, Object])
+    __param(2, (0, common_1.Inject)(firebase_provider_1.FIREBASE_STORAGE)),
+    __metadata("design:paramtypes", [destination_use_case_1.DestinationUseCase,
+        delete_destination_use_case_1.DeleteDestinationUseCase, Object])
 ], DestinationController);
 //# sourceMappingURL=destination.controller.js.map

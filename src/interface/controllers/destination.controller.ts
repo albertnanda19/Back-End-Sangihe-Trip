@@ -8,11 +8,12 @@ import {
   Get,
   Query,
   Param,
-  Res,
+  Delete,
 } from '@nestjs/common';
 import { FastifyRequest } from 'fastify';
 import { ResponseMessage } from '../../common/decorators/response.decorator';
 import { DestinationUseCase } from '../../core/application/destination.use-case';
+import { DeleteDestinationUseCase } from '../../core/application/delete-destination.use-case';
 import { AdminGuard } from '../../common/guards/admin.guard';
 import { randomUUID } from 'crypto';
 import {
@@ -33,6 +34,7 @@ import { validateOrReject } from 'class-validator';
 export class DestinationController {
   constructor(
     private readonly destinationUseCase: DestinationUseCase,
+    private readonly deleteDestinationUc: DeleteDestinationUseCase,
     @Inject(FIREBASE_STORAGE) private readonly storage: FirebaseStorage,
   ) {}
 
@@ -152,6 +154,19 @@ export class DestinationController {
         totalPages,
       },
     };
+  }
+
+  // ----------------------------------------------
+  // DELETE DESTINATION
+  // ----------------------------------------------
+  @Delete(':id')
+  @HttpCode(200)
+  @ResponseMessage('Berhasil menghapus destinasi {name}!')
+  async deleteDestination(@Param('id') id: string) {
+    // The use case returns the deleted entity so we can interpolate its name
+    const deleted = await this.deleteDestinationUc.execute(id);
+    // Return only the fields needed for interpolation to keep payload small
+    return { name: deleted.name };
   }
 
 

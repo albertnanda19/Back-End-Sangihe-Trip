@@ -16,6 +16,7 @@ import { DestinationRepositoryAdapter } from './infrastructure/database/destinat
 import { ArticleRepositoryAdapter } from './infrastructure/database/article.repository.adapter';
 import { UserUseCase } from './core/application/user.use-case';
 import { DestinationUseCase } from './core/application/destination.use-case';
+import { DeleteDestinationUseCase } from './core/application/delete-destination.use-case';
 import { CreateArticleUseCase } from './core/application/create-article.use-case';
 import { ListArticlesUseCase } from './core/application/list-articles.use-case';
 import { AuthUseCase } from './core/application/auth.use-case';
@@ -46,6 +47,7 @@ import { JwtAdminGuard } from './common/guards/jwt-admin.guard';
     AuthUseCase,
     UserUseCase,
     DestinationUseCase,
+    DeleteDestinationUseCase,
     CreateArticleUseCase,
     ListArticlesUseCase,
     JwtAdminGuard,

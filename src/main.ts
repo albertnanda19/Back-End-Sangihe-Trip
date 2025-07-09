@@ -36,6 +36,6 @@ await app.register(require('@fastify/cors'), {
   app.useGlobalInterceptors(new ResponseInterceptor(new Reflector()));
 
 
-  await app.listen(process.env.PORT ? Number(process.env.PORT) : 3001, '0.0.0.0');
+  await app.listen(process.env.PORT ? Number(process.env.PORT) : 3000, '0.0.0.0');
 }
 bootstrap();

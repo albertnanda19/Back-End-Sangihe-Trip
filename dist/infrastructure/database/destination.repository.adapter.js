@@ -42,7 +42,7 @@ let DestinationRepositoryAdapter = class DestinationRepositoryAdapter {
             updated_at: createdAt.toISOString(),
         };
     }
-    async save(destination) {
+    async save(destination, _uploadedBy) {
         const rowData = this.toRow(destination);
         const { error } = await this.client
             .from('destinations')
@@ -115,12 +115,35 @@ let DestinationRepositoryAdapter = class DestinationRepositoryAdapter {
                 address: row.address,
                 lat: row.latitude ?? 0,
                 lng: row.longitude ?? 0,
-            }, row.distance_km ?? 0, row.price, row.opening_hours ?? '', row.description, row.facilities ?? [], [], imagesArr, undefined, row.created_at ? new Date(row.created_at) : new Date());
+            }, 0, row.price, row.opening_hours ?? '', row.description, row.facilities ?? [], [], imagesArr, undefined, row.created_at ? new Date(row.created_at) : new Date());
         });
         return {
             data: mapped,
             totalItems: count || 0,
         };
+    }
+    async delete(id) {
+        const { data: row, error: fetchError } = await this.client
+            .from('destinations')
+            .select('id, name, category, address, latitude, longitude, price, opening_hours, description, facilities, images, video, created_at')
+            .eq('id', id)
+            .single();
+        if (fetchError || !row) {
+            throw new Error(fetchError?.message || 'Destination not found');
+        }
+        const destination = new destination_entity_1.Destination(row.id, row.name, row.category, {
+            address: row.address,
+            lat: row.latitude ?? 0,
+            lng: row.longitude ?? 0,
+        }, 0, row.price, row.opening_hours ?? '', row.description, row.facilities ?? [], [], row.images ?? [], row.video ?? undefined, row.created_at ? new Date(row.created_at) : new Date());
+        const { error: deleteError } = await this.client
+            .from('destinations')
+            .delete()
+            .eq('id', id);
+        if (deleteError) {
+            throw new Error(deleteError.message);
+        }
+        return destination;
     }
 };
 exports.DestinationRepositoryAdapter = DestinationRepositoryAdapter;

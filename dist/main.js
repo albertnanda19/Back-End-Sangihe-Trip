@@ -22,7 +22,7 @@ async function bootstrap() {
     app.setGlobalPrefix('api');
     app.useGlobalPipes(new common_1.ValidationPipe({ transform: true, whitelist: true }));
     app.useGlobalInterceptors(new response_interceptor_1.ResponseInterceptor(new core_1.Reflector()));
-    await app.listen(process.env.PORT ? Number(process.env.PORT) : 3001, '0.0.0.0');
+    await app.listen(process.env.PORT ? Number(process.env.PORT) : 3000, '0.0.0.0');
 }
 bootstrap();
 //# sourceMappingURL=main.js.map
