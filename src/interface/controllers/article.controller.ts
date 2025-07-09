@@ -8,6 +8,7 @@ import {
   Inject,
   Get,
   Query,
+  Param,
 } from '@nestjs/common';
 import { CreateArticleUseCase } from '../../core/application/create-article.use-case';
 import { randomUUID } from 'crypto';
@@ -16,6 +17,7 @@ import { deleteObject, getDownloadURL, ref, uploadBytes } from 'firebase/storage
 import { FIREBASE_STORAGE } from '../../infrastructure/firebase/firebase.provider';
 import { JwtAdminGuard } from '../../common/guards/jwt-admin.guard';
 import { ListArticlesUseCase } from '../../core/application/list-articles.use-case';
+import { GetArticleUseCase } from '../../core/application/get-article.use-case';
 import { ArticleQueryDto } from '../dtos/article-query.dto';
 import { ResponseMessage } from '../../common/decorators/response.decorator';
 import { Article } from '../../core/domain/article.entity';
@@ -34,6 +36,7 @@ export class ArticleController {
   constructor(
     private readonly createArticleUc: CreateArticleUseCase,
     private readonly listArticlesUc: ListArticlesUseCase,
+    private readonly getArticleUc: GetArticleUseCase,
     @Inject(FIREBASE_STORAGE) private readonly storage: FirebaseStorage,
   ) {}
 
@@ -81,6 +84,12 @@ export class ArticleController {
       featured: result.featured ? mapArticle(result.featured as Article) : null,
       articles: result.data.map((a) => mapArticle(a as Article)),
     };
+  }
+
+  @Get(':id')
+  @ResponseMessage('Berhasil mengambil detail artikel')
+  async detail(@Param('id') id: string) {
+    return this.getArticleUc.execute(id);
   }
 
   @Post()

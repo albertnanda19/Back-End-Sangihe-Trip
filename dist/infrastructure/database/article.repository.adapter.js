@@ -165,6 +165,135 @@ let ArticleRepositoryAdapter = class ArticleRepositoryAdapter {
             sidebar,
         };
     }
+    async findByIdWithDetails(idOrSlug) {
+        const { data: articleRow, error: articleErr } = await this.client
+            .from('articles')
+            .select('*')
+            .or(`id.eq.${idOrSlug},slug.eq.${idOrSlug}`)
+            .single();
+        if (articleErr) {
+            throw new Error(articleErr.message);
+        }
+        if (!articleRow)
+            return null;
+        const [authorRes, categoryRes, relatedRes, commentsRes, statsRes] = await Promise.all([
+            this.client
+                .from('users')
+                .select('id,name,avatar_url,bio,full_bio,followers')
+                .eq('id', articleRow.author_id)
+                .single(),
+            this.client
+                .from('article_categories')
+                .select('name')
+                .eq('id', articleRow.category_id)
+                .single(),
+            this.client
+                .from('articles')
+                .select('id,slug,title,category_id,featured_image_url,reading_time')
+                .eq('category_id', articleRow.category_id)
+                .neq('id', articleRow.id)
+                .order('publish_date', { ascending: false })
+                .limit(3),
+            (async () => {
+                try {
+                    return await this.client
+                        .from('article_comments')
+                        .select('id,user_id,content,created_at,likes,parent_id')
+                        .eq('article_id', articleRow.id)
+                        .order('created_at', { ascending: false })
+                        .limit(100);
+                }
+                catch {
+                    return { data: [] };
+                }
+            })(),
+            this.client
+                .from('articles')
+                .select('id', { count: 'exact', head: true })
+                .eq('author_id', articleRow.author_id),
+        ]);
+        const authorRow = authorRes.data;
+        const categoryName = categoryRes.data?.name ?? articleRow.category_id;
+        const totalAuthorArticles = statsRes.count ?? 0;
+        const generateTOC = (markdown) => {
+            const lines = markdown.split(/\n/);
+            const toc = [];
+            for (const line of lines) {
+                const match = /^(#{2,3})\s+(.*)/.exec(line.trim());
+                if (match) {
+                    const title = match[2].trim();
+                    const id = title
+                        .toLowerCase()
+                        .replace(/[^a-z0-9\s-]/g, '')
+                        .trim()
+                        .replace(/\s+/g, '-');
+                    toc.push({ id, title });
+                }
+            }
+            return toc;
+        };
+        const toc = generateTOC(articleRow.content || '');
+        const wordCount = (articleRow.content || '').split(/\s+/).filter(Boolean).length;
+        const article = {
+            id: articleRow.id,
+            slug: articleRow.slug,
+            title: articleRow.title,
+            category: categoryName,
+            author: {
+                id: authorRow?.id ?? '',
+                name: authorRow?.name ?? '',
+                avatar: authorRow?.avatar_url ?? '/placeholder.svg?height=64&width=64',
+                bio: authorRow?.bio ?? '',
+                fullBio: authorRow?.full_bio ?? '',
+                followers: authorRow?.followers ?? 0,
+                totalArticles: totalAuthorArticles,
+            },
+            publishDate: articleRow.publish_date,
+            readingTime: articleRow.reading_time,
+            featuredImage: articleRow.featured_image_url,
+            tags: articleRow.tags ?? [],
+            content: articleRow.content,
+            wordCount,
+        };
+        const related = (relatedRes.data || []).map((r) => ({
+            id: r.id,
+            slug: r.slug,
+            title: r.title,
+            category: categoryName,
+            image: r.featured_image_url,
+            readingTime: r.reading_time,
+        }));
+        const flatComments = commentsRes.data || [];
+        const commentMap = {};
+        const rootComments = [];
+        flatComments.forEach((c) => {
+            const comment = {
+                id: c.id,
+                user: {
+                    id: c.user_id,
+                    name: `User ${c.user_id}`,
+                    avatar: '/placeholder.svg?height=32&width=32',
+                },
+                createdAt: c.created_at,
+                content: c.content,
+                likes: c.likes ?? 0,
+                replies: [],
+            };
+            commentMap[c.id] = comment;
+            if (c.parent_id) {
+                commentMap[c.parent_id]?.replies.push(comment);
+            }
+            else {
+                rootComments.push(comment);
+            }
+        });
+        return {
+            article,
+            tableOfContents: toc,
+            relatedArticles: related,
+            comments: rootComments,
+        };
+    }
 };
 exports.ArticleRepositoryAdapter = ArticleRepositoryAdapter;
 exports.ArticleRepositoryAdapter = ArticleRepositoryAdapter = __decorate([

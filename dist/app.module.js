@@ -27,6 +27,7 @@ const destination_use_case_1 = require("./core/application/destination.use-case"
 const delete_destination_use_case_1 = require("./core/application/delete-destination.use-case");
 const create_article_use_case_1 = require("./core/application/create-article.use-case");
 const list_articles_use_case_1 = require("./core/application/list-articles.use-case");
+const get_article_use_case_1 = require("./core/application/get-article.use-case");
 const auth_use_case_1 = require("./core/application/auth.use-case");
 const firebase_module_1 = require("./infrastructure/firebase/firebase.module");
 const jwt_admin_guard_1 = require("./common/guards/jwt-admin.guard");
@@ -61,6 +62,7 @@ exports.AppModule = AppModule = __decorate([
             delete_destination_use_case_1.DeleteDestinationUseCase,
             create_article_use_case_1.CreateArticleUseCase,
             list_articles_use_case_1.ListArticlesUseCase,
+            get_article_use_case_1.GetArticleUseCase,
             jwt_admin_guard_1.JwtAdminGuard,
             {
                 provide: 'SUPABASE_CLIENT',

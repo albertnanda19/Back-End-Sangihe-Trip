@@ -20,15 +20,18 @@ const storage_1 = require("firebase/storage");
 const firebase_provider_1 = require("../../infrastructure/firebase/firebase.provider");
 const jwt_admin_guard_1 = require("../../common/guards/jwt-admin.guard");
 const list_articles_use_case_1 = require("../../core/application/list-articles.use-case");
+const get_article_use_case_1 = require("../../core/application/get-article.use-case");
 const article_query_dto_1 = require("../dtos/article-query.dto");
 const response_decorator_1 = require("../../common/decorators/response.decorator");
 let ArticleController = class ArticleController {
     createArticleUc;
     listArticlesUc;
+    getArticleUc;
     storage;
-    constructor(createArticleUc, listArticlesUc, storage) {
+    constructor(createArticleUc, listArticlesUc, getArticleUc, storage) {
         this.createArticleUc = createArticleUc;
         this.listArticlesUc = listArticlesUc;
+        this.getArticleUc = getArticleUc;
         this.storage = storage;
     }
     async list(query) {
@@ -67,6 +70,9 @@ let ArticleController = class ArticleController {
             featured: result.featured ? mapArticle(result.featured) : null,
             articles: result.data.map((a) => mapArticle(a)),
         };
+    }
+    async detail(id) {
+        return this.getArticleUc.execute(id);
     }
     async create(req) {
         const parts = req.parts();
@@ -126,6 +132,14 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], ArticleController.prototype, "list", null);
 __decorate([
+    (0, common_1.Get)(':id'),
+    (0, response_decorator_1.ResponseMessage)('Berhasil mengambil detail artikel'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], ArticleController.prototype, "detail", null);
+__decorate([
     (0, common_1.Post)(),
     (0, common_1.UseGuards)(jwt_admin_guard_1.JwtAdminGuard),
     __param(0, (0, common_1.Req)()),
@@ -135,8 +149,9 @@ __decorate([
 ], ArticleController.prototype, "create", null);
 exports.ArticleController = ArticleController = __decorate([
     (0, common_1.Controller)('article'),
-    __param(2, (0, common_1.Inject)(firebase_provider_1.FIREBASE_STORAGE)),
+    __param(3, (0, common_1.Inject)(firebase_provider_1.FIREBASE_STORAGE)),
     __metadata("design:paramtypes", [create_article_use_case_1.CreateArticleUseCase,
-        list_articles_use_case_1.ListArticlesUseCase, Object])
+        list_articles_use_case_1.ListArticlesUseCase,
+        get_article_use_case_1.GetArticleUseCase, Object])
 ], ArticleController);
 //# sourceMappingURL=article.controller.js.map

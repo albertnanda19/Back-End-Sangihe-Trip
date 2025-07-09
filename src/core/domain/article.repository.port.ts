@@ -26,4 +26,7 @@ export interface ArticleRepositoryPort {
     featured?: Article | null;
     sidebar?: any;
   }>;
+
+  // New: retrieve a single article with full details by ID **or** slug
+  findByIdWithDetails(idOrSlug: string): Promise<any>;
 }

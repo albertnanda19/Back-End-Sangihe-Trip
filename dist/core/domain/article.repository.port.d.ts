@@ -17,4 +17,5 @@ export interface ArticleRepositoryPort {
         featured?: Article | null;
         sidebar?: any;
     }>;
+    findByIdWithDetails(idOrSlug: string): Promise<any>;
 }

@@ -19,6 +19,7 @@ import { DestinationUseCase } from './core/application/destination.use-case';
 import { DeleteDestinationUseCase } from './core/application/delete-destination.use-case';
 import { CreateArticleUseCase } from './core/application/create-article.use-case';
 import { ListArticlesUseCase } from './core/application/list-articles.use-case';
+import { GetArticleUseCase } from './core/application/get-article.use-case';
 import { AuthUseCase } from './core/application/auth.use-case';
 import { FirebaseModule } from './infrastructure/firebase/firebase.module';
 import { JwtAdminGuard } from './common/guards/jwt-admin.guard';
@@ -50,6 +51,7 @@ import { JwtAdminGuard } from './common/guards/jwt-admin.guard';
     DeleteDestinationUseCase,
     CreateArticleUseCase,
     ListArticlesUseCase,
+    GetArticleUseCase,
     JwtAdminGuard,
     {
       provide: 'SUPABASE_CLIENT',

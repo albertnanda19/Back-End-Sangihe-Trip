@@ -12,4 +12,5 @@ export declare class ArticleRepositoryAdapter implements ArticleRepositoryPort {
         featured?: Article | null;
         sidebar?: any;
     }>;
+    findByIdWithDetails(idOrSlug: string): Promise<any>;
 }
