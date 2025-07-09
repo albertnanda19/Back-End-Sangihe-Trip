@@ -122,8 +122,8 @@ export class ArticleRepositoryAdapter implements ArticleRepositoryPort {
         : Promise.resolve({}),
     ]);
 
-    const articles = (data || []).map((row: any) =>
-      new Article(
+    const articles = (data || []).map((row: any) => {
+      const art = new Article(
         row.title,
         catMap[row.category_id] ?? row.category_id,
         row.author_id,
@@ -134,8 +134,12 @@ export class ArticleRepositoryAdapter implements ArticleRepositoryPort {
         row.slug,
         row.id,
         row.publish_date ? new Date(row.publish_date) : undefined,
-      ),
-    );
+      );
+      // Attach additional metadata used by the interface layer
+      (art as any).excerpt = row.excerpt;
+      (art as any).author = authorMap[row.author_id] ?? null;
+      return art;
+    });
 
     // featured and sidebar (parallel queries)
     let featured: Article | null = null;
@@ -190,6 +194,9 @@ export class ArticleRepositoryAdapter implements ArticleRepositoryPort {
             feat.id,
             feat.publish_date ? new Date(feat.publish_date) : undefined,
           );
+          // Attach metadata
+          (featured as any).excerpt = feat.excerpt;
+          (featured as any).author = authorMap[feat.author_id] ?? null;
         }
       }
       if (includeSidebar) {

@@ -104,7 +104,12 @@ let ArticleRepositoryAdapter = class ArticleRepositoryAdapter {
                 })
                 : Promise.resolve({}),
         ]);
-        const articles = (data || []).map((row) => new article_entity_1.Article(row.title, catMap[row.category_id] ?? row.category_id, row.author_id, row.reading_time, '', [], row.featured_image_url, row.slug, row.id, row.publish_date ? new Date(row.publish_date) : undefined));
+        const articles = (data || []).map((row) => {
+            const art = new article_entity_1.Article(row.title, catMap[row.category_id] ?? row.category_id, row.author_id, row.reading_time, '', [], row.featured_image_url, row.slug, row.id, row.publish_date ? new Date(row.publish_date) : undefined);
+            art.excerpt = row.excerpt;
+            art.author = authorMap[row.author_id] ?? null;
+            return art;
+        });
         let featured = null;
         let sidebar = undefined;
         if (includeFeatured || includeSidebar) {
@@ -139,6 +144,8 @@ let ArticleRepositoryAdapter = class ArticleRepositoryAdapter {
                 const { data: feat } = results[idx++];
                 if (feat) {
                     featured = new article_entity_1.Article(feat.title, catMap[feat.category_id] ?? feat.category_id, feat.author_id ?? '', feat.reading_time, '', [], feat.featured_image_url, feat.slug, feat.id, feat.publish_date ? new Date(feat.publish_date) : undefined);
+                    featured.excerpt = feat.excerpt;
+                    featured.author = authorMap[feat.author_id] ?? null;
                 }
             }
             if (includeSidebar) {

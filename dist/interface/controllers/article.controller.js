@@ -32,7 +32,7 @@ let ArticleController = class ArticleController {
         this.storage = storage;
     }
     async list(query) {
-        return await this.listArticlesUc.execute({
+        const result = await this.listArticlesUc.execute({
             page: query.page,
             perPage: query.per_page,
             search: query.search,
@@ -42,6 +42,31 @@ let ArticleController = class ArticleController {
             includeFeatured: query.include_featured,
             includeSidebar: query.include_sidebar,
         });
+        const formatPublishDate = (date) => date
+            ? new Intl.DateTimeFormat('id-ID', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+            }).format(date)
+            : '';
+        const mapArticle = (article) => ({
+            id: article.id,
+            title: article.title,
+            excerpt: article.excerpt ?? '',
+            category: typeof article.category === 'string' ? article.category : String(article.category),
+            author: {
+                name: article.author?.name ?? '',
+                avatar: article.author?.avatar ?? '/placeholder.svg?height=32&width=32',
+            },
+            publishDate: formatPublishDate(article.publishDate),
+            readingTime: `${article.readingTime} menit`,
+            image: article.featuredImageUrl,
+            slug: article.slug,
+        });
+        return {
+            featured: result.featured ? mapArticle(result.featured) : null,
+            articles: result.data.map((a) => mapArticle(a)),
+        };
     }
     async create(req) {
         const parts = req.parts();
@@ -94,7 +119,7 @@ let ArticleController = class ArticleController {
 exports.ArticleController = ArticleController;
 __decorate([
     (0, common_1.Get)(),
-    (0, response_decorator_1.ResponseMessage)('Berhasil mendapatkan data daftar artikel'),
+    (0, response_decorator_1.ResponseMessage)('Berhasil mengambil daftar artikel'),
     __param(0, (0, common_1.Query)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [article_query_dto_1.ArticleQueryDto]),
