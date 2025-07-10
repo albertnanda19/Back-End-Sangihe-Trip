@@ -166,12 +166,20 @@ let ArticleRepositoryAdapter = class ArticleRepositoryAdapter {
         };
     }
     async findByIdWithDetails(idOrSlug) {
-        const { data: articleRow, error: articleErr } = await this.client
-            .from('articles')
-            .select('*')
-            .or(`id.eq.${idOrSlug},slug.eq.${idOrSlug}`)
-            .single();
+        const cleanInput = idOrSlug.trim();
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanInput);
+        let query = this.client.from('articles').select('*');
+        if (isUUID) {
+            query = query.eq('id', cleanInput);
+        }
+        else {
+            query = query.eq('slug', cleanInput);
+        }
+        const { data: articleRow, error: articleErr } = await query.single();
         if (articleErr) {
+            if (articleErr.code === 'PGRST116') {
+                return null;
+            }
             throw new Error(articleErr.message);
         }
         if (!articleRow)
@@ -179,20 +187,16 @@ let ArticleRepositoryAdapter = class ArticleRepositoryAdapter {
         const [authorRes, categoryRes, relatedRes, commentsRes, statsRes] = await Promise.all([
             this.client
                 .from('users')
-                .select('id,name,avatar_url,bio,full_bio,followers')
+                .select('id,first_name,last_name,avatar_url,bio')
                 .eq('id', articleRow.author_id)
-                .single(),
-            this.client
-                .from('article_categories')
-                .select('name')
-                .eq('id', articleRow.category_id)
-                .single(),
+                .maybeSingle(),
+            Promise.resolve({ data: null }),
             this.client
                 .from('articles')
-                .select('id,slug,title,category_id,featured_image_url,reading_time')
-                .eq('category_id', articleRow.category_id)
+                .select('id,slug,title,category,read_time_minutes,featured_image')
+                .eq('category', articleRow.category)
                 .neq('id', articleRow.id)
-                .order('publish_date', { ascending: false })
+                .order('published_at', { ascending: false })
                 .limit(3),
             (async () => {
                 try {
@@ -213,7 +217,7 @@ let ArticleRepositoryAdapter = class ArticleRepositoryAdapter {
                 .eq('author_id', articleRow.author_id),
         ]);
         const authorRow = authorRes.data;
-        const categoryName = categoryRes.data?.name ?? articleRow.category_id;
+        const categoryName = articleRow.category ?? 'Uncategorized';
         const totalAuthorArticles = statsRes.count ?? 0;
         const generateTOC = (markdown) => {
             const lines = markdown.split(/\n/);
@@ -241,16 +245,16 @@ let ArticleRepositoryAdapter = class ArticleRepositoryAdapter {
             category: categoryName,
             author: {
                 id: authorRow?.id ?? '',
-                name: authorRow?.name ?? '',
+                name: authorRow ? `${authorRow.first_name || ''} ${authorRow.last_name || ''}`.trim() : 'Unknown Author',
                 avatar: authorRow?.avatar_url ?? '/placeholder.svg?height=64&width=64',
                 bio: authorRow?.bio ?? '',
-                fullBio: authorRow?.full_bio ?? '',
-                followers: authorRow?.followers ?? 0,
+                fullBio: authorRow?.bio ?? '',
+                followers: 0,
                 totalArticles: totalAuthorArticles,
             },
-            publishDate: articleRow.publish_date,
-            readingTime: articleRow.reading_time,
-            featuredImage: articleRow.featured_image_url,
+            publishDate: articleRow.published_at,
+            readingTime: articleRow.read_time_minutes,
+            featuredImage: articleRow.featured_image || '',
             tags: articleRow.tags ?? [],
             content: articleRow.content,
             wordCount,
@@ -260,8 +264,8 @@ let ArticleRepositoryAdapter = class ArticleRepositoryAdapter {
             slug: r.slug,
             title: r.title,
             category: categoryName,
-            image: r.featured_image_url,
-            readingTime: r.reading_time,
+            image: r.featured_image || '',
+            readingTime: r.read_time_minutes,
         }));
         const flatComments = commentsRes.data || [];
         const commentMap = {};
