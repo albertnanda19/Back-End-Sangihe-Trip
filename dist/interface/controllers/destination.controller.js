@@ -119,6 +119,28 @@ let DestinationController = class DestinationController {
             },
         };
     }
+    async getDestinationDetail(id) {
+        const dest = await this.destinationUseCase.findById(id);
+        return {
+            id: dest.id,
+            name: dest.name,
+            category: dest.category,
+            location: {
+                address: dest.location.address,
+                lat: dest.location.lat,
+                lng: dest.location.lng,
+            },
+            price: dest.price,
+            openHours: dest.openHours,
+            description: dest.description,
+            facilities: dest.facilities,
+            tips: dest.tips,
+            images: dest.images,
+            video: dest.video,
+            rating: dest.rating,
+            totalReviews: dest.totalReviews,
+        };
+    }
     async deleteDestination(id) {
         const deleted = await this.deleteDestinationUc.execute(id);
         return { name: deleted.name };
@@ -145,6 +167,15 @@ __decorate([
     __metadata("design:paramtypes", [get_destinations_dto_1.GetDestinationsQueryDto, Object]),
     __metadata("design:returntype", Promise)
 ], DestinationController.prototype, "getDestinations", null);
+__decorate([
+    (0, common_1.Get)(':id'),
+    (0, common_1.HttpCode)(200),
+    (0, response_decorator_1.ResponseMessage)('Berhasil mengambil data destinasi {name}'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], DestinationController.prototype, "getDestinationDetail", null);
 __decorate([
     (0, common_1.Delete)(':id'),
     (0, common_1.HttpCode)(200),

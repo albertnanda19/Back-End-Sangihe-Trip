@@ -22,5 +22,7 @@ export declare class Destination {
     images: string[];
     video?: string | undefined;
     readonly createdAt: Date;
-    constructor(id: string, name: string, category: string, location: Location, distanceKm: number, price: number, openHours: string, description: string, facilities: Facility[], tips: string[], images: string[], video?: string | undefined, createdAt?: Date);
+    rating: number;
+    totalReviews: number;
+    constructor(id: string, name: string, category: string, location: Location, distanceKm: number, price: number, openHours: string, description: string, facilities: Facility[], tips: string[], images: string[], video?: string | undefined, createdAt?: Date, rating?: number, totalReviews?: number);
 }

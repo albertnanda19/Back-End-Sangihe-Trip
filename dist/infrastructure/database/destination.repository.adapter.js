@@ -145,6 +145,39 @@ let DestinationRepositoryAdapter = class DestinationRepositoryAdapter {
         }
         return destination;
     }
+    async findById(id) {
+        const { data: row, error } = await this.client
+            .from('destinations')
+            .select(`id, name, category, address, latitude, longitude, price, opening_hours, description, facilities, images, video, avg_rating, total_reviews, created_at`)
+            .eq('id', id)
+            .single();
+        if (error || !row) {
+            throw new Error(error?.message || 'Destination not found');
+        }
+        const parsePgArray = (str) => {
+            if (!str)
+                return [];
+            return str
+                .replace(/^{|}$/g, '')
+                .split(',')
+                .map((s) => s.trim().replace(/^"|"$/g, ''))
+                .filter(Boolean);
+        };
+        let imagesArr = [];
+        if (Array.isArray(row.images)) {
+            imagesArr = row.images;
+        }
+        else if (typeof row.images === 'string') {
+            imagesArr = parsePgArray(row.images);
+        }
+        const facilities = Array.isArray(row.facilities) ? row.facilities : [];
+        const destination = new destination_entity_1.Destination(row.id, row.name, row.category, {
+            address: row.address,
+            lat: row.latitude ?? 0,
+            lng: row.longitude ?? 0,
+        }, 0, row.price, row.opening_hours ?? '', row.description, facilities, [], imagesArr, row.video ?? undefined, row.created_at ? new Date(row.created_at) : new Date(), Number(row.avg_rating ?? 0), Number(row.total_reviews ?? 0));
+        return destination;
+    }
 };
 exports.DestinationRepositoryAdapter = DestinationRepositoryAdapter;
 exports.DestinationRepositoryAdapter = DestinationRepositoryAdapter = __decorate([

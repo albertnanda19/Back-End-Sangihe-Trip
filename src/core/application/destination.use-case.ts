@@ -55,4 +55,12 @@ export class DestinationUseCase {
       throw new InternalServerErrorException(e.message);
     }
   }
+
+  async findById(id: string) {
+    try {
+      return await this.repository.findById(id);
+    } catch (e) {
+      throw new InternalServerErrorException(e.message);
+    }
+  }
 }

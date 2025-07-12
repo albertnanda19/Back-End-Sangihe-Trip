@@ -22,5 +22,6 @@ export declare class DestinationUseCase {
         data: Destination[];
         totalItems: number;
     }>;
+    findById(id: string): Promise<Destination>;
 }
 export {};

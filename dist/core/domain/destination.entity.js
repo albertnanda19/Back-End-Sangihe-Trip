@@ -15,7 +15,9 @@ class Destination {
     images;
     video;
     createdAt;
-    constructor(id, name, category, location, distanceKm, price, openHours, description, facilities, tips, images, video, createdAt = new Date()) {
+    rating;
+    totalReviews;
+    constructor(id, name, category, location, distanceKm, price, openHours, description, facilities, tips, images, video, createdAt = new Date(), rating = 0, totalReviews = 0) {
         this.id = id;
         this.name = name;
         this.category = category;
@@ -29,6 +31,8 @@ class Destination {
         this.images = images;
         this.video = video;
         this.createdAt = createdAt;
+        this.rating = rating;
+        this.totalReviews = totalReviews;
     }
 }
 exports.Destination = Destination;

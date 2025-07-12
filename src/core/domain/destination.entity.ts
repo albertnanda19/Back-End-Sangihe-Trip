@@ -25,5 +25,9 @@ export class Destination {
     public images: string[],
     public video?: string,
     public readonly createdAt: Date = new Date(),
+    /** Average rating (0-5) */
+    public rating: number = 0,
+    /** Total number of active reviews */
+    public totalReviews: number = 0,
   ) {}
 }

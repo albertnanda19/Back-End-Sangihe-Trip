@@ -228,4 +228,66 @@ export class DestinationRepositoryAdapter implements DestinationRepositoryPort {
 
     return destination;
   }
+
+  /**
+   * Find a single destination by its primary key.
+   */
+  async findById(id: string): Promise<Destination> {
+    const { data: row, error } = await this.client
+      .from('destinations')
+      .select(
+        `id, name, category, address, latitude, longitude, price, opening_hours, description, facilities, images, video, avg_rating, total_reviews, created_at`,
+      )
+      .eq('id', id)
+      .single();
+
+    if (error || !row) {
+      throw new Error(error?.message || 'Destination not found');
+    }
+
+    // Helper to parse Postgres array text to JS string[]
+    const parsePgArray = (str: string): string[] => {
+      if (!str) return [];
+      return str
+        .replace(/^{|}$/g, '')
+        .split(',')
+        .map((s) => s.trim().replace(/^"|"$/g, ''))
+        .filter(Boolean);
+    };
+
+    // Normalize images column (may come as text[] or JSON array)
+    let imagesArr: string[] = [];
+    if (Array.isArray(row.images)) {
+      imagesArr = row.images;
+    } else if (typeof row.images === 'string') {
+      imagesArr = parsePgArray(row.images);
+    }
+
+    // Normalize facilities column (can be JSON or any)
+    const facilities = Array.isArray(row.facilities) ? row.facilities : [];
+
+    const destination = new Destination(
+      row.id,
+      row.name,
+      row.category,
+      {
+        address: row.address,
+        lat: row.latitude ?? 0,
+        lng: row.longitude ?? 0,
+      },
+      0, // distanceKm (to be calculated on FE)
+      row.price,
+      row.opening_hours ?? '',
+      row.description,
+      facilities,
+      [],
+      imagesArr,
+      row.video ?? undefined,
+      row.created_at ? new Date(row.created_at) : new Date(),
+      Number(row.avg_rating ?? 0),
+      Number(row.total_reviews ?? 0),
+    );
+
+    return destination;
+  }
 }

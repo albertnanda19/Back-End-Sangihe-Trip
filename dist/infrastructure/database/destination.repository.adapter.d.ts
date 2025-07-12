@@ -11,4 +11,5 @@ export declare class DestinationRepositoryAdapter implements DestinationReposito
         totalItems: number;
     }>;
     delete(id: string): Promise<Destination>;
+    findById(id: string): Promise<Destination>;
 }

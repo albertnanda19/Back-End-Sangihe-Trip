@@ -157,6 +157,37 @@ export class DestinationController {
   }
 
   // ----------------------------------------------
+  // GET DESTINATION DETAIL
+  // ----------------------------------------------
+  @Get(':id')
+  @HttpCode(200)
+  @ResponseMessage('Berhasil mengambil data destinasi {name}')
+  async getDestinationDetail(@Param('id') id: string) {
+    const dest = await this.destinationUseCase.findById(id);
+
+    return {
+      // Used for placeholder interpolation in the response message
+      id: dest.id,
+      name: dest.name,
+      category: dest.category,
+      location: {
+        address: dest.location.address,
+        lat: dest.location.lat,
+        lng: dest.location.lng,
+      },
+      price: dest.price,
+      openHours: dest.openHours,
+      description: dest.description,
+      facilities: dest.facilities,
+      tips: dest.tips,
+      images: dest.images,
+      video: dest.video,
+      rating: dest.rating,
+      totalReviews: dest.totalReviews,
+    };
+  }
+
+  // ----------------------------------------------
   // DELETE DESTINATION
   // ----------------------------------------------
   @Delete(':id')

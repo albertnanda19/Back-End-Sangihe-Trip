@@ -49,7 +49,8 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, ResponseDto<T>
         return {
           status: statusCode,
           message: finalMessage,
-          data: hasReplacement ? null : (data || null),
+          // Always attach the original payload to keep response versatile.
+          data: (data ?? null),
         } as ResponseDto<T>;
       }),
     );
