@@ -18,6 +18,7 @@ const app_service_1 = require("./app.service");
 const user_controller_1 = require("./interface/controllers/user.controller");
 const destination_controller_1 = require("./interface/controllers/destination.controller");
 const article_controller_1 = require("./interface/controllers/article.controller");
+const landing_page_controller_1 = require("./interface/controllers/landing-page.controller");
 const auth_controller_1 = require("./interface/controllers/auth.controller");
 const user_repository_adapter_1 = require("./infrastructure/database/user.repository.adapter");
 const destination_repository_adapter_1 = require("./infrastructure/database/destination.repository.adapter");
@@ -28,6 +29,7 @@ const delete_destination_use_case_1 = require("./core/application/delete-destina
 const create_article_use_case_1 = require("./core/application/create-article.use-case");
 const list_articles_use_case_1 = require("./core/application/list-articles.use-case");
 const get_article_use_case_1 = require("./core/application/get-article.use-case");
+const landing_page_use_case_1 = require("./core/application/landing-page.use-case");
 const auth_use_case_1 = require("./core/application/auth.use-case");
 const firebase_module_1 = require("./infrastructure/firebase/firebase.module");
 const jwt_admin_guard_1 = require("./common/guards/jwt-admin.guard");
@@ -53,6 +55,7 @@ exports.AppModule = AppModule = __decorate([
             user_controller_1.UserController,
             destination_controller_1.DestinationController,
             article_controller_1.ArticleController,
+            landing_page_controller_1.LandingPageController,
         ],
         providers: [
             app_service_1.AppService,
@@ -63,6 +66,7 @@ exports.AppModule = AppModule = __decorate([
             create_article_use_case_1.CreateArticleUseCase,
             list_articles_use_case_1.ListArticlesUseCase,
             get_article_use_case_1.GetArticleUseCase,
+            landing_page_use_case_1.LandingPageUseCase,
             jwt_admin_guard_1.JwtAdminGuard,
             {
                 provide: 'SUPABASE_CLIENT',

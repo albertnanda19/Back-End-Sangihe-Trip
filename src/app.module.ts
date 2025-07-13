@@ -10,6 +10,7 @@ import { AppService } from './app.service';
 import { UserController } from './interface/controllers/user.controller';
 import { DestinationController } from './interface/controllers/destination.controller';
 import { ArticleController } from './interface/controllers/article.controller';
+import { LandingPageController } from './interface/controllers/landing-page.controller';
 import { AuthController } from './interface/controllers/auth.controller';
 import { UserRepositoryAdapter } from './infrastructure/database/user.repository.adapter';
 import { DestinationRepositoryAdapter } from './infrastructure/database/destination.repository.adapter';
@@ -20,6 +21,7 @@ import { DeleteDestinationUseCase } from './core/application/delete-destination.
 import { CreateArticleUseCase } from './core/application/create-article.use-case';
 import { ListArticlesUseCase } from './core/application/list-articles.use-case';
 import { GetArticleUseCase } from './core/application/get-article.use-case';
+import { LandingPageUseCase } from './core/application/landing-page.use-case';
 import { AuthUseCase } from './core/application/auth.use-case';
 import { FirebaseModule } from './infrastructure/firebase/firebase.module';
 import { JwtAdminGuard } from './common/guards/jwt-admin.guard';
@@ -42,6 +44,7 @@ import { JwtAdminGuard } from './common/guards/jwt-admin.guard';
     UserController,
     DestinationController,
     ArticleController,
+    LandingPageController,
   ],
   providers: [
     AppService,
@@ -52,6 +55,7 @@ import { JwtAdminGuard } from './common/guards/jwt-admin.guard';
     CreateArticleUseCase,
     ListArticlesUseCase,
     GetArticleUseCase,
+    LandingPageUseCase,
     JwtAdminGuard,
     {
       provide: 'SUPABASE_CLIENT',
