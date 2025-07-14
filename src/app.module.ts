@@ -25,6 +25,10 @@ import { LandingPageUseCase } from './core/application/landing-page.use-case';
 import { AuthUseCase } from './core/application/auth.use-case';
 import { FirebaseModule } from './infrastructure/firebase/firebase.module';
 import { JwtAdminGuard } from './common/guards/jwt-admin.guard';
+import { TripController } from './interface/controllers/trip.controller';
+import { CreateTripUseCase } from './core/application/create-trip.use-case';
+import { TripPlanRepositoryAdapter } from './infrastructure/database/trip-plan.repository.adapter';
+import { JwtAccessGuard } from './common/guards/jwt-access.guard';
 
 @Module({
   imports: [
@@ -45,6 +49,7 @@ import { JwtAdminGuard } from './common/guards/jwt-admin.guard';
     DestinationController,
     ArticleController,
     LandingPageController,
+    TripController,
   ],
   providers: [
     AppService,
@@ -56,7 +61,9 @@ import { JwtAdminGuard } from './common/guards/jwt-admin.guard';
     ListArticlesUseCase,
     GetArticleUseCase,
     LandingPageUseCase,
+    CreateTripUseCase,
     JwtAdminGuard,
+    JwtAccessGuard,
     {
       provide: 'SUPABASE_CLIENT',
       useFactory: () =>
@@ -68,6 +75,7 @@ import { JwtAdminGuard } from './common/guards/jwt-admin.guard';
     { provide: 'UserRepository', useClass: UserRepositoryAdapter },
     { provide: 'DestinationRepository', useClass: DestinationRepositoryAdapter },
     { provide: 'ArticleRepository', useClass: ArticleRepositoryAdapter },
+    { provide: 'TripPlanRepository', useClass: TripPlanRepositoryAdapter },
     {
       provide: 'STORAGE_PATH',
       useValue: join(__dirname, '..', 'storage'),

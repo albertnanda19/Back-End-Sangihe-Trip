@@ -33,6 +33,10 @@ const landing_page_use_case_1 = require("./core/application/landing-page.use-cas
 const auth_use_case_1 = require("./core/application/auth.use-case");
 const firebase_module_1 = require("./infrastructure/firebase/firebase.module");
 const jwt_admin_guard_1 = require("./common/guards/jwt-admin.guard");
+const trip_controller_1 = require("./interface/controllers/trip.controller");
+const create_trip_use_case_1 = require("./core/application/create-trip.use-case");
+const trip_plan_repository_adapter_1 = require("./infrastructure/database/trip-plan.repository.adapter");
+const jwt_access_guard_1 = require("./common/guards/jwt-access.guard");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -56,6 +60,7 @@ exports.AppModule = AppModule = __decorate([
             destination_controller_1.DestinationController,
             article_controller_1.ArticleController,
             landing_page_controller_1.LandingPageController,
+            trip_controller_1.TripController,
         ],
         providers: [
             app_service_1.AppService,
@@ -67,7 +72,9 @@ exports.AppModule = AppModule = __decorate([
             list_articles_use_case_1.ListArticlesUseCase,
             get_article_use_case_1.GetArticleUseCase,
             landing_page_use_case_1.LandingPageUseCase,
+            create_trip_use_case_1.CreateTripUseCase,
             jwt_admin_guard_1.JwtAdminGuard,
+            jwt_access_guard_1.JwtAccessGuard,
             {
                 provide: 'SUPABASE_CLIENT',
                 useFactory: () => (0, supabase_js_1.createClient)(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY),
@@ -75,6 +82,7 @@ exports.AppModule = AppModule = __decorate([
             { provide: 'UserRepository', useClass: user_repository_adapter_1.UserRepositoryAdapter },
             { provide: 'DestinationRepository', useClass: destination_repository_adapter_1.DestinationRepositoryAdapter },
             { provide: 'ArticleRepository', useClass: article_repository_adapter_1.ArticleRepositoryAdapter },
+            { provide: 'TripPlanRepository', useClass: trip_plan_repository_adapter_1.TripPlanRepositoryAdapter },
             {
                 provide: 'STORAGE_PATH',
                 useValue: (0, path_1.join)(__dirname, '..', 'storage'),
