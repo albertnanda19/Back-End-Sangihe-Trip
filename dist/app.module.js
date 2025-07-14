@@ -37,6 +37,7 @@ const trip_controller_1 = require("./interface/controllers/trip.controller");
 const create_trip_use_case_1 = require("./core/application/create-trip.use-case");
 const trip_plan_repository_adapter_1 = require("./infrastructure/database/trip-plan.repository.adapter");
 const jwt_access_guard_1 = require("./common/guards/jwt-access.guard");
+const list_user_trips_use_case_1 = require("./core/application/list-user-trips.use-case");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -73,6 +74,7 @@ exports.AppModule = AppModule = __decorate([
             get_article_use_case_1.GetArticleUseCase,
             landing_page_use_case_1.LandingPageUseCase,
             create_trip_use_case_1.CreateTripUseCase,
+            list_user_trips_use_case_1.ListUserTripsUseCase,
             jwt_admin_guard_1.JwtAdminGuard,
             jwt_access_guard_1.JwtAccessGuard,
             {

@@ -16,6 +16,7 @@ exports.TripPlanRepositoryAdapter = void 0;
 const common_1 = require("@nestjs/common");
 const supabase_js_1 = require("@supabase/supabase-js");
 const uuid_1 = require("uuid");
+const trip_plan_entity_1 = require("../../core/domain/trip-plan.entity");
 let TripPlanRepositoryAdapter = class TripPlanRepositoryAdapter {
     client;
     constructor(client) {
@@ -78,6 +79,27 @@ let TripPlanRepositoryAdapter = class TripPlanRepositoryAdapter {
                     throw new Error(itemsErr.message);
             }
         }));
+    }
+    async findAllByUser(query) {
+        const { userId, page = 1, pageSize = 10 } = query;
+        const safePageSize = Math.min(Math.max(pageSize, 1), 50);
+        const from = (page - 1) * safePageSize;
+        const to = from + safePageSize - 1;
+        let supabaseQuery = this.client
+            .from('trip_plans')
+            .select(`id, user_id, title, start_date, end_date, total_people, trip_type, estimated_budget, privacy_level, created_at, updated_at`, { count: 'exact' })
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false })
+            .range(from, to);
+        const { data, count, error } = await supabaseQuery;
+        if (error) {
+            throw new Error(error.message);
+        }
+        const mapped = (data || []).map((row) => new trip_plan_entity_1.TripPlan(row.user_id, row.title, row.start_date ? new Date(row.start_date) : new Date(), row.end_date ? new Date(row.end_date) : new Date(), row.total_people ?? 0, row.trip_type ?? '', row.privacy_level === 'public', [], [], {}, null, [], row.id, row.created_at ? new Date(row.created_at) : new Date()));
+        return {
+            data: mapped,
+            totalItems: count || 0,
+        };
     }
 };
 exports.TripPlanRepositoryAdapter = TripPlanRepositoryAdapter;

@@ -70,4 +70,54 @@ export class TripPlanRepositoryAdapter implements TripPlanRepositoryPort {
       }
     }));
   }
+
+  async findAllByUser(
+    query: import('../../core/domain/trip-plan.repository.port').TripPlanListQuery,
+  ): Promise<{ data: TripPlan[]; totalItems: number }> {
+    const { userId, page = 1, pageSize = 10 } = query;
+
+    const safePageSize = Math.min(Math.max(pageSize, 1), 50);
+    const from = (page - 1) * safePageSize;
+    const to = from + safePageSize - 1;
+
+    let supabaseQuery = this.client
+      .from('trip_plans')
+      .select(
+        `id, user_id, title, start_date, end_date, total_people, trip_type, estimated_budget, privacy_level, created_at, updated_at`,
+        { count: 'exact' },
+      )
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .range(from, to);
+
+    const { data, count, error } = await supabaseQuery;
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    // Map to domain entity – we leave destinations, schedule & budget empty as they are not needed for the listing
+    const mapped = (data || []).map((row: any) =>
+      new TripPlan(
+        row.user_id,
+        row.title,
+        row.start_date ? new Date(row.start_date) : new Date(),
+        row.end_date ? new Date(row.end_date) : new Date(),
+        row.total_people ?? 0,
+        row.trip_type ?? '',
+        row.privacy_level === 'public',
+        [],
+        [],
+        {},
+        null,
+        [],
+        row.id,
+        row.created_at ? new Date(row.created_at) : new Date(),
+      ),
+    );
+
+    return {
+      data: mapped,
+      totalItems: count || 0,
+    };
+  }
 } 
