@@ -9,6 +9,47 @@ export class DestinationRepositoryAdapter implements DestinationRepositoryPort {
     @Inject('SUPABASE_CLIENT') private readonly client: SupabaseClient,
   ) {}
 
+  // ----------------------------------------------
+  // Helper utilities
+  // ----------------------------------------------
+  /**
+   * Normalize the images column that can be either text[] or JSON string
+   */
+  private parseImages(images: any): string[] {
+    if (Array.isArray(images)) return images as string[];
+    if (typeof images === 'string') {
+      return images
+        .replace(/^{|}$/g, '')
+        .split(',')
+        .map((s) => s.trim().replace(/^"|"$/g, ''))
+        .filter(Boolean);
+    }
+    return [];
+  }
+
+  /** Converts a DB row to a Destination domain entity */
+  private mapRowToEntity(row: any): Destination {
+    return new Destination(
+      row.id,
+      row.name,
+      row.category,
+      {
+        address: row.address,
+        lat: row.latitude ?? 0,
+        lng: row.longitude ?? 0,
+      },
+      0,
+      row.price,
+      row.opening_hours ?? '',
+      row.description,
+      row.facilities ?? [],
+      [],
+      this.parseImages(row.images),
+      undefined,
+      row.created_at ? new Date(row.created_at) : new Date(),
+    );
+  }
+
   /**
    * Maps a Destination domain entity to a plain object suitable for the DB.
    */
@@ -176,6 +217,24 @@ export class DestinationRepositoryAdapter implements DestinationRepositoryPort {
       data: mapped,
       totalItems: count || 0,
     };
+  }
+
+  // ----------------------------------------------
+  // PUBLIC: Get every destination (no pagination)
+  // ----------------------------------------------
+  async findAllNoPagination(): Promise<Destination[]> {
+    const { data, error } = await this.client
+      .from('destinations')
+      .select(
+        'id, name, category, address, latitude, longitude, price, opening_hours, description, facilities, images, created_at',
+      )
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    return (data || []).map((row: any) => this.mapRowToEntity(row));
   }
 
   /**

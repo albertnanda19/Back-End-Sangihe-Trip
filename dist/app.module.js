@@ -19,6 +19,7 @@ const user_controller_1 = require("./interface/controllers/user.controller");
 const destination_controller_1 = require("./interface/controllers/destination.controller");
 const article_controller_1 = require("./interface/controllers/article.controller");
 const landing_page_controller_1 = require("./interface/controllers/landing-page.controller");
+const all_destination_controller_1 = require("./interface/controllers/all-destination.controller");
 const auth_controller_1 = require("./interface/controllers/auth.controller");
 const user_repository_adapter_1 = require("./infrastructure/database/user.repository.adapter");
 const destination_repository_adapter_1 = require("./infrastructure/database/destination.repository.adapter");
@@ -30,6 +31,7 @@ const create_article_use_case_1 = require("./core/application/create-article.use
 const list_articles_use_case_1 = require("./core/application/list-articles.use-case");
 const get_article_use_case_1 = require("./core/application/get-article.use-case");
 const landing_page_use_case_1 = require("./core/application/landing-page.use-case");
+const list_all_destinations_use_case_1 = require("./core/application/list-all-destinations.use-case");
 const auth_use_case_1 = require("./core/application/auth.use-case");
 const firebase_module_1 = require("./infrastructure/firebase/firebase.module");
 const jwt_admin_guard_1 = require("./common/guards/jwt-admin.guard");
@@ -62,6 +64,7 @@ exports.AppModule = AppModule = __decorate([
             article_controller_1.ArticleController,
             landing_page_controller_1.LandingPageController,
             trip_controller_1.TripController,
+            all_destination_controller_1.AllDestinationController,
         ],
         providers: [
             app_service_1.AppService,
@@ -73,6 +76,7 @@ exports.AppModule = AppModule = __decorate([
             list_articles_use_case_1.ListArticlesUseCase,
             get_article_use_case_1.GetArticleUseCase,
             landing_page_use_case_1.LandingPageUseCase,
+            list_all_destinations_use_case_1.ListAllDestinationsUseCase,
             create_trip_use_case_1.CreateTripUseCase,
             list_user_trips_use_case_1.ListUserTripsUseCase,
             jwt_admin_guard_1.JwtAdminGuard,

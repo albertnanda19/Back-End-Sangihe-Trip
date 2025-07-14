@@ -16,6 +16,10 @@ export interface DestinationRepositoryPort {
   save(destination: Destination, uploadedBy: string): Promise<Destination>;
   findAll(query: DestinationQuery): Promise<{ data: Destination[]; totalItems: number }>; 
   /**
+   * Retrieves every destination without applying pagination. Intended for public listings requiring the full dataset.
+   */
+  findAllNoPagination(): Promise<Destination[]>;
+  /**
    * Retrieves a single destination by its ID or throws if not found.
    */
   findById(id: string): Promise<Destination>;

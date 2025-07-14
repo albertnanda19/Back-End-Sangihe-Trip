@@ -16,6 +16,7 @@ export interface DestinationRepositoryPort {
         data: Destination[];
         totalItems: number;
     }>;
+    findAllNoPagination(): Promise<Destination[]>;
     findById(id: string): Promise<Destination>;
     delete(id: string): Promise<Destination>;
 }

@@ -21,6 +21,25 @@ let DestinationRepositoryAdapter = class DestinationRepositoryAdapter {
     constructor(client) {
         this.client = client;
     }
+    parseImages(images) {
+        if (Array.isArray(images))
+            return images;
+        if (typeof images === 'string') {
+            return images
+                .replace(/^{|}$/g, '')
+                .split(',')
+                .map((s) => s.trim().replace(/^"|"$/g, ''))
+                .filter(Boolean);
+        }
+        return [];
+    }
+    mapRowToEntity(row) {
+        return new destination_entity_1.Destination(row.id, row.name, row.category, {
+            address: row.address,
+            lat: row.latitude ?? 0,
+            lng: row.longitude ?? 0,
+        }, 0, row.price, row.opening_hours ?? '', row.description, row.facilities ?? [], [], this.parseImages(row.images), undefined, row.created_at ? new Date(row.created_at) : new Date());
+    }
     toRow(dest) {
         const { id, name, category, location, distanceKm, price, openHours, description, facilities, tips, images, video, createdAt, } = dest;
         return {
@@ -121,6 +140,16 @@ let DestinationRepositoryAdapter = class DestinationRepositoryAdapter {
             data: mapped,
             totalItems: count || 0,
         };
+    }
+    async findAllNoPagination() {
+        const { data, error } = await this.client
+            .from('destinations')
+            .select('id, name, category, address, latitude, longitude, price, opening_hours, description, facilities, images, created_at')
+            .order('created_at', { ascending: false });
+        if (error) {
+            throw new Error(error.message);
+        }
+        return (data || []).map((row) => this.mapRowToEntity(row));
     }
     async delete(id) {
         const { data: row, error: fetchError } = await this.client

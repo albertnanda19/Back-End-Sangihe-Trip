@@ -11,6 +11,7 @@ import { UserController } from './interface/controllers/user.controller';
 import { DestinationController } from './interface/controllers/destination.controller';
 import { ArticleController } from './interface/controllers/article.controller';
 import { LandingPageController } from './interface/controllers/landing-page.controller';
+import { AllDestinationController } from './interface/controllers/all-destination.controller';
 import { AuthController } from './interface/controllers/auth.controller';
 import { UserRepositoryAdapter } from './infrastructure/database/user.repository.adapter';
 import { DestinationRepositoryAdapter } from './infrastructure/database/destination.repository.adapter';
@@ -22,6 +23,7 @@ import { CreateArticleUseCase } from './core/application/create-article.use-case
 import { ListArticlesUseCase } from './core/application/list-articles.use-case';
 import { GetArticleUseCase } from './core/application/get-article.use-case';
 import { LandingPageUseCase } from './core/application/landing-page.use-case';
+import { ListAllDestinationsUseCase } from './core/application/list-all-destinations.use-case';
 import { AuthUseCase } from './core/application/auth.use-case';
 import { FirebaseModule } from './infrastructure/firebase/firebase.module';
 import { JwtAdminGuard } from './common/guards/jwt-admin.guard';
@@ -51,6 +53,7 @@ import { ListUserTripsUseCase } from './core/application/list-user-trips.use-cas
     ArticleController,
     LandingPageController,
     TripController,
+    AllDestinationController,
   ],
   providers: [
     AppService,
@@ -62,6 +65,7 @@ import { ListUserTripsUseCase } from './core/application/list-user-trips.use-cas
     ListArticlesUseCase,
     GetArticleUseCase,
     LandingPageUseCase,
+    ListAllDestinationsUseCase,
     CreateTripUseCase,
     ListUserTripsUseCase,
     JwtAdminGuard,
