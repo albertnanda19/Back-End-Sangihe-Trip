@@ -6,7 +6,7 @@ export interface TripBudget {
     [key: string]: number | undefined;
 }
 export interface TripItem {
-    destinationId: number;
+    destinationId: string;
     startTime: string;
     endTime: string;
     activity: string;
@@ -24,12 +24,12 @@ export declare class TripPlan {
     readonly peopleCount: number;
     readonly tripType: string;
     readonly isPublic: boolean;
-    readonly destinations: number[];
+    readonly destinations: string[];
     readonly schedule: TripDay[];
     readonly budget: TripBudget;
     readonly notes: string | null;
     readonly packingList: string[];
     readonly id: string;
     readonly createdAt: Date;
-    constructor(userId: string, name: string, startDate: Date, endDate: Date, peopleCount: number, tripType: string, isPublic: boolean, destinations: number[], schedule: TripDay[], budget: TripBudget, notes?: string | null, packingList?: string[], id?: string, createdAt?: Date);
+    constructor(userId: string, name: string, startDate: Date, endDate: Date, peopleCount: number, tripType: string, isPublic: boolean, destinations: string[], schedule: TripDay[], budget: TripBudget, notes?: string | null, packingList?: string[], id?: string, createdAt?: Date);
 }

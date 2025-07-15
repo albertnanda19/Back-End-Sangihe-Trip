@@ -1,5 +1,5 @@
 declare class TripItemDto {
-    destinationId: number;
+    destinationId: string;
     startTime: string;
     endTime: string;
     activity: string;
@@ -22,7 +22,7 @@ export declare class CreateTripDto {
     peopleCount: number;
     tripType: string;
     isPublic: boolean;
-    destinations: number[];
+    destinations: string[];
     schedule: TripDayDto[];
     budget: BudgetDto;
     notes?: string;

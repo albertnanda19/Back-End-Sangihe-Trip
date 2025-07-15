@@ -12,8 +12,9 @@ import {
 import { Type } from 'class-transformer';
 
 class TripItemDto {
-  @IsNumber()
-  destinationId: number;
+  @IsString()
+  @IsNotEmpty()
+  destinationId: string;
 
   @IsString()
   startTime: string;
@@ -77,7 +78,7 @@ export class CreateTripDto {
 
   @IsArray()
   @ArrayNotEmpty()
-  destinations: number[];
+  destinations: string[];
 
   @IsArray()
   @ArrayNotEmpty()

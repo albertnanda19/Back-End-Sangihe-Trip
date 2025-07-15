@@ -7,7 +7,7 @@ export interface TripBudget {
 }
 
 export interface TripItem {
-  destinationId: number;
+  destinationId: string;
   startTime: string; // HH:mm format
   endTime: string;   // HH:mm format
   activity: string;
@@ -33,7 +33,7 @@ export class TripPlan {
     public readonly peopleCount: number,
     public readonly tripType: string,
     public readonly isPublic: boolean,
-    public readonly destinations: number[],
+    public readonly destinations: string[],
     public readonly schedule: TripDay[],
     public readonly budget: TripBudget,
     public readonly notes: string | null = null,

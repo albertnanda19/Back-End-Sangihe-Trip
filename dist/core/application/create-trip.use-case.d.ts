@@ -8,7 +8,7 @@ export interface CreateTripCommand {
     peopleCount: number;
     tripType: string;
     isPublic: boolean;
-    destinations: number[];
+    destinations: string[];
     schedule: TripPlan['schedule'];
     budget: TripPlan['budget'];
     notes?: string;
