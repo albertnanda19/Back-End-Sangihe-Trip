@@ -32,6 +32,7 @@ import { CreateTripUseCase } from './core/application/create-trip.use-case';
 import { TripPlanRepositoryAdapter } from './infrastructure/database/trip-plan.repository.adapter';
 import { JwtAccessGuard } from './common/guards/jwt-access.guard';
 import { ListUserTripsUseCase } from './core/application/list-user-trips.use-case';
+import { GetTripUseCase } from './core/application/get-trip.use-case';
 
 @Module({
   imports: [
@@ -68,6 +69,7 @@ import { ListUserTripsUseCase } from './core/application/list-user-trips.use-cas
     ListAllDestinationsUseCase,
     CreateTripUseCase,
     ListUserTripsUseCase,
+    GetTripUseCase,
     JwtAdminGuard,
     JwtAccessGuard,
     {

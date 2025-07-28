@@ -10,4 +10,5 @@ export interface TripPlanRepositoryPort {
         data: TripPlan[];
         totalItems: number;
     }>;
+    findById(id: string): Promise<TripPlan | null>;
 }

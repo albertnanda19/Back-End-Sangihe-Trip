@@ -15,18 +15,25 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.TripController = void 0;
 const common_1 = require("@nestjs/common");
 const create_trip_use_case_1 = require("../../core/application/create-trip.use-case");
+const get_trip_use_case_1 = require("../../core/application/get-trip.use-case");
 const create_trip_dto_1 = require("../dtos/trip/create-trip.dto");
 const jwt_access_guard_1 = require("../../common/guards/jwt-access.guard");
 const response_decorator_1 = require("../../common/decorators/response.decorator");
 let TripController = class TripController {
     createTripUc;
-    constructor(createTripUc) {
+    getTripUc;
+    constructor(createTripUc, getTripUc) {
         this.createTripUc = createTripUc;
+        this.getTripUc = getTripUc;
     }
     async create(dto, req) {
         const userId = req.user?.id;
         await this.createTripUc.execute({ ...dto, userId, schedule: dto.schedule, budget: { ...dto.budget } });
         return null;
+    }
+    async getTripDetail(id) {
+        const trip = await this.getTripUc.execute(id);
+        return trip;
     }
 };
 exports.TripController = TripController;
@@ -40,8 +47,18 @@ __decorate([
     __metadata("design:paramtypes", [create_trip_dto_1.CreateTripDto, Object]),
     __metadata("design:returntype", Promise)
 ], TripController.prototype, "create", null);
+__decorate([
+    (0, common_1.Get)(':id'),
+    (0, common_1.HttpCode)(200),
+    (0, response_decorator_1.ResponseMessage)('Berhasil mendapatkan data trip {name}'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], TripController.prototype, "getTripDetail", null);
 exports.TripController = TripController = __decorate([
-    (0, common_1.Controller)('trips'),
-    __metadata("design:paramtypes", [create_trip_use_case_1.CreateTripUseCase])
+    (0, common_1.Controller)('trip'),
+    __metadata("design:paramtypes", [create_trip_use_case_1.CreateTripUseCase,
+        get_trip_use_case_1.GetTripUseCase])
 ], TripController);
 //# sourceMappingURL=trip.controller.js.map

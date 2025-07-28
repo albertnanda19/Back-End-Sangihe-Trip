@@ -71,6 +71,57 @@ export class TripPlanRepositoryAdapter implements TripPlanRepositoryPort {
     }));
   }
 
+  async findById(id: string): Promise<TripPlan | null> {
+    // Fetch main plan
+    const { data: planRow, error: planErr } = await this.client
+      .from('trip_plans')
+      .select('*')
+      .eq('id', id)
+      .single();
+    if (planErr?.code === 'PGRST116') return null; // not found
+    if (planErr) throw new Error(planErr.message);
+
+    // Fetch days & items in parallel to minimize latency
+    const { data: dayRows, error: dayErr } = await this.client
+      .from('trip_plan_days')
+      .select('*, trip_plan_items(*)')
+      .eq('trip_plan_id', id)
+      .order('day_number', { ascending: true });
+    if (dayErr) throw new Error(dayErr.message);
+
+    // Map to domain entities
+    const schedule = (dayRows || []).map((d: any) => ({
+      day: d.day_number,
+      items: (d.trip_plan_items || []).map((it: any) => ({
+        destinationId: it.destination_id,
+        startTime: it.start_time,
+        endTime: it.end_time,
+        activity: it.title,
+        notes: it.description ?? undefined,
+      })),
+    }));
+
+    const budget: TripPlan['budget'] = {};
+    // If you later add budget table, map here
+
+    return new TripPlan(
+      planRow.user_id,
+      planRow.title,
+      new Date(planRow.start_date),
+      new Date(planRow.end_date),
+      planRow.total_people,
+      planRow.trip_type,
+      planRow.privacy_level === 'public',
+      planRow.destinations ?? [],
+      schedule,
+      budget,
+      planRow.description,
+      [],
+      planRow.id,
+      new Date(planRow.created_at),
+    );
+  }
+
   async findAllByUser(
     query: import('../../core/domain/trip-plan.repository.port').TripPlanListQuery,
   ): Promise<{ data: TripPlan[]; totalItems: number }> {

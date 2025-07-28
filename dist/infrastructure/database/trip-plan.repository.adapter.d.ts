@@ -6,6 +6,7 @@ export declare class TripPlanRepositoryAdapter implements TripPlanRepositoryPort
     constructor(client: SupabaseClient);
     private calcEstimatedBudget;
     create(plan: TripPlan): Promise<void>;
+    findById(id: string): Promise<TripPlan | null>;
     findAllByUser(query: import('../../core/domain/trip-plan.repository.port').TripPlanListQuery): Promise<{
         data: TripPlan[];
         totalItems: number;

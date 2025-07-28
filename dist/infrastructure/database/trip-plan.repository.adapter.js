@@ -80,6 +80,36 @@ let TripPlanRepositoryAdapter = class TripPlanRepositoryAdapter {
             }
         }));
     }
+    async findById(id) {
+        const { data: planRow, error: planErr } = await this.client
+            .from('trip_plans')
+            .select('*')
+            .eq('id', id)
+            .single();
+        if (planErr?.code === 'PGRST116')
+            return null;
+        if (planErr)
+            throw new Error(planErr.message);
+        const { data: dayRows, error: dayErr } = await this.client
+            .from('trip_plan_days')
+            .select('*, trip_plan_items(*)')
+            .eq('trip_plan_id', id)
+            .order('day_number', { ascending: true });
+        if (dayErr)
+            throw new Error(dayErr.message);
+        const schedule = (dayRows || []).map((d) => ({
+            day: d.day_number,
+            items: (d.trip_plan_items || []).map((it) => ({
+                destinationId: it.destination_id,
+                startTime: it.start_time,
+                endTime: it.end_time,
+                activity: it.title,
+                notes: it.description ?? undefined,
+            })),
+        }));
+        const budget = {};
+        return new trip_plan_entity_1.TripPlan(planRow.user_id, planRow.title, new Date(planRow.start_date), new Date(planRow.end_date), planRow.total_people, planRow.trip_type, planRow.privacy_level === 'public', planRow.destinations ?? [], schedule, budget, planRow.description, [], planRow.id, new Date(planRow.created_at));
+    }
     async findAllByUser(query) {
         const { userId, page = 1, pageSize = 10 } = query;
         const safePageSize = Math.min(Math.max(pageSize, 1), 50);
