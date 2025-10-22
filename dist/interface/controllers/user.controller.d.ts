@@ -2,12 +2,20 @@ import { UserUseCase } from '../../core/application/user.use-case';
 import { ListUserTripsUseCase } from '../../core/application/list-user-trips.use-case';
 import { ListUserReviewsUseCase } from '../../core/application/list-user-reviews.use-case';
 import { MyTripsQueryDto } from '../dtos/trip/my-trips-query.dto';
+interface AuthenticatedRequest {
+    user?: {
+        id: string;
+        email: string;
+        type: string;
+        role?: string;
+    };
+}
 export declare class UserController {
     private readonly userUseCase;
     private readonly listUserTripsUc;
     private readonly listUserReviewsUc;
     constructor(userUseCase: UserUseCase, listUserTripsUc: ListUserTripsUseCase, listUserReviewsUc: ListUserReviewsUseCase);
-    getMyProfile(req: any): Promise<{
+    getMyProfile(req: AuthenticatedRequest): Promise<{
         id: string;
         name: string;
         email: string;
@@ -23,8 +31,8 @@ export declare class UserController {
             badges: number;
         };
     }>;
-    getMyTrips(req: any, query: MyTripsQueryDto): Promise<import("../../core/application/list-user-trips.use-case").ListUserTripsResult>;
-    getMyReviews(req: any, limit?: number): Promise<{
+    getMyTrips(req: AuthenticatedRequest, query: MyTripsQueryDto): Promise<import("../../core/application/list-user-trips.use-case").ListUserTripsResult>;
+    getMyReviews(req: AuthenticatedRequest, limit?: number): Promise<{
         data: {
             id: string;
             destination: {
@@ -43,3 +51,4 @@ export declare class UserController {
     }>;
     findOne(id: string): Promise<import("../../core/domain/user.entity").User>;
 }
+export {};

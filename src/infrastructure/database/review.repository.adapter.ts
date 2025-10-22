@@ -12,9 +12,11 @@ export class ReviewRepositoryAdapter implements ReviewRepositoryPort {
     @Inject('SUPABASE_CLIENT') private readonly client: SupabaseClient,
   ) {}
 
+  // eslint-disable-next-line @typescript-eslint/require-await
   async findAllByUser(
     query: ReviewListQuery,
   ): Promise<{ data: Review[]; totalItems: number }> {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { userId, page = 1, pageSize = 10 } = query;
 
     // TODO: Implement actual database query when reviews table is created
@@ -62,11 +64,13 @@ export class ReviewRepositoryAdapter implements ReviewRepositoryPort {
     };
   }
 
+  // eslint-disable-next-line @typescript-eslint/require-await, @typescript-eslint/no-unused-vars
   async findById(id: string): Promise<Review | null> {
     // TODO: Implement when reviews table exists
     return null;
   }
 
+  // eslint-disable-next-line @typescript-eslint/require-await, @typescript-eslint/no-unused-vars
   async create(review: Review): Promise<Review> {
     // TODO: Implement when reviews table exists
     throw new Error('Review creation not yet implemented');
