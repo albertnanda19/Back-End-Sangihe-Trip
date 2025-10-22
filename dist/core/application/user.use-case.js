@@ -51,8 +51,6 @@ let UserUseCase = class UserUseCase {
                 tripPlans: tripCount,
                 visitedDestinations: 0,
                 reviewsWritten: 0,
-                points: 0,
-                badges: 0,
             },
         };
     }

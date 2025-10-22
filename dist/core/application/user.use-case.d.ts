@@ -18,8 +18,6 @@ export declare class UserUseCase {
             tripPlans: number;
             visitedDestinations: number;
             reviewsWritten: number;
-            points: number;
-            badges: number;
         };
     }>;
     private calculateProfileCompletion;

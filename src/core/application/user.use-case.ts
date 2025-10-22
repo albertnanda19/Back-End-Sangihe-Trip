@@ -49,8 +49,6 @@ export class UserUseCase {
         tripPlans: tripCount,
         visitedDestinations: 0, // To be implemented with destination tracking
         reviewsWritten: 0, // To be implemented with review system
-        points: 0, // To be implemented with gamification
-        badges: 0, // To be implemented with achievement system
       },
     };
   }

@@ -27,8 +27,6 @@ export declare class UserController {
             tripPlans: number;
             visitedDestinations: number;
             reviewsWritten: number;
-            points: number;
-            badges: number;
         };
     }>;
     getMyTrips(req: AuthenticatedRequest, query: MyTripsQueryDto): Promise<import("../../core/application/list-user-trips.use-case").ListUserTripsResult>;
