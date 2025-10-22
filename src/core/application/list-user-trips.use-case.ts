@@ -1,4 +1,8 @@
-import { Inject, Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { TripPlanRepositoryPort } from '../domain/trip-plan.repository.port';
 
 export interface ListUserTripsResult {
@@ -16,7 +20,11 @@ export class ListUserTripsUseCase {
     @Inject('TripPlanRepository') private readonly repo: TripPlanRepositoryPort,
   ) {}
 
-  async execute(userId: string, page = 1, limit = 10): Promise<ListUserTripsResult> {
+  async execute(
+    userId: string,
+    page = 1,
+    limit = 10,
+  ): Promise<ListUserTripsResult> {
     try {
       const { data, totalItems } = await this.repo.findAllByUser({
         userId,
@@ -62,4 +70,4 @@ export class ListUserTripsUseCase {
       throw new InternalServerErrorException(e.message);
     }
   }
-} 
+}

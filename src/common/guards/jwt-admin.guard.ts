@@ -26,10 +26,13 @@ export class JwtAdminGuard implements CanActivate {
 
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest<FastifyRequest>();
-    const authHeader = request.headers['authorization'] || request.headers['Authorization'];
+    const authHeader =
+      request.headers['authorization'] || request.headers['Authorization'];
 
     if (!authHeader || !authHeader.toString().startsWith('Bearer ')) {
-      throw new UnauthorizedException('Header Authorization tidak ditemukan atau format tidak benar');
+      throw new UnauthorizedException(
+        'Header Authorization tidak ditemukan atau format tidak benar',
+      );
     }
 
     const token = authHeader.toString().replace('Bearer ', '').trim();
@@ -40,7 +43,9 @@ export class JwtAdminGuard implements CanActivate {
         algorithms: ['RS256'],
       });
     } catch (e) {
-      throw new UnauthorizedException('Token tidak valid atau sudah kedaluwarsa');
+      throw new UnauthorizedException(
+        'Token tidak valid atau sudah kedaluwarsa',
+      );
     }
 
     if (payload?.type !== 'access') {

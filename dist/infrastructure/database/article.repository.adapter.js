@@ -26,7 +26,9 @@ let ArticleRepositoryAdapter = class ArticleRepositoryAdapter {
             id: article.id,
             title: article.title,
             slug: article.slug,
-            category_id: typeof article.category === 'string' ? parseInt(article.category, 10) : article.category,
+            category_id: typeof article.category === 'string'
+                ? parseInt(article.category, 10)
+                : article.category,
             author_id: article.authorId,
             content: article.content,
             featured_image_url: article.featuredImageUrl,
@@ -134,8 +136,13 @@ let ArticleRepositoryAdapter = class ArticleRepositoryAdapter {
                         .select('title')
                         .order('publish_date', { ascending: false })
                         .limit(5),
-                    this.client.from('categories').select('name'),
-                    this.client.from('tags').select('name').limit(20),
+                    this.client
+                        .from('categories')
+                        .select('name'),
+                    this.client
+                        .from('tags')
+                        .select('name')
+                        .limit(20),
                 ]));
             }
             const results = await Promise.all(promises);
@@ -237,7 +244,9 @@ let ArticleRepositoryAdapter = class ArticleRepositoryAdapter {
             return toc;
         };
         const toc = generateTOC(articleRow.content || '');
-        const wordCount = (articleRow.content || '').split(/\s+/).filter(Boolean).length;
+        const wordCount = (articleRow.content || '')
+            .split(/\s+/)
+            .filter(Boolean).length;
         const article = {
             id: articleRow.id,
             slug: articleRow.slug,
@@ -245,7 +254,9 @@ let ArticleRepositoryAdapter = class ArticleRepositoryAdapter {
             category: categoryName,
             author: {
                 id: authorRow?.id ?? '',
-                name: authorRow ? `${authorRow.first_name || ''} ${authorRow.last_name || ''}`.trim() : 'Unknown Author',
+                name: authorRow
+                    ? `${authorRow.first_name || ''} ${authorRow.last_name || ''}`.trim()
+                    : 'Unknown Author',
                 avatar: authorRow?.avatar_url ?? '/placeholder.svg?height=64&width=64',
                 bio: authorRow?.bio ?? '',
                 fullBio: authorRow?.bio ?? '',

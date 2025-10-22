@@ -1,4 +1,9 @@
-import { Inject, Injectable, NotFoundException, InternalServerErrorException } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  NotFoundException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { ArticleRepositoryPort } from '../domain/article.repository.port';
 
 @Injectable()
@@ -20,4 +25,4 @@ export class GetArticleUseCase {
       throw new InternalServerErrorException(e.message);
     }
   }
-} 
+}

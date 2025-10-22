@@ -39,7 +39,7 @@ let ResponseInterceptor = class ResponseInterceptor {
             return {
                 status: statusCode,
                 message: finalMessage,
-                data: (data ?? null),
+                data: data ?? null,
             };
         }));
     }

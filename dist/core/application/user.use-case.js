@@ -16,8 +16,10 @@ exports.UserUseCase = void 0;
 const common_1 = require("@nestjs/common");
 let UserUseCase = class UserUseCase {
     userRepository;
-    constructor(userRepository) {
+    tripPlanRepository;
+    constructor(userRepository, tripPlanRepository) {
         this.userRepository = userRepository;
+        this.tripPlanRepository = tripPlanRepository;
     }
     async getUserById(id) {
         const user = await this.userRepository.findById(id);
@@ -26,11 +28,48 @@ let UserUseCase = class UserUseCase {
         }
         return user;
     }
+    async getUserProfile(id) {
+        const user = await this.userRepository.findById(id);
+        if (!user) {
+            throw new common_1.NotFoundException('User not found');
+        }
+        const { totalItems: tripCount } = await this.tripPlanRepository.findAllByUser({
+            userId: id,
+            page: 1,
+            pageSize: 1,
+        });
+        const profileCompletion = this.calculateProfileCompletion(user);
+        return {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            avatar: null,
+            role: 'user',
+            joinDate: user.createdAt.toISOString(),
+            profileCompletion,
+            stats: {
+                tripPlans: tripCount,
+                visitedDestinations: 0,
+                reviewsWritten: 0,
+                points: 0,
+                badges: 0,
+            },
+        };
+    }
+    calculateProfileCompletion(user) {
+        let completion = 0;
+        if (user.name)
+            completion += 30;
+        if (user.email)
+            completion += 30;
+        return Math.min(completion, 100);
+    }
 };
 exports.UserUseCase = UserUseCase;
 exports.UserUseCase = UserUseCase = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, common_1.Inject)('UserRepository')),
-    __metadata("design:paramtypes", [Object])
+    __param(1, (0, common_1.Inject)('TripPlanRepository')),
+    __metadata("design:paramtypes", [Object, Object])
 ], UserUseCase);
 //# sourceMappingURL=user.use-case.js.map

@@ -26,7 +26,12 @@ export class TripController {
   @ResponseMessage('Berhasil menambah rencana perjalanan baru')
   async create(@Body() dto: CreateTripDto, @Req() req: any) {
     const userId = req.user?.id;
-    await this.createTripUc.execute({ ...dto, userId, schedule: dto.schedule as any, budget: { ...dto.budget } as any });
+    await this.createTripUc.execute({
+      ...dto,
+      userId,
+      schedule: dto.schedule as any,
+      budget: { ...dto.budget } as any,
+    });
     // Returning null allows ResponseInterceptor to set data: null
     return null;
   }

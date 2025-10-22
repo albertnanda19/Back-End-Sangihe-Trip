@@ -12,10 +12,12 @@ export interface TripPlanRepositoryPort {
   /**
    * Retrieves paginated trip plans belonging to a specific user
    */
-  findAllByUser(query: TripPlanListQuery): Promise<{ data: TripPlan[]; totalItems: number }>;
+  findAllByUser(
+    query: TripPlanListQuery,
+  ): Promise<{ data: TripPlan[]; totalItems: number }>;
 
   /**
    * Find a trip plan by its ID
    */
   findById(id: string): Promise<TripPlan | null>;
-} 
+}

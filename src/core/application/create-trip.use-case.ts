@@ -6,7 +6,7 @@ export interface CreateTripCommand {
   userId: string;
   name: string;
   startDate: string; // ISO date string
-  endDate: string;   // ISO date string
+  endDate: string; // ISO date string
   peopleCount: number;
   tripType: string;
   isPublic: boolean;
@@ -43,4 +43,4 @@ export class CreateTripUseCase {
     // Delegate persistence to repository (SRP / DIP)
     await this.repo.create(plan);
   }
-} 
+}

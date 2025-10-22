@@ -24,6 +24,7 @@ const auth_controller_1 = require("./interface/controllers/auth.controller");
 const user_repository_adapter_1 = require("./infrastructure/database/user.repository.adapter");
 const destination_repository_adapter_1 = require("./infrastructure/database/destination.repository.adapter");
 const article_repository_adapter_1 = require("./infrastructure/database/article.repository.adapter");
+const review_repository_adapter_1 = require("./infrastructure/database/review.repository.adapter");
 const user_use_case_1 = require("./core/application/user.use-case");
 const destination_use_case_1 = require("./core/application/destination.use-case");
 const delete_destination_use_case_1 = require("./core/application/delete-destination.use-case");
@@ -32,6 +33,7 @@ const list_articles_use_case_1 = require("./core/application/list-articles.use-c
 const get_article_use_case_1 = require("./core/application/get-article.use-case");
 const landing_page_use_case_1 = require("./core/application/landing-page.use-case");
 const list_all_destinations_use_case_1 = require("./core/application/list-all-destinations.use-case");
+const list_user_reviews_use_case_1 = require("./core/application/list-user-reviews.use-case");
 const auth_use_case_1 = require("./core/application/auth.use-case");
 const firebase_module_1 = require("./infrastructure/firebase/firebase.module");
 const jwt_admin_guard_1 = require("./common/guards/jwt-admin.guard");
@@ -78,6 +80,7 @@ exports.AppModule = AppModule = __decorate([
             get_article_use_case_1.GetArticleUseCase,
             landing_page_use_case_1.LandingPageUseCase,
             list_all_destinations_use_case_1.ListAllDestinationsUseCase,
+            list_user_reviews_use_case_1.ListUserReviewsUseCase,
             create_trip_use_case_1.CreateTripUseCase,
             list_user_trips_use_case_1.ListUserTripsUseCase,
             get_trip_use_case_1.GetTripUseCase,
@@ -88,8 +91,12 @@ exports.AppModule = AppModule = __decorate([
                 useFactory: () => (0, supabase_js_1.createClient)(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY),
             },
             { provide: 'UserRepository', useClass: user_repository_adapter_1.UserRepositoryAdapter },
-            { provide: 'DestinationRepository', useClass: destination_repository_adapter_1.DestinationRepositoryAdapter },
+            {
+                provide: 'DestinationRepository',
+                useClass: destination_repository_adapter_1.DestinationRepositoryAdapter,
+            },
             { provide: 'ArticleRepository', useClass: article_repository_adapter_1.ArticleRepositoryAdapter },
+            { provide: 'ReviewRepository', useClass: review_repository_adapter_1.ReviewRepositoryAdapter },
             { provide: 'TripPlanRepository', useClass: trip_plan_repository_adapter_1.TripPlanRepositoryAdapter },
             {
                 provide: 'STORAGE_PATH',

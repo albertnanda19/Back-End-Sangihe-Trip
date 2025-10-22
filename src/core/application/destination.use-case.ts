@@ -1,4 +1,8 @@
-import { Inject, Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { Destination, Facility, Location } from '../domain/destination.entity';
 import { DestinationRepositoryPort } from '../domain/destination.repository.port';
@@ -48,7 +52,9 @@ export class DestinationUseCase {
     }
   }
 
-  async findAll(query: import('../domain/destination.repository.port').DestinationQuery) {
+  async findAll(
+    query: import('../domain/destination.repository.port').DestinationQuery,
+  ) {
     try {
       return await this.repository.findAll(query);
     } catch (e) {

@@ -43,7 +43,13 @@ let AuthUseCase = class AuthUseCase {
         const newUserId = (0, uuid_1.v4)();
         const { data: created, error: insertErr } = await this.client
             .from('users')
-            .insert({ id: newUserId, email, password_hash: hashed, first_name: name, last_name: '' })
+            .insert({
+            id: newUserId,
+            email,
+            password_hash: hashed,
+            first_name: name,
+            last_name: '',
+        })
             .select()
             .single();
         if (insertErr || !created) {

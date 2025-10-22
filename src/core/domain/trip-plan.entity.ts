@@ -9,7 +9,7 @@ export interface TripBudget {
 export interface TripItem {
   destinationId: string;
   startTime: string; // HH:mm format
-  endTime: string;   // HH:mm format
+  endTime: string; // HH:mm format
   activity: string;
   notes?: string;
 }
@@ -44,4 +44,4 @@ export class TripPlan {
     this.id = id ?? uuid();
     this.createdAt = createdAt ?? new Date();
   }
-} 
+}

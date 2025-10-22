@@ -1,4 +1,9 @@
-import { Inject, Injectable, NotFoundException, InternalServerErrorException } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  NotFoundException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { DestinationRepositoryPort } from '../domain/destination.repository.port';
 import { Destination } from '../domain/destination.entity';
 
@@ -17,7 +22,9 @@ export class DeleteDestinationUseCase {
       if (/(not found)/i.test(err?.message ?? '')) {
         throw new NotFoundException('Destinasi tidak ditemukan');
       }
-      throw new InternalServerErrorException(err?.message ?? 'Gagal menghapus destinasi');
+      throw new InternalServerErrorException(
+        err?.message ?? 'Gagal menghapus destinasi',
+      );
     }
   }
-} 
+}

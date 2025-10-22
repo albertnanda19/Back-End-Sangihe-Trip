@@ -27,5 +27,4 @@ export class AuthController {
     const tokens = await this.authUseCase.login(body);
     return tokens;
   }
-
 }

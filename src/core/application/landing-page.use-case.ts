@@ -36,7 +36,8 @@ export class LandingPageUseCase {
       Alam: 'nature',
     };
 
-    const dbCategory = category && category !== 'Semua' ? categoryMap[category] : undefined;
+    const dbCategory =
+      category && category !== 'Semua' ? categoryMap[category] : undefined;
 
     // Fetch data in parallel to keep total latency low (<1s) – DRY & SRP
     const [destRes, artRes] = await Promise.all([
@@ -50,7 +51,9 @@ export class LandingPageUseCase {
     ]);
 
     const toRupiah = (value?: number): string =>
-      typeof value === 'number' ? `Rp ${value.toLocaleString('id-ID')}` : 'Rp -';
+      typeof value === 'number'
+        ? `Rp ${value.toLocaleString('id-ID')}`
+        : 'Rp -';
 
     const destinations = destRes.data.map((d) => ({
       id: d.id,
@@ -77,4 +80,4 @@ export class LandingPageUseCase {
       articles,
     };
   }
-} 
+}

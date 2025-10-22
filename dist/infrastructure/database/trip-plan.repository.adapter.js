@@ -47,7 +47,9 @@ let TripPlanRepositoryAdapter = class TripPlanRepositoryAdapter {
         await Promise.all(plan.schedule.map(async (day) => {
             const dayId = (0, uuid_1.v4)();
             const dayDate = new Date(plan.startDate.getTime() + (day.day - 1) * 24 * 60 * 60 * 1000);
-            const { error: dayErr } = await this.client.from('trip_plan_days').insert({
+            const { error: dayErr } = await this.client
+                .from('trip_plan_days')
+                .insert({
                 id: dayId,
                 trip_plan_id: plan.id,
                 day_number: day.day,
@@ -74,7 +76,9 @@ let TripPlanRepositoryAdapter = class TripPlanRepositoryAdapter {
                     created_at: plan.createdAt.toISOString(),
                     updated_at: plan.createdAt.toISOString(),
                 }));
-                const { error: itemsErr } = await this.client.from('trip_plan_items').insert(itemRows);
+                const { error: itemsErr } = await this.client
+                    .from('trip_plan_items')
+                    .insert(itemRows);
                 if (itemsErr)
                     throw new Error(itemsErr.message);
             }
@@ -115,7 +119,7 @@ let TripPlanRepositoryAdapter = class TripPlanRepositoryAdapter {
         const safePageSize = Math.min(Math.max(pageSize, 1), 50);
         const from = (page - 1) * safePageSize;
         const to = from + safePageSize - 1;
-        let supabaseQuery = this.client
+        const supabaseQuery = this.client
             .from('trip_plans')
             .select(`id, user_id, title, start_date, end_date, total_people, trip_type, estimated_budget, privacy_level, created_at, updated_at`, { count: 'exact' })
             .eq('user_id', userId)

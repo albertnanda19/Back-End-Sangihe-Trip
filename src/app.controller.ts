@@ -20,7 +20,10 @@ export class AppController {
   @ResponseMessage('Database connection test successful.')
   @Get('test-db')
   async testDbConnection() {
-    const { data, error } = await this.supabase.from('destination_categories').select('*').limit(1);
+    const { data, error } = await this.supabase
+      .from('destination_categories')
+      .select('*')
+      .limit(1);
     if (error) {
       throw new Error(error.message);
     }

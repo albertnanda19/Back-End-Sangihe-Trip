@@ -16,6 +16,7 @@ import { AuthController } from './interface/controllers/auth.controller';
 import { UserRepositoryAdapter } from './infrastructure/database/user.repository.adapter';
 import { DestinationRepositoryAdapter } from './infrastructure/database/destination.repository.adapter';
 import { ArticleRepositoryAdapter } from './infrastructure/database/article.repository.adapter';
+import { ReviewRepositoryAdapter } from './infrastructure/database/review.repository.adapter';
 import { UserUseCase } from './core/application/user.use-case';
 import { DestinationUseCase } from './core/application/destination.use-case';
 import { DeleteDestinationUseCase } from './core/application/delete-destination.use-case';
@@ -24,6 +25,7 @@ import { ListArticlesUseCase } from './core/application/list-articles.use-case';
 import { GetArticleUseCase } from './core/application/get-article.use-case';
 import { LandingPageUseCase } from './core/application/landing-page.use-case';
 import { ListAllDestinationsUseCase } from './core/application/list-all-destinations.use-case';
+import { ListUserReviewsUseCase } from './core/application/list-user-reviews.use-case';
 import { AuthUseCase } from './core/application/auth.use-case';
 import { FirebaseModule } from './infrastructure/firebase/firebase.module';
 import { JwtAdminGuard } from './common/guards/jwt-admin.guard';
@@ -67,6 +69,7 @@ import { GetTripUseCase } from './core/application/get-trip.use-case';
     GetArticleUseCase,
     LandingPageUseCase,
     ListAllDestinationsUseCase,
+    ListUserReviewsUseCase,
     CreateTripUseCase,
     ListUserTripsUseCase,
     GetTripUseCase,
@@ -81,8 +84,12 @@ import { GetTripUseCase } from './core/application/get-trip.use-case';
         ),
     },
     { provide: 'UserRepository', useClass: UserRepositoryAdapter },
-    { provide: 'DestinationRepository', useClass: DestinationRepositoryAdapter },
+    {
+      provide: 'DestinationRepository',
+      useClass: DestinationRepositoryAdapter,
+    },
     { provide: 'ArticleRepository', useClass: ArticleRepositoryAdapter },
+    { provide: 'ReviewRepository', useClass: ReviewRepositoryAdapter },
     { provide: 'TripPlanRepository', useClass: TripPlanRepositoryAdapter },
     {
       provide: 'STORAGE_PATH',

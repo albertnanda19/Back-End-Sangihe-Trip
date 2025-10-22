@@ -12,4 +12,4 @@ export class LandingPageController {
   getLandingPage(@Query() query: LandingPageQueryDto) {
     return this.landingPageUseCase.execute(query.category);
   }
-} 
+}

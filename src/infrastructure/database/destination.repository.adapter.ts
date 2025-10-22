@@ -90,7 +90,10 @@ export class DestinationRepositoryAdapter implements DestinationRepositoryPort {
     };
   }
 
-  async save(destination: Destination, _uploadedBy: string): Promise<Destination> {
+  async save(
+    destination: Destination,
+    _uploadedBy: string,
+  ): Promise<Destination> {
     const rowData = this.toRow(destination);
 
     const { error } = await this.client
@@ -107,7 +110,9 @@ export class DestinationRepositoryAdapter implements DestinationRepositoryPort {
     return destination;
   }
 
-  async findAll(query: import('../../core/domain/destination.repository.port').DestinationQuery): Promise<{ data: Destination[]; totalItems: number }> {
+  async findAll(
+    query: import('../../core/domain/destination.repository.port').DestinationQuery,
+  ): Promise<{ data: Destination[]; totalItems: number }> {
     const {
       search,
       category,
@@ -124,7 +129,7 @@ export class DestinationRepositoryAdapter implements DestinationRepositoryPort {
       .from('destinations')
       .select(
         `id, name, category, address, price, images, facilities, description, created_at`,
-        { count: 'exact' }
+        { count: 'exact' },
       );
 
     if (search) {
@@ -179,7 +184,7 @@ export class DestinationRepositoryAdapter implements DestinationRepositoryPort {
       return str
         .replace(/^{|}$/g, '')
         .split(',')
-        .map(s => s.trim().replace(/^"|"$/g, ''))
+        .map((s) => s.trim().replace(/^"|"$/g, ''))
         .filter(Boolean);
     }
 
@@ -246,7 +251,7 @@ export class DestinationRepositoryAdapter implements DestinationRepositoryPort {
     const { data: row, error: fetchError } = await this.client
       .from('destinations')
       .select(
-        'id, name, category, address, latitude, longitude, price, opening_hours, description, facilities, images, video, created_at'
+        'id, name, category, address, latitude, longitude, price, opening_hours, description, facilities, images, video, created_at',
       )
       .eq('id', id)
       .single();

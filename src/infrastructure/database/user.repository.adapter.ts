@@ -17,8 +17,6 @@ export class UserRepositoryAdapter implements UserRepositoryPort {
     return new User(row.id, row.name, row.email, new Date(row.created_at));
   }
 
-  
-
   async findById(id: string): Promise<User | null> {
     const { data, error } = await this.client
       .from('users')
@@ -41,7 +39,9 @@ export class UserRepositoryAdapter implements UserRepositoryPort {
       .single();
 
     if (error || !data) {
-      throw new Error(`Failed to save user: ${error?.message ?? 'Unknown error'}`);
+      throw new Error(
+        `Failed to save user: ${error?.message ?? 'Unknown error'}`,
+      );
     }
 
     return this.mapRowToUser(data);

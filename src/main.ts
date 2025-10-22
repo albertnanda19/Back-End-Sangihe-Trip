@@ -23,19 +23,19 @@ async function bootstrap() {
   });
 
   // Gunakan @fastify/cors untuk konfigurasi CORS pada Fastify
-await app.register(require('@fastify/cors'), {
-  origin: '*', // Mengizinkan semua domain (wildcard)
-  methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
-});
+  await app.register(require('@fastify/cors'), {
+    origin: '*', // Mengizinkan semua domain (wildcard)
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+  });
 
   app.setGlobalPrefix('api');
-  app.useGlobalPipes(
-    new ValidationPipe({ transform: true, whitelist: true })
-  );
+  app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
   app.useGlobalInterceptors(new ResponseInterceptor(new Reflector()));
 
-
-  await app.listen(process.env.PORT ? Number(process.env.PORT) : 3000, '0.0.0.0');
+  await app.listen(
+    process.env.PORT ? Number(process.env.PORT) : 3000,
+    '0.0.0.0',
+  );
 }
 bootstrap();

@@ -1,4 +1,11 @@
-import { IsEnum, IsNumber, IsOptional, IsString, Max, Min } from 'class-validator';
+import {
+  IsEnum,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class GetDestinationsQueryDto {

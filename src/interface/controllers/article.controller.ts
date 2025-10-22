@@ -13,7 +13,12 @@ import {
 import { CreateArticleUseCase } from '../../core/application/create-article.use-case';
 import { randomUUID } from 'crypto';
 import { FirebaseStorage } from 'firebase/storage';
-import { deleteObject, getDownloadURL, ref, uploadBytes } from 'firebase/storage';
+import {
+  deleteObject,
+  getDownloadURL,
+  ref,
+  uploadBytes,
+} from 'firebase/storage';
 import { FIREBASE_STORAGE } from '../../infrastructure/firebase/firebase.provider';
 import { JwtAdminGuard } from '../../common/guards/jwt-admin.guard';
 import { ListArticlesUseCase } from '../../core/application/list-articles.use-case';
@@ -69,10 +74,15 @@ export class ArticleController {
       id: article.id,
       title: article.title,
       excerpt: (article as any).excerpt ?? '',
-      category: typeof article.category === 'string' ? article.category : String(article.category),
+      category:
+        typeof article.category === 'string'
+          ? article.category
+          : String(article.category),
       author: {
         name: (article as any).author?.name ?? '',
-        avatar: (article as any).author?.avatar ?? '/placeholder.svg?height=32&width=32',
+        avatar:
+          (article as any).author?.avatar ??
+          '/placeholder.svg?height=32&width=32',
       },
       publishDate: formatPublishDate(article.publishDate),
       readingTime: `${article.readingTime} menit`,
@@ -81,8 +91,8 @@ export class ArticleController {
     });
 
     return {
-      featured: result.featured ? mapArticle(result.featured as Article) : null,
-      articles: result.data.map((a) => mapArticle(a as Article)),
+      featured: result.featured ? mapArticle(result.featured) : null,
+      articles: result.data.map((a) => mapArticle(a)),
     };
   }
 
@@ -95,7 +105,7 @@ export class ArticleController {
   @Post()
   @UseGuards(JwtAdminGuard)
   async create(@Req() req: any) {
-    const parts = (req as any).parts();
+    const parts = req.parts();
     const fields: Partial<ArticleFields> = {};
     let featuredImageUrl = '';
     const uploadedRefs: any[] = [];
@@ -105,7 +115,10 @@ export class ArticleController {
         if (part.type === 'file' && part.fieldname === 'featuredImage') {
           const buffer = await part.toBuffer();
           if (buffer.length > 2 * 1024 * 1024) {
-            throw new HttpException({ status:400, message:'Ukuran gambar maksimal 2MB'}, HttpStatus.BAD_REQUEST);
+            throw new HttpException(
+              { status: 400, message: 'Ukuran gambar maksimal 2MB' },
+              HttpStatus.BAD_REQUEST,
+            );
           }
           const ext = (part.filename?.split('.').pop() ?? '').toLowerCase();
           const filename = `${randomUUID()}.${ext}`;
@@ -118,9 +131,19 @@ export class ArticleController {
         }
       }
 
-      const { title, category, readingTime, content, slug } = fields as ArticleFields;
-      if (!title || !category || !readingTime || !content || !featuredImageUrl) {
-        throw new HttpException({ status:400, message:'Data wajib tidak lengkap'}, HttpStatus.BAD_REQUEST);
+      const { title, category, readingTime, content, slug } =
+        fields as ArticleFields;
+      if (
+        !title ||
+        !category ||
+        !readingTime ||
+        !content ||
+        !featuredImageUrl
+      ) {
+        throw new HttpException(
+          { status: 400, message: 'Data wajib tidak lengkap' },
+          HttpStatus.BAD_REQUEST,
+        );
       }
       const tagsRaw = fields['tags[]'];
       const tags = Array.isArray(tagsRaw) ? tagsRaw : tagsRaw ? [tagsRaw] : [];
@@ -137,22 +160,17 @@ export class ArticleController {
         slug,
       });
 
-      return { status:200, message:'Berhasil menambahkan artikel', data: article };
+      return {
+        status: 200,
+        message: 'Berhasil menambahkan artikel',
+        data: article,
+      };
     } catch (e) {
       // rollback upload
-      await Promise.all(uploadedRefs.map(r=>deleteObject(r).catch(()=>{})));
+      await Promise.all(
+        uploadedRefs.map((r) => deleteObject(r).catch(() => {})),
+      );
       throw e;
     }
-
-    
-
-    
-
-    }
-
-    
-    
-
-    
-    
+  }
 }

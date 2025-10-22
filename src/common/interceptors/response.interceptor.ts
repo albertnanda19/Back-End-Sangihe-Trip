@@ -11,7 +11,9 @@ import { RESPONSE_MESSAGE } from '../decorators/response.decorator';
 import { ResponseDto } from '../dtos/response.dto';
 
 @Injectable()
-export class ResponseInterceptor<T> implements NestInterceptor<T, ResponseDto<T>> {
+export class ResponseInterceptor<T>
+  implements NestInterceptor<T, ResponseDto<T>>
+{
   constructor(private reflector: Reflector) {}
 
   intercept(
@@ -50,7 +52,7 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, ResponseDto<T>
           status: statusCode,
           message: finalMessage,
           // Always attach the original payload to keep response versatile.
-          data: (data ?? null),
+          data: data ?? null,
         } as ResponseDto<T>;
       }),
     );

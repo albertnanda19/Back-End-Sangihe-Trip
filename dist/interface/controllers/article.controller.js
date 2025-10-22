@@ -56,10 +56,13 @@ let ArticleController = class ArticleController {
             id: article.id,
             title: article.title,
             excerpt: article.excerpt ?? '',
-            category: typeof article.category === 'string' ? article.category : String(article.category),
+            category: typeof article.category === 'string'
+                ? article.category
+                : String(article.category),
             author: {
                 name: article.author?.name ?? '',
-                avatar: article.author?.avatar ?? '/placeholder.svg?height=32&width=32',
+                avatar: article.author?.avatar ??
+                    '/placeholder.svg?height=32&width=32',
             },
             publishDate: formatPublishDate(article.publishDate),
             readingTime: `${article.readingTime} menit`,
@@ -98,7 +101,11 @@ let ArticleController = class ArticleController {
                 }
             }
             const { title, category, readingTime, content, slug } = fields;
-            if (!title || !category || !readingTime || !content || !featuredImageUrl) {
+            if (!title ||
+                !category ||
+                !readingTime ||
+                !content ||
+                !featuredImageUrl) {
                 throw new common_1.HttpException({ status: 400, message: 'Data wajib tidak lengkap' }, common_1.HttpStatus.BAD_REQUEST);
             }
             const tagsRaw = fields['tags[]'];
@@ -114,10 +121,14 @@ let ArticleController = class ArticleController {
                 featuredImageUrl,
                 slug,
             });
-            return { status: 200, message: 'Berhasil menambahkan artikel', data: article };
+            return {
+                status: 200,
+                message: 'Berhasil menambahkan artikel',
+                data: article,
+            };
         }
         catch (e) {
-            await Promise.all(uploadedRefs.map(r => (0, storage_1.deleteObject)(r).catch(() => { })));
+            await Promise.all(uploadedRefs.map((r) => (0, storage_1.deleteObject)(r).catch(() => { })));
             throw e;
         }
     }

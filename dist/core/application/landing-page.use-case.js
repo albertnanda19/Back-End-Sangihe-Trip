@@ -49,7 +49,9 @@ let LandingPageUseCase = class LandingPageUseCase {
             }),
             this.articleRepo.findAll({ page: 1, perPage: 3, sort: 'latest' }),
         ]);
-        const toRupiah = (value) => typeof value === 'number' ? `Rp ${value.toLocaleString('id-ID')}` : 'Rp -';
+        const toRupiah = (value) => typeof value === 'number'
+            ? `Rp ${value.toLocaleString('id-ID')}`
+            : 'Rp -';
         const destinations = destRes.data.map((d) => ({
             id: d.id,
             name: d.name,

@@ -119,7 +119,7 @@ let DestinationRepositoryAdapter = class DestinationRepositoryAdapter {
             return str
                 .replace(/^{|}$/g, '')
                 .split(',')
-                .map(s => s.trim().replace(/^"|"$/g, ''))
+                .map((s) => s.trim().replace(/^"|"$/g, ''))
                 .filter(Boolean);
         }
         const mapped = (data || []).map((row) => {

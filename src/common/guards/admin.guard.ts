@@ -20,10 +20,13 @@ export class AdminGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request>();
-    const authHeader = request.headers['authorization'] || request.headers['Authorization'];
+    const authHeader =
+      request.headers['authorization'] || request.headers['Authorization'];
 
     if (!authHeader || !authHeader.toString().startsWith('Bearer ')) {
-      throw new UnauthorizedException('Missing or malformed Authorization header');
+      throw new UnauthorizedException(
+        'Missing or malformed Authorization header',
+      );
     }
 
     const token = authHeader.toString().replace('Bearer ', '').trim();

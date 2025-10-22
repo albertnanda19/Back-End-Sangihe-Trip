@@ -1,4 +1,9 @@
-import { Inject, Injectable, NotFoundException, InternalServerErrorException } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  NotFoundException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { TripPlanRepositoryPort } from '../domain/trip-plan.repository.port';
 
 @Injectable()

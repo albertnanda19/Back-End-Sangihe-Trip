@@ -4,4 +4,4 @@ export class LandingPageQueryDto {
   @IsOptional()
   @IsIn(['Semua', 'Pantai', 'Budaya', 'Kuliner', 'Alam'])
   category?: string;
-} 
+}

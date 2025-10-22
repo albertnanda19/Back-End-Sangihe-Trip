@@ -97,4 +97,4 @@ export class CreateTripDto {
   @IsOptional()
   @IsArray()
   packingList?: string[];
-} 
+}

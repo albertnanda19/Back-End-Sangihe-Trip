@@ -49,7 +49,9 @@ let DestinationController = class DestinationController {
                         const extension = (part.filename?.split('.').pop() ?? '').toLowerCase();
                         const filename = `${(0, crypto_1.randomUUID)()}.${extension}`;
                         const storageRef = (0, storage_1.ref)(this.storage, `destinations/${filename}`);
-                        await (0, storage_1.uploadBytes)(storageRef, buffer, { contentType: part.mimetype });
+                        await (0, storage_1.uploadBytes)(storageRef, buffer, {
+                            contentType: part.mimetype,
+                        });
                         uploadedImageRefs.push(storageRef);
                         const url = await (0, storage_1.getDownloadURL)(storageRef);
                         if (part.fieldname === 'video') {

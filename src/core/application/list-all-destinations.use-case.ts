@@ -1,4 +1,8 @@
-import { Inject, Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { Destination } from '../domain/destination.entity';
 import { DestinationRepositoryPort } from '../domain/destination.repository.port';
 
@@ -16,4 +20,4 @@ export class ListAllDestinationsUseCase {
       throw new InternalServerErrorException(e.message);
     }
   }
-} 
+}

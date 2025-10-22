@@ -26,7 +26,10 @@ import {
 import { FirebaseStorage } from 'firebase/storage';
 import { FIREBASE_STORAGE } from '../../infrastructure/firebase/firebase.provider';
 import { CreateDestinationDto } from '../dtos/destination/create-destination.dto';
-import { GetDestinationsQueryDto, GetDestinationsResponseDto } from '../dtos/destination/get-destinations.dto';
+import {
+  GetDestinationsQueryDto,
+  GetDestinationsResponseDto,
+} from '../dtos/destination/get-destinations.dto';
 import { plainToInstance } from 'class-transformer';
 import { validateOrReject } from 'class-validator';
 
@@ -60,11 +63,15 @@ export class DestinationController {
           const task = (async () => {
             const buffer = await part.toBuffer();
 
-            const extension = (part.filename?.split('.').pop() ?? '').toLowerCase();
+            const extension = (
+              part.filename?.split('.').pop() ?? ''
+            ).toLowerCase();
             const filename = `${randomUUID()}.${extension}`;
             const storageRef = ref(this.storage, `destinations/${filename}`);
 
-            await uploadBytes(storageRef, buffer, { contentType: part.mimetype });
+            await uploadBytes(storageRef, buffer, {
+              contentType: part.mimetype,
+            });
 
             // Keep reference for rollback *after* successful upload
             uploadedImageRefs.push(storageRef);
@@ -92,9 +99,13 @@ export class DestinationController {
         throw new Error('Missing payload field');
       }
 
-      const dto = plainToInstance(CreateDestinationDto, JSON.parse(payloadJson), {
-        enableImplicitConversion: true,
-      });
+      const dto = plainToInstance(
+        CreateDestinationDto,
+        JSON.parse(payloadJson),
+        {
+          enableImplicitConversion: true,
+        },
+      );
 
       await validateOrReject(dto as object, { whitelist: true });
 
@@ -119,7 +130,10 @@ export class DestinationController {
   @ResponseMessage('Berhasil mendapatkan data daftar destinasi')
   @Get()
   @HttpCode(200)
-  async getDestinations(@Query() query: GetDestinationsQueryDto, @Req() req: any): Promise<GetDestinationsResponseDto> {
+  async getDestinations(
+    @Query() query: GetDestinationsQueryDto,
+    @Req() req: any,
+  ): Promise<GetDestinationsResponseDto> {
     const result = await this.destinationUseCase.findAll(query);
     const { data, totalItems } = result;
     const page = query.page ?? 1;
@@ -199,7 +213,4 @@ export class DestinationController {
     // Return only the fields needed for interpolation to keep payload small
     return { name: deleted.name };
   }
-
-
 }
-

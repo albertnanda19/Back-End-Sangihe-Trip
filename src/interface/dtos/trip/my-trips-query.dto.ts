@@ -14,4 +14,4 @@ export class MyTripsQueryDto {
   @Max(100)
   @IsOptional()
   per_page?: number = 10;
-} 
+}

@@ -28,7 +28,12 @@ let TripController = class TripController {
     }
     async create(dto, req) {
         const userId = req.user?.id;
-        await this.createTripUc.execute({ ...dto, userId, schedule: dto.schedule, budget: { ...dto.budget } });
+        await this.createTripUc.execute({
+            ...dto,
+            userId,
+            schedule: dto.schedule,
+            budget: { ...dto.budget },
+        });
         return null;
     }
     async getTripDetail(id) {

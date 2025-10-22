@@ -1,7 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { Article } from '../../core/domain/article.entity';
-import { ArticleRepositoryPort, ArticleQuery } from '../../core/domain/article.repository.port';
+import {
+  ArticleRepositoryPort,
+  ArticleQuery,
+} from '../../core/domain/article.repository.port';
 
 @Injectable()
 export class ArticleRepositoryAdapter implements ArticleRepositoryPort {
@@ -14,13 +17,15 @@ export class ArticleRepositoryAdapter implements ArticleRepositoryPort {
       id: article.id,
       title: article.title,
       slug: article.slug,
-      category_id: typeof article.category === 'string' ? parseInt(article.category, 10) : article.category,
+      category_id:
+        typeof article.category === 'string'
+          ? parseInt(article.category, 10)
+          : article.category,
       author_id: article.authorId,
-      
-      
+
       content: article.content,
       featured_image_url: article.featuredImageUrl,
-      
+
       status: article.status,
       created_at: article.createdAt.toISOString(),
       updated_at: new Date().toISOString(),
@@ -39,7 +44,12 @@ export class ArticleRepositoryAdapter implements ArticleRepositoryPort {
     return article;
   }
 
-  async findAll(query: ArticleQuery): Promise<{ data: Article[]; totalItems: number; featured?: Article | null; sidebar?: any }> {
+  async findAll(query: ArticleQuery): Promise<{
+    data: Article[];
+    totalItems: number;
+    featured?: Article | null;
+    sidebar?: any;
+  }> {
     const {
       page = 1,
       perPage = 10,
@@ -56,9 +66,7 @@ export class ArticleRepositoryAdapter implements ArticleRepositoryPort {
       .select(
         `id, slug, title, excerpt, category_id, author_id, publish_date, reading_time, featured_image_url`,
         { count: 'exact' },
-      )
-      ;
-
+      );
     if (search) {
       supa = supa.textSearch('title', search, {
         type: 'websearch',
@@ -94,8 +102,12 @@ export class ArticleRepositoryAdapter implements ArticleRepositoryPort {
     if (error) throw new Error(error.message);
 
     // Build lookup maps for categories & authors
-    const categoryIds = Array.from(new Set((data || []).map((r:any)=>r.category_id).filter(Boolean)));
-    const authorIds = Array.from(new Set((data || []).map((r:any)=>r.author_id).filter(Boolean)));
+    const categoryIds = Array.from(
+      new Set((data || []).map((r: any) => r.category_id).filter(Boolean)),
+    );
+    const authorIds = Array.from(
+      new Set((data || []).map((r: any) => r.author_id).filter(Boolean)),
+    );
 
     const [catMap, authorMap] = await Promise.all([
       categoryIds.length
@@ -116,7 +128,10 @@ export class ArticleRepositoryAdapter implements ArticleRepositoryPort {
             .in('id', authorIds)
             .then((res) => {
               const map: Record<string, { name: string; avatar: string }> = {};
-              (res.data || []).forEach((u: any) => (map[u.id] = { name: u.name, avatar: u.avatar_url }));
+              (res.data || []).forEach(
+                (u: any) =>
+                  (map[u.id] = { name: u.name, avatar: u.avatar_url }),
+              );
               return map;
             })
         : Promise.resolve({}),
@@ -151,7 +166,9 @@ export class ArticleRepositoryAdapter implements ArticleRepositoryPort {
         promises.push(
           this.client
             .from('articles')
-            .select('id, slug, title, excerpt, category_id, author_id, publish_date, reading_time, featured_image_url')
+            .select(
+              'id, slug, title, excerpt, category_id, author_id, publish_date, reading_time, featured_image_url',
+            )
             .order('publish_date', { ascending: false })
             .limit(1)
             .single() as unknown as Promise<any>,
@@ -171,8 +188,13 @@ export class ArticleRepositoryAdapter implements ArticleRepositoryPort {
               .select('title')
               .order('publish_date', { ascending: false })
               .limit(5) as unknown as Promise<any>,
-            this.client.from('categories').select('name') as unknown as Promise<any>,
-            this.client.from('tags').select('name').limit(20) as unknown as Promise<any>,
+            this.client
+              .from('categories')
+              .select('name') as unknown as Promise<any>,
+            this.client
+              .from('tags')
+              .select('name')
+              .limit(20) as unknown as Promise<any>,
           ]) as unknown as Promise<any>,
         );
       }
@@ -222,19 +244,22 @@ export class ArticleRepositoryAdapter implements ArticleRepositoryPort {
   async findByIdWithDetails(idOrSlug: string): Promise<any> {
     // Sanitize input to prevent issues with whitespace
     const cleanInput = idOrSlug.trim();
-    
+
     // Check if input looks like a UUID (36 chars with dashes in right positions)
-    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanInput);
-    
+    const isUUID =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        cleanInput,
+      );
+
     // Fetch the main article row (allows lookup by id or slug)
     let query = this.client.from('articles').select('*');
-    
+
     if (isUUID) {
       query = query.eq('id', cleanInput);
     } else {
       query = query.eq('slug', cleanInput);
     }
-    
+
     const { data: articleRow, error: articleErr } = await query.single();
 
     if (articleErr) {
@@ -247,40 +272,41 @@ export class ArticleRepositoryAdapter implements ArticleRepositoryPort {
     if (!articleRow) return null;
 
     // Parallel fetches for related data to keep latency low (<1s)
-    const [authorRes, categoryRes, relatedRes, commentsRes, statsRes] = await Promise.all([
-      this.client
-        .from('users')
-        .select('id,first_name,last_name,avatar_url,bio')
-        .eq('id', articleRow.author_id)
-        .maybeSingle(),
-      // Category is an enum, not a foreign key in this schema
-      Promise.resolve({ data: null }),
-      this.client
-        .from('articles')
-        .select('id,slug,title,category,read_time_minutes,featured_image')
-        .eq('category', articleRow.category)
-        .neq('id', articleRow.id)
-        .order('published_at', { ascending: false })
-        .limit(3),
-      // comments table might not exist; wrap in rescue
-      (async () => {
-        try {
-          return await this.client
-            .from('article_comments')
-            .select('id,user_id,content,created_at,likes,parent_id')
-            .eq('article_id', articleRow.id)
-            .order('created_at', { ascending: false })
-            .limit(100);
-        } catch {
-          return { data: [] } as any;
-        }
-      })(),
-      // Total articles by author
-      this.client
-        .from('articles')
-        .select('id', { count: 'exact', head: true })
-        .eq('author_id', articleRow.author_id),
-    ]);
+    const [authorRes, categoryRes, relatedRes, commentsRes, statsRes] =
+      await Promise.all([
+        this.client
+          .from('users')
+          .select('id,first_name,last_name,avatar_url,bio')
+          .eq('id', articleRow.author_id)
+          .maybeSingle(),
+        // Category is an enum, not a foreign key in this schema
+        Promise.resolve({ data: null }),
+        this.client
+          .from('articles')
+          .select('id,slug,title,category,read_time_minutes,featured_image')
+          .eq('category', articleRow.category)
+          .neq('id', articleRow.id)
+          .order('published_at', { ascending: false })
+          .limit(3),
+        // comments table might not exist; wrap in rescue
+        (async () => {
+          try {
+            return await this.client
+              .from('article_comments')
+              .select('id,user_id,content,created_at,likes,parent_id')
+              .eq('article_id', articleRow.id)
+              .order('created_at', { ascending: false })
+              .limit(100);
+          } catch {
+            return { data: [] } as any;
+          }
+        })(),
+        // Total articles by author
+        this.client
+          .from('articles')
+          .select('id', { count: 'exact', head: true })
+          .eq('author_id', articleRow.author_id),
+      ]);
 
     const authorRow = authorRes.data as any;
     const categoryName = articleRow.category ?? 'Uncategorized';
@@ -306,7 +332,9 @@ export class ArticleRepositoryAdapter implements ArticleRepositoryPort {
     };
 
     const toc = generateTOC(articleRow.content || '');
-    const wordCount = (articleRow.content || '').split(/\s+/).filter(Boolean).length;
+    const wordCount = (articleRow.content || '')
+      .split(/\s+/)
+      .filter(Boolean).length;
 
     const article = {
       id: articleRow.id,
@@ -315,7 +343,9 @@ export class ArticleRepositoryAdapter implements ArticleRepositoryPort {
       category: categoryName,
       author: {
         id: authorRow?.id ?? '',
-        name: authorRow ? `${authorRow.first_name || ''} ${authorRow.last_name || ''}`.trim() : 'Unknown Author',
+        name: authorRow
+          ? `${authorRow.first_name || ''} ${authorRow.last_name || ''}`.trim()
+          : 'Unknown Author',
         avatar: authorRow?.avatar_url ?? '/placeholder.svg?height=64&width=64',
         bio: authorRow?.bio ?? '',
         fullBio: authorRow?.bio ?? '',

@@ -4,7 +4,9 @@ import { ListAllDestinationsUseCase } from '../../core/application/list-all-dest
 
 @Controller('all-destination')
 export class AllDestinationController {
-  constructor(private readonly listAllDestinationsUseCase: ListAllDestinationsUseCase) {}
+  constructor(
+    private readonly listAllDestinationsUseCase: ListAllDestinationsUseCase,
+  ) {}
 
   @Get()
   @HttpCode(200)
@@ -31,4 +33,4 @@ export class AllDestinationController {
       };
     });
   }
-} 
+}

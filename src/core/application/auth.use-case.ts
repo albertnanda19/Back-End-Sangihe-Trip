@@ -1,11 +1,15 @@
-import { Inject, Injectable, ConflictException, UnauthorizedException } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  ConflictException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { SupabaseClient } from '@supabase/supabase-js';
 import * as bcrypt from 'bcryptjs';
 import { JwtService } from '@nestjs/jwt';
 import { v4 as uuidv4 } from 'uuid';
 
 import { User } from '../domain/user.entity';
-
 
 /**
  * AuthUseCase is responsible only for authenticating users (Curly's Law).
@@ -19,10 +23,19 @@ export class AuthUseCase {
   ) {}
 
   private mapRowToUser(row: any): User {
-    return new User(row.id, `${row.first_name} ${row.last_name}`.trim(), row.email, new Date(row.created_at));
+    return new User(
+      row.id,
+      `${row.first_name} ${row.last_name}`.trim(),
+      row.email,
+      new Date(row.created_at),
+    );
   }
 
-  async execute(dto: { name: string; email: string; password: string }): Promise<User> {
+  async execute(dto: {
+    name: string;
+    email: string;
+    password: string;
+  }): Promise<User> {
     const { email, password, name } = dto;
 
     // 1. Ensure email is not already registered
@@ -41,7 +54,13 @@ export class AuthUseCase {
     const newUserId = uuidv4();
     const { data: created, error: insertErr } = await this.client
       .from('users')
-      .insert({ id: newUserId, email, password_hash: hashed, first_name: name, last_name: '' })
+      .insert({
+        id: newUserId,
+        email,
+        password_hash: hashed,
+        first_name: name,
+        last_name: '',
+      })
       .select()
       .single();
     if (insertErr || !created) {
@@ -52,7 +71,10 @@ export class AuthUseCase {
     return user;
   }
 
-  async login(dto: { email: string; password: string }): Promise<{ access_token: string; refresh_token: string }> {
+  async login(dto: {
+    email: string;
+    password: string;
+  }): Promise<{ access_token: string; refresh_token: string }> {
     const { email, password } = dto;
     const { data: row } = await this.client
       .from('users')
