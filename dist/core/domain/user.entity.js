@@ -5,11 +5,17 @@ class User {
     id;
     name;
     email;
+    firstName;
+    lastName;
+    avatarUrl;
     createdAt;
-    constructor(id, name, email, createdAt = new Date()) {
+    constructor(id, name, email, firstName, lastName, avatarUrl, createdAt = new Date()) {
         this.id = id;
         this.name = name;
         this.email = email;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.avatarUrl = avatarUrl;
         this.createdAt = createdAt;
     }
 }

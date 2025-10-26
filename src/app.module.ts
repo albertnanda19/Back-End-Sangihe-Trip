@@ -18,6 +18,8 @@ import { DestinationRepositoryAdapter } from './infrastructure/database/destinat
 import { ArticleRepositoryAdapter } from './infrastructure/database/article.repository.adapter';
 import { ReviewRepositoryAdapter } from './infrastructure/database/review.repository.adapter';
 import { UserUseCase } from './core/application/user.use-case';
+import { UpdateUserProfileUseCase } from './core/application/update-user-profile.use-case';
+import { UpdatePasswordUseCase } from './core/application/update-password.use-case';
 import { DestinationUseCase } from './core/application/destination.use-case';
 import { DeleteDestinationUseCase } from './core/application/delete-destination.use-case';
 import { CreateArticleUseCase } from './core/application/create-article.use-case';
@@ -30,11 +32,17 @@ import { AuthUseCase } from './core/application/auth.use-case';
 import { FirebaseModule } from './infrastructure/firebase/firebase.module';
 import { JwtAdminGuard } from './common/guards/jwt-admin.guard';
 import { TripController } from './interface/controllers/trip.controller';
+import { ReviewController } from './interface/controllers/review.controller';
 import { CreateTripUseCase } from './core/application/create-trip.use-case';
+import { DeleteTripUseCase } from './core/application/delete-trip.use-case';
+import { UpdateTripUseCase } from './core/application/update-trip.use-case';
 import { TripPlanRepositoryAdapter } from './infrastructure/database/trip-plan.repository.adapter';
 import { JwtAccessGuard } from './common/guards/jwt-access.guard';
 import { ListUserTripsUseCase } from './core/application/list-user-trips.use-case';
 import { GetTripUseCase } from './core/application/get-trip.use-case';
+import { SubmitReviewUseCase } from './core/application/submit-review.use-case';
+import { GetDestinationReviewsUseCase } from './core/application/get-destination-reviews.use-case';
+import { LikeReviewUseCase } from './core/application/like-review.use-case';
 
 @Module({
   imports: [
@@ -56,12 +64,15 @@ import { GetTripUseCase } from './core/application/get-trip.use-case';
     ArticleController,
     LandingPageController,
     TripController,
+    ReviewController,
     AllDestinationController,
   ],
   providers: [
     AppService,
     AuthUseCase,
     UserUseCase,
+    UpdateUserProfileUseCase,
+    UpdatePasswordUseCase,
     DestinationUseCase,
     DeleteDestinationUseCase,
     CreateArticleUseCase,
@@ -71,8 +82,13 @@ import { GetTripUseCase } from './core/application/get-trip.use-case';
     ListAllDestinationsUseCase,
     ListUserReviewsUseCase,
     CreateTripUseCase,
+    DeleteTripUseCase,
+    UpdateTripUseCase,
     ListUserTripsUseCase,
     GetTripUseCase,
+    SubmitReviewUseCase,
+    GetDestinationReviewsUseCase,
+    LikeReviewUseCase,
     JwtAdminGuard,
     JwtAccessGuard,
     {

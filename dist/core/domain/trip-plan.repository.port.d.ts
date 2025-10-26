@@ -11,4 +11,6 @@ export interface TripPlanRepositoryPort {
         totalItems: number;
     }>;
     findById(id: string): Promise<TripPlan | null>;
+    delete(id: string): Promise<boolean>;
+    update(id: string, plan: Partial<TripPlan>): Promise<TripPlan | null>;
 }

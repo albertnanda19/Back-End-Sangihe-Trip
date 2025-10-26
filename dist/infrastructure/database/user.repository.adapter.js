@@ -22,7 +22,7 @@ let UserRepositoryAdapter = class UserRepositoryAdapter {
         this.client = client;
     }
     mapRowToUser(row) {
-        return new user_entity_1.User(row.id, row.name, row.email, new Date(row.created_at));
+        return new user_entity_1.User(row.id, row.name || `${row.first_name || ''} ${row.last_name || ''}`.trim(), row.email, row.first_name, row.last_name, row.avatar_url, new Date(row.created_at));
     }
     async findById(id) {
         const { data, error } = await this.client
@@ -45,6 +45,29 @@ let UserRepositoryAdapter = class UserRepositoryAdapter {
             .single();
         if (error || !data) {
             throw new Error(`Failed to save user: ${error?.message ?? 'Unknown error'}`);
+        }
+        return this.mapRowToUser(data);
+    }
+    async update(id, updateData) {
+        const dbData = {};
+        if (updateData.firstName !== undefined) {
+            dbData.first_name = updateData.firstName;
+        }
+        if (updateData.lastName !== undefined) {
+            dbData.last_name = updateData.lastName;
+        }
+        if (updateData.avatarUrl !== undefined) {
+            dbData.avatar_url = updateData.avatarUrl;
+        }
+        dbData.updated_at = new Date().toISOString();
+        const { data, error } = await this.client
+            .from('users')
+            .update(dbData)
+            .eq('id', id)
+            .select()
+            .single();
+        if (error || !data) {
+            return null;
         }
         return this.mapRowToUser(data);
     }

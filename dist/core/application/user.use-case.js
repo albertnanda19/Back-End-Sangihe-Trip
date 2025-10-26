@@ -17,9 +17,11 @@ const common_1 = require("@nestjs/common");
 let UserUseCase = class UserUseCase {
     userRepository;
     tripPlanRepository;
-    constructor(userRepository, tripPlanRepository) {
+    reviewRepository;
+    constructor(userRepository, tripPlanRepository, reviewRepository) {
         this.userRepository = userRepository;
         this.tripPlanRepository = tripPlanRepository;
+        this.reviewRepository = reviewRepository;
     }
     async getUserById(id) {
         const user = await this.userRepository.findById(id);
@@ -38,27 +40,42 @@ let UserUseCase = class UserUseCase {
             page: 1,
             pageSize: 1,
         });
+        const { totalItems: reviewCount } = await this.reviewRepository.findAllByUser({
+            userId: id,
+            page: 1,
+            pageSize: 1,
+        });
         const profileCompletion = this.calculateProfileCompletion(user);
         return {
             id: user.id,
             name: user.name,
             email: user.email,
-            avatar: null,
+            firstName: user.firstName,
+            first_name: user.firstName,
+            lastName: user.lastName,
+            last_name: user.lastName,
+            avatar: user.avatarUrl,
+            avatar_url: user.avatarUrl,
             role: 'user',
             joinDate: user.createdAt.toISOString(),
+            created_at: user.createdAt.toISOString(),
             profileCompletion,
             stats: {
                 tripPlans: tripCount,
                 visitedDestinations: 0,
-                reviewsWritten: 0,
+                reviewsWritten: reviewCount,
             },
         };
     }
     calculateProfileCompletion(user) {
         let completion = 0;
-        if (user.name)
-            completion += 30;
         if (user.email)
+            completion += 20;
+        if (user.firstName && user.lastName)
+            completion += 20;
+        if (user.avatarUrl)
+            completion += 30;
+        if (user.name)
             completion += 30;
         return Math.min(completion, 100);
     }
@@ -68,6 +85,7 @@ exports.UserUseCase = UserUseCase = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, common_1.Inject)('UserRepository')),
     __param(1, (0, common_1.Inject)('TripPlanRepository')),
-    __metadata("design:paramtypes", [Object, Object])
+    __param(2, (0, common_1.Inject)('ReviewRepository')),
+    __metadata("design:paramtypes", [Object, Object, Object])
 ], UserUseCase);
 //# sourceMappingURL=user.use-case.js.map

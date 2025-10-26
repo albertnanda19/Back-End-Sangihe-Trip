@@ -7,15 +7,17 @@ class Review {
     destinationId;
     rating;
     comment;
+    images;
     helpful;
     createdAt;
     updatedAt;
-    constructor(id, userId, destinationId, rating, comment, helpful = 0, createdAt = new Date(), updatedAt = new Date()) {
+    constructor(id, userId, destinationId, rating, comment, images = [], helpful = 0, createdAt = new Date(), updatedAt = new Date()) {
         this.id = id;
         this.userId = userId;
         this.destinationId = destinationId;
         this.rating = rating;
         this.comment = comment;
+        this.images = images;
         this.helpful = helpful;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;

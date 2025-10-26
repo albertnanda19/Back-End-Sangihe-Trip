@@ -4,9 +4,11 @@ export declare class ListUserReviewsUseCase {
     private readonly reviewRepository;
     private readonly destinationRepository;
     constructor(reviewRepository: ReviewRepositoryPort, destinationRepository: DestinationRepositoryPort);
-    execute(userId: string, page?: number, limit?: number): Promise<{
+    execute(userId: string, page?: number, limit?: number, sortBy?: 'date' | 'rating', order?: 'asc' | 'desc', rating?: '1' | '2' | '3' | '4' | '5' | 'all'): Promise<{
         data: {
             id: string;
+            destinationId: string;
+            destinationName: string;
             destination: {
                 id: string;
                 name: string;
@@ -14,11 +16,18 @@ export declare class ListUserReviewsUseCase {
             };
             rating: number;
             comment: string;
-            createdAt: string;
+            content: string;
             helpful: number;
+            helpfulCount: number;
+            likes: number;
+            createdAt: string;
+            date: string;
         }[];
-        total: number;
-        page: number;
-        pageSize: number;
+        meta: {
+            page: number;
+            per_page: number;
+            total: number;
+            total_pages: number;
+        };
     }>;
 }

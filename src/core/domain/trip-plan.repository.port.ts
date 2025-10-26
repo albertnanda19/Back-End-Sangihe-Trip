@@ -20,4 +20,16 @@ export interface TripPlanRepositoryPort {
    * Find a trip plan by its ID
    */
   findById(id: string): Promise<TripPlan | null>;
+
+  /**
+   * Delete a trip plan by its ID
+   * Returns true if deleted, false if not found
+   */
+  delete(id: string): Promise<boolean>;
+
+  /**
+   * Update a trip plan
+   * Returns the updated trip plan
+   */
+  update(id: string, plan: Partial<TripPlan>): Promise<TripPlan | null>;
 }

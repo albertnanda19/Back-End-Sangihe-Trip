@@ -27,6 +27,9 @@ export class AuthUseCase {
       row.id,
       `${row.first_name} ${row.last_name}`.trim(),
       row.email,
+      row.first_name,
+      row.last_name,
+      row.avatar_url,
       new Date(row.created_at),
     );
   }
@@ -38,7 +41,6 @@ export class AuthUseCase {
   }): Promise<User> {
     const { email, password, name } = dto;
 
-    // 1. Ensure email is not already registered
     const { data: existing } = await this.client
       .from('users')
       .select('id')
@@ -49,7 +51,6 @@ export class AuthUseCase {
       throw new ConflictException('Email telah terdaftar');
     }
 
-    // 2. Create new user
     const hashed = await bcrypt.hash(password, 10);
     const newUserId = uuidv4();
     const { data: created, error: insertErr } = await this.client
@@ -91,7 +92,6 @@ export class AuthUseCase {
       throw new UnauthorizedException('Email atau password salah');
     }
 
-    // Fetch role name based on user's role_id
     const { data: roleRow } = await this.client
       .from('roles')
       .select('name')

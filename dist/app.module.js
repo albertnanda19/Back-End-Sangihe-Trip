@@ -26,6 +26,8 @@ const destination_repository_adapter_1 = require("./infrastructure/database/dest
 const article_repository_adapter_1 = require("./infrastructure/database/article.repository.adapter");
 const review_repository_adapter_1 = require("./infrastructure/database/review.repository.adapter");
 const user_use_case_1 = require("./core/application/user.use-case");
+const update_user_profile_use_case_1 = require("./core/application/update-user-profile.use-case");
+const update_password_use_case_1 = require("./core/application/update-password.use-case");
 const destination_use_case_1 = require("./core/application/destination.use-case");
 const delete_destination_use_case_1 = require("./core/application/delete-destination.use-case");
 const create_article_use_case_1 = require("./core/application/create-article.use-case");
@@ -38,11 +40,17 @@ const auth_use_case_1 = require("./core/application/auth.use-case");
 const firebase_module_1 = require("./infrastructure/firebase/firebase.module");
 const jwt_admin_guard_1 = require("./common/guards/jwt-admin.guard");
 const trip_controller_1 = require("./interface/controllers/trip.controller");
+const review_controller_1 = require("./interface/controllers/review.controller");
 const create_trip_use_case_1 = require("./core/application/create-trip.use-case");
+const delete_trip_use_case_1 = require("./core/application/delete-trip.use-case");
+const update_trip_use_case_1 = require("./core/application/update-trip.use-case");
 const trip_plan_repository_adapter_1 = require("./infrastructure/database/trip-plan.repository.adapter");
 const jwt_access_guard_1 = require("./common/guards/jwt-access.guard");
 const list_user_trips_use_case_1 = require("./core/application/list-user-trips.use-case");
 const get_trip_use_case_1 = require("./core/application/get-trip.use-case");
+const submit_review_use_case_1 = require("./core/application/submit-review.use-case");
+const get_destination_reviews_use_case_1 = require("./core/application/get-destination-reviews.use-case");
+const like_review_use_case_1 = require("./core/application/like-review.use-case");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -67,12 +75,15 @@ exports.AppModule = AppModule = __decorate([
             article_controller_1.ArticleController,
             landing_page_controller_1.LandingPageController,
             trip_controller_1.TripController,
+            review_controller_1.ReviewController,
             all_destination_controller_1.AllDestinationController,
         ],
         providers: [
             app_service_1.AppService,
             auth_use_case_1.AuthUseCase,
             user_use_case_1.UserUseCase,
+            update_user_profile_use_case_1.UpdateUserProfileUseCase,
+            update_password_use_case_1.UpdatePasswordUseCase,
             destination_use_case_1.DestinationUseCase,
             delete_destination_use_case_1.DeleteDestinationUseCase,
             create_article_use_case_1.CreateArticleUseCase,
@@ -82,8 +93,13 @@ exports.AppModule = AppModule = __decorate([
             list_all_destinations_use_case_1.ListAllDestinationsUseCase,
             list_user_reviews_use_case_1.ListUserReviewsUseCase,
             create_trip_use_case_1.CreateTripUseCase,
+            delete_trip_use_case_1.DeleteTripUseCase,
+            update_trip_use_case_1.UpdateTripUseCase,
             list_user_trips_use_case_1.ListUserTripsUseCase,
             get_trip_use_case_1.GetTripUseCase,
+            submit_review_use_case_1.SubmitReviewUseCase,
+            get_destination_reviews_use_case_1.GetDestinationReviewsUseCase,
+            like_review_use_case_1.LikeReviewUseCase,
             jwt_admin_guard_1.JwtAdminGuard,
             jwt_access_guard_1.JwtAccessGuard,
             {

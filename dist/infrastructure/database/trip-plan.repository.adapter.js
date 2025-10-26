@@ -39,6 +39,11 @@ let TripPlanRepositoryAdapter = class TripPlanRepositoryAdapter {
             estimated_budget: estimatedBudget,
             privacy_level: plan.isPublic ? 'public' : 'private',
             status: 'planning',
+            settings: {
+                budget: plan.budget,
+                packingList: plan.packingList,
+                destinations: plan.destinations,
+            },
             created_at: plan.createdAt.toISOString(),
             updated_at: plan.createdAt.toISOString(),
         });
@@ -111,8 +116,11 @@ let TripPlanRepositoryAdapter = class TripPlanRepositoryAdapter {
                 notes: it.description ?? undefined,
             })),
         }));
-        const budget = {};
-        return new trip_plan_entity_1.TripPlan(planRow.user_id, planRow.title, new Date(planRow.start_date), new Date(planRow.end_date), planRow.total_people, planRow.trip_type, planRow.privacy_level === 'public', planRow.destinations ?? [], schedule, budget, planRow.description, [], planRow.id, new Date(planRow.created_at));
+        const settings = planRow.settings || {};
+        const budget = settings.budget || {};
+        const packingList = settings.packingList || [];
+        const destinations = settings.destinations || [];
+        return new trip_plan_entity_1.TripPlan(planRow.user_id, planRow.title, new Date(planRow.start_date), new Date(planRow.end_date), planRow.total_people, planRow.trip_type, planRow.privacy_level === 'public', destinations, schedule, budget, planRow.description, packingList, planRow.id, new Date(planRow.created_at));
     }
     async findAllByUser(query) {
         const { userId, page = 1, pageSize = 10 } = query;
@@ -134,6 +142,109 @@ let TripPlanRepositoryAdapter = class TripPlanRepositoryAdapter {
             data: mapped,
             totalItems: count || 0,
         };
+    }
+    async delete(id) {
+        const { error } = await this.client
+            .from('trip_plans')
+            .delete()
+            .eq('id', id);
+        if (error) {
+            if (error.code === 'PGRST116') {
+                return false;
+            }
+            throw new Error(`Failed to delete trip: ${error.message}`);
+        }
+        return true;
+    }
+    async update(id, updates) {
+        const existingTrip = await this.findById(id);
+        if (!existingTrip)
+            return null;
+        const updateData = {
+            updated_at: new Date().toISOString(),
+        };
+        if (updates.name !== undefined)
+            updateData.title = updates.name;
+        if (updates.startDate !== undefined)
+            updateData.start_date = updates.startDate.toISOString().split('T')[0];
+        if (updates.endDate !== undefined)
+            updateData.end_date = updates.endDate.toISOString().split('T')[0];
+        if (updates.peopleCount !== undefined)
+            updateData.total_people = updates.peopleCount;
+        if (updates.tripType !== undefined)
+            updateData.trip_type = updates.tripType;
+        if (updates.isPublic !== undefined)
+            updateData.privacy_level = updates.isPublic ? 'public' : 'private';
+        if (updates.notes !== undefined)
+            updateData.description = updates.notes;
+        const currentSettings = existingTrip.settings || {};
+        const newSettings = { ...currentSettings };
+        if (updates.budget !== undefined) {
+            newSettings.budget = updates.budget;
+            updateData.estimated_budget = this.calcEstimatedBudget(updates.budget);
+        }
+        if (updates.packingList !== undefined) {
+            newSettings.packingList = updates.packingList;
+        }
+        if (updates.destinations !== undefined) {
+            newSettings.destinations = updates.destinations;
+        }
+        updateData.settings = newSettings;
+        const { error: planErr } = await this.client
+            .from('trip_plans')
+            .update(updateData)
+            .eq('id', id);
+        if (planErr)
+            throw new Error(planErr.message);
+        if (updates.schedule !== undefined) {
+            const { error: deleteErr } = await this.client
+                .from('trip_plan_days')
+                .delete()
+                .eq('trip_plan_id', id);
+            if (deleteErr)
+                throw new Error(deleteErr.message);
+            await Promise.all(updates.schedule.map(async (day) => {
+                const dayId = (0, uuid_1.v4)();
+                const baseDate = updates.startDate || existingTrip.startDate;
+                const dayDate = new Date(baseDate.getTime() + (day.day - 1) * 24 * 60 * 60 * 1000);
+                const { error: dayErr } = await this.client
+                    .from('trip_plan_days')
+                    .insert({
+                    id: dayId,
+                    trip_plan_id: id,
+                    day_number: day.day,
+                    date: dayDate.toISOString().split('T')[0],
+                    title: `Hari ${day.day}`,
+                    description: null,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                });
+                if (dayErr)
+                    throw new Error(dayErr.message);
+                if (day.items?.length) {
+                    const itemRows = day.items.map((item) => ({
+                        id: (0, uuid_1.v4)(),
+                        trip_plan_day_id: dayId,
+                        destination_id: item.destinationId,
+                        title: item.activity,
+                        description: item.notes ?? null,
+                        start_time: item.startTime,
+                        end_time: item.endTime,
+                        estimated_cost: 0,
+                        item_type: 'destination',
+                        sort_order: 0,
+                        created_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString(),
+                    }));
+                    const { error: itemsErr } = await this.client
+                        .from('trip_plan_items')
+                        .insert(itemRows);
+                    if (itemsErr)
+                        throw new Error(itemsErr.message);
+                }
+            }));
+        }
+        return this.findById(id);
     }
 };
 exports.TripPlanRepositoryAdapter = TripPlanRepositoryAdapter;

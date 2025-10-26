@@ -7,4 +7,9 @@ export declare class UserRepositoryAdapter implements UserRepositoryPort {
     private mapRowToUser;
     findById(id: string): Promise<User | null>;
     save(user: User): Promise<User>;
+    update(id: string, updateData: {
+        firstName?: string;
+        lastName?: string;
+        avatarUrl?: string;
+    }): Promise<User | null>;
 }

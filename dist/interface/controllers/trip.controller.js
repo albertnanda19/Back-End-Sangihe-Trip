@@ -43,7 +43,7 @@ let TripController = class TripController {
 };
 exports.TripController = TripController;
 __decorate([
-    (0, common_1.Post)(),
+    (0, common_1.Post)('trips'),
     (0, common_1.UseGuards)(jwt_access_guard_1.JwtAccessGuard),
     (0, response_decorator_1.ResponseMessage)('Berhasil menambah rencana perjalanan baru'),
     __param(0, (0, common_1.Body)()),
@@ -53,7 +53,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], TripController.prototype, "create", null);
 __decorate([
-    (0, common_1.Get)(':id'),
+    (0, common_1.Get)('trip/:id'),
     (0, common_1.HttpCode)(200),
     (0, response_decorator_1.ResponseMessage)('Berhasil mendapatkan data trip {name}'),
     __param(0, (0, common_1.Param)('id')),
@@ -62,7 +62,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], TripController.prototype, "getTripDetail", null);
 exports.TripController = TripController = __decorate([
-    (0, common_1.Controller)('trip'),
+    (0, common_1.Controller)(),
     __metadata("design:paramtypes", [create_trip_use_case_1.CreateTripUseCase,
         get_trip_use_case_1.GetTripUseCase])
 ], TripController);

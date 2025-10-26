@@ -27,7 +27,7 @@ let AuthUseCase = class AuthUseCase {
         this.jwt = jwt;
     }
     mapRowToUser(row) {
-        return new user_entity_1.User(row.id, `${row.first_name} ${row.last_name}`.trim(), row.email, new Date(row.created_at));
+        return new user_entity_1.User(row.id, `${row.first_name} ${row.last_name}`.trim(), row.email, row.first_name, row.last_name, row.avatar_url, new Date(row.created_at));
     }
     async execute(dto) {
         const { email, password, name } = dto;

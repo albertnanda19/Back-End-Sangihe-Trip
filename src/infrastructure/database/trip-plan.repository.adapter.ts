@@ -18,7 +18,6 @@ export class TripPlanRepositoryAdapter implements TripPlanRepositoryPort {
   }
 
   async create(plan: TripPlan): Promise<void> {
-    // 1. Insert into trip_plans
     const estimatedBudget = this.calcEstimatedBudget(plan.budget);
     const { error: planErr } = await this.client.from('trip_plans').insert({
       id: plan.id,
@@ -32,12 +31,16 @@ export class TripPlanRepositoryAdapter implements TripPlanRepositoryPort {
       estimated_budget: estimatedBudget,
       privacy_level: plan.isPublic ? 'public' : 'private',
       status: 'planning',
+      settings: {
+        budget: plan.budget,
+        packingList: plan.packingList,
+        destinations: plan.destinations,
+      },
       created_at: plan.createdAt.toISOString(),
       updated_at: plan.createdAt.toISOString(),
     });
     if (planErr) throw new Error(planErr.message);
 
-    // 2. Insert days & items in parallel per day to keep latency low (<1s)
     await Promise.all(
       plan.schedule.map(async (day) => {
         const dayId = uuid();
@@ -83,16 +86,14 @@ export class TripPlanRepositoryAdapter implements TripPlanRepositoryPort {
   }
 
   async findById(id: string): Promise<TripPlan | null> {
-    // Fetch main plan
     const { data: planRow, error: planErr } = await this.client
       .from('trip_plans')
       .select('*')
       .eq('id', id)
       .single();
-    if (planErr?.code === 'PGRST116') return null; // not found
+    if (planErr?.code === 'PGRST116') return null;
     if (planErr) throw new Error(planErr.message);
 
-    // Fetch days & items in parallel to minimize latency
     const { data: dayRows, error: dayErr } = await this.client
       .from('trip_plan_days')
       .select('*, trip_plan_items(*)')
@@ -100,7 +101,6 @@ export class TripPlanRepositoryAdapter implements TripPlanRepositoryPort {
       .order('day_number', { ascending: true });
     if (dayErr) throw new Error(dayErr.message);
 
-    // Map to domain entities
     const schedule = (dayRows || []).map((d: any) => ({
       day: d.day_number,
       items: (d.trip_plan_items || []).map((it: any) => ({
@@ -112,8 +112,14 @@ export class TripPlanRepositoryAdapter implements TripPlanRepositoryPort {
       })),
     }));
 
-    const budget: TripPlan['budget'] = {};
-    // If you later add budget table, map here
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const settings = planRow.settings || {};
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    const budget: TripPlan['budget'] = settings.budget || {};
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    const packingList: string[] = settings.packingList || [];
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    const destinations: string[] = settings.destinations || [];
 
     return new TripPlan(
       planRow.user_id,
@@ -123,11 +129,11 @@ export class TripPlanRepositoryAdapter implements TripPlanRepositoryPort {
       planRow.total_people,
       planRow.trip_type,
       planRow.privacy_level === 'public',
-      planRow.destinations ?? [],
+      destinations,
       schedule,
       budget,
       planRow.description,
-      [],
+      packingList,
       planRow.id,
       new Date(planRow.created_at),
     );
@@ -157,7 +163,6 @@ export class TripPlanRepositoryAdapter implements TripPlanRepositoryPort {
       throw new Error(error.message);
     }
 
-    // Map to domain entity – we leave destinations, schedule & budget empty as they are not needed for the listing
     const mapped = (data || []).map(
       (row: any) =>
         new TripPlan(
@@ -182,5 +187,127 @@ export class TripPlanRepositoryAdapter implements TripPlanRepositoryPort {
       data: mapped,
       totalItems: count || 0,
     };
+  }
+
+  async delete(id: string): Promise<boolean> {
+    const { error } = await this.client
+      .from('trip_plans')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return false;
+      }
+      throw new Error(`Failed to delete trip: ${error.message}`);
+    }
+
+    return true;
+  }
+
+  async update(
+    id: string,
+    updates: Partial<TripPlan>,
+  ): Promise<TripPlan | null> {
+    const existingTrip = await this.findById(id);
+    if (!existingTrip) return null;
+
+    const updateData: any = {
+      updated_at: new Date().toISOString(),
+    };
+
+    if (updates.name !== undefined) updateData.title = updates.name;
+    if (updates.startDate !== undefined)
+      updateData.start_date = updates.startDate.toISOString().split('T')[0];
+    if (updates.endDate !== undefined)
+      updateData.end_date = updates.endDate.toISOString().split('T')[0];
+    if (updates.peopleCount !== undefined)
+      updateData.total_people = updates.peopleCount;
+    if (updates.tripType !== undefined) updateData.trip_type = updates.tripType;
+    if (updates.isPublic !== undefined)
+      updateData.privacy_level = updates.isPublic ? 'public' : 'private';
+    if (updates.notes !== undefined) updateData.description = updates.notes;
+
+    const currentSettings = (existingTrip as any).settings || {};
+    const newSettings = { ...currentSettings };
+
+    if (updates.budget !== undefined) {
+      newSettings.budget = updates.budget;
+      updateData.estimated_budget = this.calcEstimatedBudget(updates.budget);
+    }
+    if (updates.packingList !== undefined) {
+      newSettings.packingList = updates.packingList;
+    }
+    if (updates.destinations !== undefined) {
+      newSettings.destinations = updates.destinations;
+    }
+
+    updateData.settings = newSettings;
+
+    const { error: planErr } = await this.client
+      .from('trip_plans')
+      .update(updateData)
+      .eq('id', id);
+
+    if (planErr) throw new Error(planErr.message);
+
+    if (updates.schedule !== undefined) {
+      const { error: deleteErr } = await this.client
+        .from('trip_plan_days')
+        .delete()
+        .eq('trip_plan_id', id);
+
+      if (deleteErr) throw new Error(deleteErr.message);
+
+      await Promise.all(
+        updates.schedule.map(async (day) => {
+          const dayId = uuid();
+          const baseDate = updates.startDate || existingTrip.startDate;
+          const dayDate = new Date(
+            baseDate.getTime() + (day.day - 1) * 24 * 60 * 60 * 1000,
+          );
+
+          const { error: dayErr } = await this.client
+            .from('trip_plan_days')
+            .insert({
+              id: dayId,
+              trip_plan_id: id,
+              day_number: day.day,
+              date: dayDate.toISOString().split('T')[0],
+              title: `Hari ${day.day}`,
+              description: null,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            });
+
+          if (dayErr) throw new Error(dayErr.message);
+
+          if (day.items?.length) {
+            const itemRows = day.items.map((item) => ({
+              id: uuid(),
+              trip_plan_day_id: dayId,
+              destination_id: item.destinationId,
+              title: item.activity,
+              description: item.notes ?? null,
+              start_time: item.startTime,
+              end_time: item.endTime,
+              estimated_cost: 0,
+              item_type: 'destination',
+              sort_order: 0,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            }));
+
+            const { error: itemsErr } = await this.client
+              .from('trip_plan_items')
+              .insert(itemRows);
+
+            if (itemsErr) throw new Error(itemsErr.message);
+          }
+        }),
+      );
+    }
+
+    return this.findById(id);
   }
 }

@@ -21,16 +21,33 @@ let ListUserReviewsUseCase = class ListUserReviewsUseCase {
         this.reviewRepository = reviewRepository;
         this.destinationRepository = destinationRepository;
     }
-    async execute(userId, page = 1, limit = 10) {
+    async execute(userId, page = 1, limit = 10, sortBy = 'date', order = 'desc', rating) {
         const { data: reviews, totalItems } = await this.reviewRepository.findAllByUser({
             userId,
             page,
             pageSize: limit,
         });
-        const enrichedReviews = await Promise.all(reviews.map(async (review) => {
+        let filteredReviews = reviews;
+        if (rating && rating !== 'all') {
+            const ratingNum = parseInt(rating);
+            filteredReviews = reviews.filter((r) => r.rating === ratingNum);
+        }
+        const sortedReviews = [...filteredReviews].sort((a, b) => {
+            if (sortBy === 'date') {
+                const comparison = a.createdAt.getTime() - b.createdAt.getTime();
+                return order === 'asc' ? comparison : -comparison;
+            }
+            else {
+                const comparison = a.rating - b.rating;
+                return order === 'asc' ? comparison : -comparison;
+            }
+        });
+        const enrichedReviews = await Promise.all(sortedReviews.map(async (review) => {
             const destination = await this.destinationRepository.findById(review.destinationId);
             return {
                 id: review.id,
+                destinationId: review.destinationId,
+                destinationName: destination?.name || 'Unknown Destination',
                 destination: destination
                     ? {
                         id: destination.id,
@@ -46,15 +63,24 @@ let ListUserReviewsUseCase = class ListUserReviewsUseCase {
                     },
                 rating: review.rating,
                 comment: review.comment,
-                createdAt: review.createdAt.toISOString(),
+                content: review.comment,
                 helpful: review.helpful,
+                helpfulCount: review.helpful,
+                likes: review.helpful,
+                createdAt: review.createdAt.toISOString(),
+                date: review.createdAt.toISOString(),
             };
         }));
+        const totalPages = Math.ceil((rating && rating !== 'all' ? filteredReviews.length : totalItems) /
+            limit);
         return {
             data: enrichedReviews,
-            total: totalItems,
-            page,
-            pageSize: limit,
+            meta: {
+                page,
+                per_page: limit,
+                total: rating && rating !== 'all' ? filteredReviews.length : totalItems,
+                total_pages: totalPages,
+            },
         };
     }
 };

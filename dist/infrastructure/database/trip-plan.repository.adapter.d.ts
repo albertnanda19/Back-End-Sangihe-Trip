@@ -11,4 +11,6 @@ export declare class TripPlanRepositoryAdapter implements TripPlanRepositoryPort
         data: TripPlan[];
         totalItems: number;
     }>;
+    delete(id: string): Promise<boolean>;
+    update(id: string, updates: Partial<TripPlan>): Promise<TripPlan | null>;
 }
