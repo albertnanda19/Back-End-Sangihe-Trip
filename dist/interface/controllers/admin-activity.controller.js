@@ -51,7 +51,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], AdminActivityController.prototype, "getAlerts", null);
 exports.AdminActivityController = AdminActivityController = __decorate([
-    (0, common_1.Controller)('api/admin'),
+    (0, common_1.Controller)('admin'),
     (0, common_1.UseGuards)(jwt_admin_guard_1.JwtAdminGuard),
     __metadata("design:paramtypes", [admin_activity_use_case_1.AdminActivityUseCase])
 ], AdminActivityController);

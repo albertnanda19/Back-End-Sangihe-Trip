@@ -5,7 +5,7 @@ import { AdminActivityUseCase } from '../../core/application/admin-activity.use-
 import { AdminActivityQueryDto } from '../dtos/admin/admin-activity-query.dto';
 import { AdminAlertQueryDto } from '../dtos/admin/admin-alert-query.dto';
 
-@Controller('api/admin')
+@Controller('admin')
 @UseGuards(JwtAdminGuard)
 export class AdminActivityController {
   constructor(private readonly adminActivityUseCase: AdminActivityUseCase) {}
