@@ -62,16 +62,24 @@ export class AdminUserUseCase {
     // Fetch roles for each user separately
     const usersWithRoles = await Promise.all(
       (data || []).map(async (user: any) => {
-        const { data: userRoles } = await this.supabase
+        // Get role IDs from user_roles
+        const { data: userRoleLinks } = await this.supabase
           .from('user_roles')
-          .select(`
-            role_id,
-            roles (
-              id,
-              name
-            )
-          `)
+          .select('role_id')
           .eq('user_id', user.id);
+
+        const roleIds = userRoleLinks?.map((ur: any) => ur.role_id) || [];
+
+        // Get role names from roles table
+        let roleNames: string[] = [];
+        if (roleIds.length > 0) {
+          const { data: rolesData } = await this.supabase
+            .from('roles')
+            .select('name')
+            .in('id', roleIds);
+
+          roleNames = rolesData?.map((r: any) => r.name) || [];
+        }
 
         return {
           id: user.id,
@@ -84,7 +92,7 @@ export class AdminUserUseCase {
           email_verified: user.email_verified,
           last_login_at: user.last_login_at,
           created_at: user.created_at,
-          roles: userRoles?.map((ur: any) => ur.roles?.name).filter(Boolean) || [],
+          roles: roleNames,
         };
       }),
     );
@@ -102,25 +110,31 @@ export class AdminUserUseCase {
   async getById(id: string): Promise<any> {
     const { data: user, error } = await this.supabase
       .from('users')
-      .select(
-        `
-        *,
-        user_roles(
-          roles(
-            id,
-            name,
-            description
-          )
-        ),
-        user_profiles(*)
-      `,
-      )
+      .select('*, user_profiles(*)')
       .eq('id', id)
       .is('deleted_at', null)
       .single();
 
     if (error || !user) {
       throw new NotFoundException('User not found');
+    }
+
+    // Get user roles
+    const { data: userRoleLinks } = await this.supabase
+      .from('user_roles')
+      .select('role_id')
+      .eq('user_id', id);
+
+    const roleIds = userRoleLinks?.map((ur: any) => ur.role_id) || [];
+
+    let roles: any[] = [];
+    if (roleIds.length > 0) {
+      const { data: rolesData } = await this.supabase
+        .from('roles')
+        .select('id, name, description')
+        .in('id', roleIds);
+
+      roles = rolesData || [];
     }
 
     // Get user's trip count
@@ -139,10 +153,9 @@ export class AdminUserUseCase {
 
     return {
       ...user,
-      roles: user.user_roles?.map((ur: any) => ur.roles) || [],
+      roles,
       tripPlansCount: tripCount || 0,
       reviewsCount: reviewCount || 0,
-      user_roles: undefined,
     };
   }
 

@@ -41,16 +41,19 @@ let AdminUserUseCase = class AdminUserUseCase {
             throw new Error(`Failed to fetch users: ${error.message}`);
         }
         const usersWithRoles = await Promise.all((data || []).map(async (user) => {
-            const { data: userRoles } = await this.supabase
+            const { data: userRoleLinks } = await this.supabase
                 .from('user_roles')
-                .select(`
-            role_id,
-            roles (
-              id,
-              name
-            )
-          `)
+                .select('role_id')
                 .eq('user_id', user.id);
+            const roleIds = userRoleLinks?.map((ur) => ur.role_id) || [];
+            let roleNames = [];
+            if (roleIds.length > 0) {
+                const { data: rolesData } = await this.supabase
+                    .from('roles')
+                    .select('name')
+                    .in('id', roleIds);
+                roleNames = rolesData?.map((r) => r.name) || [];
+            }
             return {
                 id: user.id,
                 email: user.email,
@@ -62,7 +65,7 @@ let AdminUserUseCase = class AdminUserUseCase {
                 email_verified: user.email_verified,
                 last_login_at: user.last_login_at,
                 created_at: user.created_at,
-                roles: userRoles?.map((ur) => ur.roles?.name).filter(Boolean) || [],
+                roles: roleNames,
             };
         }));
         return {
@@ -77,22 +80,25 @@ let AdminUserUseCase = class AdminUserUseCase {
     async getById(id) {
         const { data: user, error } = await this.supabase
             .from('users')
-            .select(`
-        *,
-        user_roles(
-          roles(
-            id,
-            name,
-            description
-          )
-        ),
-        user_profiles(*)
-      `)
+            .select('*, user_profiles(*)')
             .eq('id', id)
             .is('deleted_at', null)
             .single();
         if (error || !user) {
             throw new common_1.NotFoundException('User not found');
+        }
+        const { data: userRoleLinks } = await this.supabase
+            .from('user_roles')
+            .select('role_id')
+            .eq('user_id', id);
+        const roleIds = userRoleLinks?.map((ur) => ur.role_id) || [];
+        let roles = [];
+        if (roleIds.length > 0) {
+            const { data: rolesData } = await this.supabase
+                .from('roles')
+                .select('id, name, description')
+                .in('id', roleIds);
+            roles = rolesData || [];
         }
         const { count: tripCount } = await this.supabase
             .from('trip_plans')
@@ -106,10 +112,9 @@ let AdminUserUseCase = class AdminUserUseCase {
             .is('deleted_at', null);
         return {
             ...user,
-            roles: user.user_roles?.map((ur) => ur.roles) || [],
+            roles,
             tripPlansCount: tripCount || 0,
             reviewsCount: reviewCount || 0,
-            user_roles: undefined,
         };
     }
     async update(id, data) {
