@@ -43,6 +43,14 @@ import { GetTripUseCase } from './core/application/get-trip.use-case';
 import { SubmitReviewUseCase } from './core/application/submit-review.use-case';
 import { GetDestinationReviewsUseCase } from './core/application/get-destination-reviews.use-case';
 import { LikeReviewUseCase } from './core/application/like-review.use-case';
+import { AdminMetricsController } from './interface/controllers/admin-metrics.controller';
+import { AdminMetricsUseCase } from './core/application/admin-metrics.use-case';
+import { AdminDestinationController } from './interface/controllers/admin-destination.controller';
+import { AdminDestinationUseCase } from './core/application/admin-destination.use-case';
+import { AdminReviewController } from './interface/controllers/admin-review.controller';
+import { AdminReviewUseCase } from './core/application/admin-review.use-case';
+import { AdminUserController } from './interface/controllers/admin-user.controller';
+import { AdminUserUseCase } from './core/application/admin-user.use-case';
 
 @Module({
   imports: [
@@ -66,6 +74,10 @@ import { LikeReviewUseCase } from './core/application/like-review.use-case';
     TripController,
     ReviewController,
     AllDestinationController,
+    AdminMetricsController,
+    AdminDestinationController,
+    AdminReviewController,
+    AdminUserController,
   ],
   providers: [
     AppService,
@@ -89,6 +101,10 @@ import { LikeReviewUseCase } from './core/application/like-review.use-case';
     SubmitReviewUseCase,
     GetDestinationReviewsUseCase,
     LikeReviewUseCase,
+    AdminMetricsUseCase,
+    AdminDestinationUseCase,
+    AdminReviewUseCase,
+    AdminUserUseCase,
     JwtAdminGuard,
     JwtAccessGuard,
     {
