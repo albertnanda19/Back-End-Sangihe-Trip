@@ -5,7 +5,6 @@ import {
   IsBoolean,
   IsArray,
   ValidateNested,
-  IsEmail,
   IsUrl,
   IsEnum,
 } from 'class-validator';
@@ -54,10 +53,6 @@ export class CreateAdminDestinationDto {
   description: string;
 
   @IsOptional()
-  @IsString()
-  shortDescription?: string;
-
-  @IsOptional()
   @ValidateNested()
   @Type(() => LocationDto)
   location?: LocationDto;
@@ -79,11 +74,11 @@ export class CreateAdminDestinationDto {
   phone?: string;
 
   @IsOptional()
-  @IsEmail()
+  @IsString()
   email?: string;
 
   @IsOptional()
-  @IsUrl()
+  @IsString()
   website?: string;
 
   @IsOptional()
@@ -137,10 +132,6 @@ export class UpdateAdminDestinationDto {
   description?: string;
 
   @IsOptional()
-  @IsString()
-  shortDescription?: string;
-
-  @IsOptional()
   @ValidateNested()
   @Type(() => LocationDto)
   location?: LocationDto;
@@ -162,11 +153,11 @@ export class UpdateAdminDestinationDto {
   phone?: string;
 
   @IsOptional()
-  @IsEmail()
+  @IsString()
   email?: string;
 
   @IsOptional()
-  @IsUrl()
+  @IsString()
   website?: string;
 
   @IsOptional()

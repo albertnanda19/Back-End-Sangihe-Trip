@@ -63,7 +63,6 @@ class CreateAdminDestinationDto {
     name;
     slug;
     description;
-    shortDescription;
     location;
     address;
     latitude;
@@ -96,11 +95,6 @@ __decorate([
 ], CreateAdminDestinationDto.prototype, "description", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], CreateAdminDestinationDto.prototype, "shortDescription", void 0);
-__decorate([
-    (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.ValidateNested)(),
     (0, class_transformer_1.Type)(() => LocationDto),
     __metadata("design:type", LocationDto)
@@ -127,12 +121,12 @@ __decorate([
 ], CreateAdminDestinationDto.prototype, "phone", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsEmail)(),
+    (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateAdminDestinationDto.prototype, "email", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsUrl)(),
+    (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateAdminDestinationDto.prototype, "website", void 0);
 __decorate([
@@ -183,7 +177,6 @@ class UpdateAdminDestinationDto {
     name;
     slug;
     description;
-    shortDescription;
     location;
     address;
     latitude;
@@ -218,11 +211,6 @@ __decorate([
 ], UpdateAdminDestinationDto.prototype, "description", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], UpdateAdminDestinationDto.prototype, "shortDescription", void 0);
-__decorate([
-    (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.ValidateNested)(),
     (0, class_transformer_1.Type)(() => LocationDto),
     __metadata("design:type", LocationDto)
@@ -249,12 +237,12 @@ __decorate([
 ], UpdateAdminDestinationDto.prototype, "phone", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsEmail)(),
+    (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], UpdateAdminDestinationDto.prototype, "email", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsUrl)(),
+    (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], UpdateAdminDestinationDto.prototype, "website", void 0);
 __decorate([

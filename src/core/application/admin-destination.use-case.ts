@@ -111,7 +111,6 @@ export class AdminDestinationUseCase {
       name: data.name,
       slug,
       description: data.description,
-      short_description: data.shortDescription,
       address: data.address,
       latitude: data.latitude,
       longitude: data.longitude,
@@ -163,8 +162,6 @@ export class AdminDestinationUseCase {
     if (data.slug !== undefined) updateData.slug = data.slug;
     if (data.description !== undefined)
       updateData.description = data.description;
-    if (data.shortDescription !== undefined)
-      updateData.short_description = data.shortDescription;
     if (data.address !== undefined) updateData.address = data.address;
     if (data.latitude !== undefined) updateData.latitude = data.latitude;
     if (data.longitude !== undefined) updateData.longitude = data.longitude;

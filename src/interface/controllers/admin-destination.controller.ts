@@ -2,7 +2,7 @@ import {
   Controller,
   Get,
   Post,
-  Put,
+  Patch,
   Delete,
   Body,
   Param,
@@ -58,7 +58,7 @@ export class AdminDestinationController {
     return await this.destinationUseCase.create(dto, adminId);
   }
 
-  @Put(':id')
+  @Patch(':id')
   @ResponseMessage('Berhasil memperbarui destinasi')
   async update(
     @Param('id') id: string,

@@ -61,6 +61,8 @@ const admin_user_controller_1 = require("./interface/controllers/admin-user.cont
 const admin_user_use_case_1 = require("./core/application/admin-user.use-case");
 const admin_activity_controller_1 = require("./interface/controllers/admin-activity.controller");
 const admin_activity_use_case_1 = require("./core/application/admin-activity.use-case");
+const admin_article_controller_1 = require("./interface/controllers/admin-article.controller");
+const admin_article_use_case_1 = require("./core/application/admin-article.use-case");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -92,6 +94,7 @@ exports.AppModule = AppModule = __decorate([
             admin_review_controller_1.AdminReviewController,
             admin_user_controller_1.AdminUserController,
             admin_activity_controller_1.AdminActivityController,
+            admin_article_controller_1.AdminArticleController,
         ],
         providers: [
             app_service_1.AppService,
@@ -120,6 +123,7 @@ exports.AppModule = AppModule = __decorate([
             admin_review_use_case_1.AdminReviewUseCase,
             admin_user_use_case_1.AdminUserUseCase,
             admin_activity_use_case_1.AdminActivityUseCase,
+            admin_article_use_case_1.AdminArticleUseCase,
             jwt_admin_guard_1.JwtAdminGuard,
             jwt_access_guard_1.JwtAccessGuard,
             {

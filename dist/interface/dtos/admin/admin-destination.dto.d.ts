@@ -14,7 +14,6 @@ export declare class CreateAdminDestinationDto {
     name: string;
     slug?: string;
     description: string;
-    shortDescription?: string;
     location?: LocationDto;
     address?: string;
     latitude?: number;
@@ -35,7 +34,6 @@ export declare class UpdateAdminDestinationDto {
     name?: string;
     slug?: string;
     description?: string;
-    shortDescription?: string;
     location?: LocationDto;
     address?: string;
     latitude?: number;

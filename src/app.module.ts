@@ -53,6 +53,8 @@ import { AdminUserController } from './interface/controllers/admin-user.controll
 import { AdminUserUseCase } from './core/application/admin-user.use-case';
 import { AdminActivityController } from './interface/controllers/admin-activity.controller';
 import { AdminActivityUseCase } from './core/application/admin-activity.use-case';
+import { AdminArticleController } from './interface/controllers/admin-article.controller';
+import { AdminArticleUseCase } from './core/application/admin-article.use-case';
 
 @Module({
   imports: [
@@ -81,6 +83,7 @@ import { AdminActivityUseCase } from './core/application/admin-activity.use-case
     AdminReviewController,
     AdminUserController,
     AdminActivityController,
+    AdminArticleController,
   ],
   providers: [
     AppService,
@@ -109,6 +112,7 @@ import { AdminActivityUseCase } from './core/application/admin-activity.use-case
     AdminReviewUseCase,
     AdminUserUseCase,
     AdminActivityUseCase,
+    AdminArticleUseCase,
     JwtAdminGuard,
     JwtAccessGuard,
     {
