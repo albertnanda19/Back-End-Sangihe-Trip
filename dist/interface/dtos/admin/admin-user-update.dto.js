@@ -13,7 +13,7 @@ exports.UpdateUserDto = void 0;
 const class_validator_1 = require("class-validator");
 class UpdateUserDto {
     status;
-    roles;
+    role;
     notes;
 }
 exports.UpdateUserDto = UpdateUserDto;
@@ -24,10 +24,9 @@ __decorate([
 ], UpdateUserDto.prototype, "status", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsArray)(),
-    (0, class_validator_1.IsString)({ each: true }),
-    __metadata("design:type", Array)
-], UpdateUserDto.prototype, "roles", void 0);
+    (0, class_validator_1.IsEnum)(['user', 'admin']),
+    __metadata("design:type", String)
+], UpdateUserDto.prototype, "role", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),

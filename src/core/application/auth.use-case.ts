@@ -51,6 +51,17 @@ export class AuthUseCase {
       throw new ConflictException('Email telah terdaftar');
     }
 
+    // Get 'user' role ID
+    const { data: userRole } = await this.client
+      .from('roles')
+      .select('id')
+      .eq('name', 'user')
+      .single();
+
+    if (!userRole) {
+      throw new Error('Default user role not found');
+    }
+
     const hashed = await bcrypt.hash(password, 10);
     const newUserId = uuidv4();
     const { data: created, error: insertErr } = await this.client
@@ -61,6 +72,7 @@ export class AuthUseCase {
         password_hash: hashed,
         first_name: name,
         last_name: '',
+        role_id: userRole.id, // Set default role sebagai 'user'
       })
       .select()
       .single();

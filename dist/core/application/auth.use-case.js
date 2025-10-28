@@ -39,6 +39,14 @@ let AuthUseCase = class AuthUseCase {
         if (existing) {
             throw new common_1.ConflictException('Email telah terdaftar');
         }
+        const { data: userRole } = await this.client
+            .from('roles')
+            .select('id')
+            .eq('name', 'user')
+            .single();
+        if (!userRole) {
+            throw new Error('Default user role not found');
+        }
         const hashed = await bcrypt.hash(password, 10);
         const newUserId = (0, uuid_1.v4)();
         const { data: created, error: insertErr } = await this.client
@@ -49,6 +57,7 @@ let AuthUseCase = class AuthUseCase {
             password_hash: hashed,
             first_name: name,
             last_name: '',
+            role_id: userRole.id,
         })
             .select()
             .single();

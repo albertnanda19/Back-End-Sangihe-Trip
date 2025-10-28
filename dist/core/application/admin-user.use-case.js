@@ -41,18 +41,14 @@ let AdminUserUseCase = class AdminUserUseCase {
             throw new Error(`Failed to fetch users: ${error.message}`);
         }
         const usersWithRoles = await Promise.all((data || []).map(async (user) => {
-            const { data: userRoleLinks } = await this.supabase
-                .from('user_roles')
-                .select('role_id')
-                .eq('user_id', user.id);
-            const roleIds = userRoleLinks?.map((ur) => ur.role_id) || [];
-            let roleNames = [];
-            if (roleIds.length > 0) {
-                const { data: rolesData } = await this.supabase
+            let roleName = null;
+            if (user.role_id) {
+                const { data: roleData } = await this.supabase
                     .from('roles')
                     .select('name')
-                    .in('id', roleIds);
-                roleNames = rolesData?.map((r) => r.name) || [];
+                    .eq('id', user.role_id)
+                    .single();
+                roleName = roleData?.name || null;
             }
             return {
                 id: user.id,
@@ -65,7 +61,7 @@ let AdminUserUseCase = class AdminUserUseCase {
                 email_verified: user.email_verified,
                 last_login_at: user.last_login_at,
                 created_at: user.created_at,
-                roles: roleNames,
+                role: roleName,
             };
         }));
         return {
@@ -87,18 +83,14 @@ let AdminUserUseCase = class AdminUserUseCase {
         if (error || !user) {
             throw new common_1.NotFoundException('User not found');
         }
-        const { data: userRoleLinks } = await this.supabase
-            .from('user_roles')
-            .select('role_id')
-            .eq('user_id', id);
-        const roleIds = userRoleLinks?.map((ur) => ur.role_id) || [];
-        let roles = [];
-        if (roleIds.length > 0) {
-            const { data: rolesData } = await this.supabase
+        let role = null;
+        if (user.role_id) {
+            const { data: roleData } = await this.supabase
                 .from('roles')
                 .select('id, name, description')
-                .in('id', roleIds);
-            roles = rolesData || [];
+                .eq('id', user.role_id)
+                .single();
+            role = roleData || null;
         }
         const { count: tripCount } = await this.supabase
             .from('trip_plans')
@@ -112,7 +104,7 @@ let AdminUserUseCase = class AdminUserUseCase {
             .is('deleted_at', null);
         return {
             ...user,
-            roles,
+            role,
             tripPlansCount: tripCount || 0,
             reviewsCount: reviewCount || 0,
         };
@@ -122,6 +114,16 @@ let AdminUserUseCase = class AdminUserUseCase {
         const updateData = {};
         if (data.status !== undefined)
             updateData.status = data.status;
+        if (data.role !== undefined) {
+            const { data: roleData } = await this.supabase
+                .from('roles')
+                .select('id')
+                .eq('name', data.role)
+                .single();
+            if (roleData) {
+                updateData.role_id = roleData.id;
+            }
+        }
         if (Object.keys(updateData).length > 0) {
             const { error } = await this.supabase
                 .from('users')
@@ -129,20 +131,6 @@ let AdminUserUseCase = class AdminUserUseCase {
                 .eq('id', id);
             if (error) {
                 throw new Error(`Failed to update user: ${error.message}`);
-            }
-        }
-        if (data.roles !== undefined && Array.isArray(data.roles)) {
-            const { data: roles } = await this.supabase
-                .from('roles')
-                .select('id, name')
-                .in('name', data.roles);
-            if (roles && roles.length > 0) {
-                await this.supabase.from('user_roles').delete().eq('user_id', id);
-                const userRoles = roles.map((role) => ({
-                    user_id: id,
-                    role_id: role.id,
-                }));
-                await this.supabase.from('user_roles').insert(userRoles);
             }
         }
         return this.getById(id);

@@ -62,23 +62,16 @@ export class AdminUserUseCase {
     // Fetch roles for each user separately
     const usersWithRoles = await Promise.all(
       (data || []).map(async (user: any) => {
-        // Get role IDs from user_roles
-        const { data: userRoleLinks } = await this.supabase
-          .from('user_roles')
-          .select('role_id')
-          .eq('user_id', user.id);
-
-        const roleIds = userRoleLinks?.map((ur: any) => ur.role_id) || [];
-
-        // Get role names from roles table
-        let roleNames: string[] = [];
-        if (roleIds.length > 0) {
-          const { data: rolesData } = await this.supabase
+        // Get role from users.role_id (single role)
+        let roleName: string | null = null;
+        if (user.role_id) {
+          const { data: roleData } = await this.supabase
             .from('roles')
             .select('name')
-            .in('id', roleIds);
+            .eq('id', user.role_id)
+            .single();
 
-          roleNames = rolesData?.map((r: any) => r.name) || [];
+          roleName = roleData?.name || null;
         }
 
         return {
@@ -92,7 +85,7 @@ export class AdminUserUseCase {
           email_verified: user.email_verified,
           last_login_at: user.last_login_at,
           created_at: user.created_at,
-          roles: roleNames,
+          role: roleName,
         };
       }),
     );
@@ -119,22 +112,16 @@ export class AdminUserUseCase {
       throw new NotFoundException('User not found');
     }
 
-    // Get user roles
-    const { data: userRoleLinks } = await this.supabase
-      .from('user_roles')
-      .select('role_id')
-      .eq('user_id', id);
-
-    const roleIds = userRoleLinks?.map((ur: any) => ur.role_id) || [];
-
-    let roles: any[] = [];
-    if (roleIds.length > 0) {
-      const { data: rolesData } = await this.supabase
+    // Get user role from users.role_id (single role)
+    let role: any = null;
+    if (user.role_id) {
+      const { data: roleData } = await this.supabase
         .from('roles')
         .select('id, name, description')
-        .in('id', roleIds);
+        .eq('id', user.role_id)
+        .single();
 
-      roles = rolesData || [];
+      role = roleData || null;
     }
 
     // Get user's trip count
@@ -153,7 +140,7 @@ export class AdminUserUseCase {
 
     return {
       ...user,
-      roles,
+      role,
       tripPlansCount: tripCount || 0,
       reviewsCount: reviewCount || 0,
     };
@@ -166,6 +153,20 @@ export class AdminUserUseCase {
     const updateData: any = {};
     if (data.status !== undefined) updateData.status = data.status;
 
+    // Update role if provided (single role)
+    if (data.role !== undefined) {
+      // Get role ID from role name
+      const { data: roleData } = await this.supabase
+        .from('roles')
+        .select('id')
+        .eq('name', data.role)
+        .single();
+
+      if (roleData) {
+        updateData.role_id = roleData.id;
+      }
+    }
+
     // Update user basic info
     if (Object.keys(updateData).length > 0) {
       const { error } = await this.supabase
@@ -175,28 +176,6 @@ export class AdminUserUseCase {
 
       if (error) {
         throw new Error(`Failed to update user: ${error.message}`);
-      }
-    }
-
-    // Update roles if provided
-    if (data.roles !== undefined && Array.isArray(data.roles)) {
-      // Get role IDs from role names
-      const { data: roles } = await this.supabase
-        .from('roles')
-        .select('id, name')
-        .in('name', data.roles);
-
-      if (roles && roles.length > 0) {
-        // Delete existing user_roles
-        await this.supabase.from('user_roles').delete().eq('user_id', id);
-
-        // Insert new user_roles
-        const userRoles = roles.map((role: any) => ({
-          user_id: id,
-          role_id: role.id,
-        }));
-
-        await this.supabase.from('user_roles').insert(userRoles);
       }
     }
 

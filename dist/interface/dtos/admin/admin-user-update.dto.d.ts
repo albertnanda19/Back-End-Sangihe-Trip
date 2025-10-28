@@ -1,5 +1,5 @@
 export declare class UpdateUserDto {
     status?: string;
-    roles?: string[];
+    role?: string;
     notes?: string;
 }
