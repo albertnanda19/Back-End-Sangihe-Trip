@@ -26,7 +26,14 @@ let AdminDestinationUseCase = class AdminDestinationUseCase {
         const offset = (page - 1) * limit;
         let dbQuery = this.supabase
             .from('destinations')
-            .select('*', { count: 'exact' })
+            .select(`
+        *,
+        creator:users!created_by (
+          id,
+          first_name,
+          last_name
+        )
+      `, { count: 'exact' })
             .is('deleted_at', null);
         if (query.search) {
             dbQuery = dbQuery.or(`name.ilike.%${query.search}%,description.ilike.%${query.search}%,slug.ilike.%${query.search}%`);
@@ -47,8 +54,20 @@ let AdminDestinationUseCase = class AdminDestinationUseCase {
         if (error) {
             throw new Error(`Failed to fetch destinations: ${error.message}`);
         }
+        const formattedData = (data || []).map((destination) => {
+            const { creator, ...dest } = destination;
+            return {
+                ...dest,
+                created_by: creator
+                    ? {
+                        firstName: creator.first_name,
+                        lastName: creator.last_name,
+                    }
+                    : null,
+            };
+        });
         return {
-            data: data || [],
+            data: formattedData,
             meta: {
                 page,
                 limit,
@@ -59,7 +78,14 @@ let AdminDestinationUseCase = class AdminDestinationUseCase {
     async getById(id) {
         const { data: destination, error: destError } = await this.supabase
             .from('destinations')
-            .select('*')
+            .select(`
+        *,
+        creator:users!created_by (
+          id,
+          first_name,
+          last_name
+        )
+      `)
             .eq('id', id)
             .is('deleted_at', null)
             .single();
@@ -71,8 +97,16 @@ let AdminDestinationUseCase = class AdminDestinationUseCase {
             .select('*')
             .eq('destination_id', id)
             .order('sort_order', { ascending: true });
+        const { creator, ...destinationData } = destination;
+        const creatorObj = creator
+            ? {
+                firstName: creator.first_name,
+                lastName: creator.last_name,
+            }
+            : null;
         return {
-            ...destination,
+            ...destinationData,
+            created_by: creatorObj,
             images: images || [],
         };
     }

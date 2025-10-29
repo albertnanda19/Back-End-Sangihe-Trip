@@ -34,7 +34,17 @@ export class AdminDestinationUseCase {
     // Build query
     let dbQuery = this.supabase
       .from('destinations')
-      .select('*', { count: 'exact' })
+      .select(
+        `
+        *,
+        creator:users!created_by (
+          id,
+          first_name,
+          last_name
+        )
+      `,
+        { count: 'exact' },
+      )
       .is('deleted_at', null);
 
     // Apply filters
@@ -68,8 +78,22 @@ export class AdminDestinationUseCase {
       throw new Error(`Failed to fetch destinations: ${error.message}`);
     }
 
+    // Format creator for each destination
+    const formattedData = (data || []).map((destination: any) => {
+      const { creator, ...dest } = destination;
+      return {
+        ...dest,
+        created_by: creator
+          ? {
+              firstName: creator.first_name,
+              lastName: creator.last_name,
+            }
+          : null,
+      };
+    });
+
     return {
-      data: data || [],
+      data: formattedData,
       meta: {
         page,
         limit,
@@ -81,7 +105,16 @@ export class AdminDestinationUseCase {
   async getById(id: string): Promise<any> {
     const { data: destination, error: destError } = await this.supabase
       .from('destinations')
-      .select('*')
+      .select(
+        `
+        *,
+        creator:users!created_by (
+          id,
+          first_name,
+          last_name
+        )
+      `,
+      )
       .eq('id', id)
       .is('deleted_at', null)
       .single();
@@ -97,8 +130,18 @@ export class AdminDestinationUseCase {
       .eq('destination_id', id)
       .order('sort_order', { ascending: true });
 
+    // Format creator name
+    const { creator, ...destinationData } = destination;
+    const creatorObj = creator
+      ? {
+          firstName: creator.first_name,
+          lastName: creator.last_name,
+        }
+      : null;
+
     return {
-      ...destination,
+      ...destinationData,
+      created_by: creatorObj,
       images: images || [],
     };
   }
