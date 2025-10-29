@@ -1,7 +1,7 @@
 import {
   Controller,
   Get,
-  Put,
+  Patch,
   Delete,
   Query,
   Param,
@@ -32,7 +32,7 @@ export class AdminUserController {
     return await this.userUseCase.getById(id);
   }
 
-  @Put(':id')
+  @Patch(':id')
   @ResponseMessage('Berhasil memperbarui pengguna')
   async update(@Param('id') id: string, @Body() dto: UpdateUserDto) {
     return await this.userUseCase.update(id, dto);
