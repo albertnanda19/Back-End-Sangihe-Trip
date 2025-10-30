@@ -11,7 +11,8 @@ class Review {
     helpful;
     createdAt;
     updatedAt;
-    constructor(id, userId, destinationId, rating, comment, images = [], helpful = 0, createdAt = new Date(), updatedAt = new Date()) {
+    status;
+    constructor(id, userId, destinationId, rating, comment, images = [], helpful = 0, createdAt = new Date(), updatedAt = new Date(), status = 'pending') {
         this.id = id;
         this.userId = userId;
         this.destinationId = destinationId;
@@ -21,6 +22,7 @@ class Review {
         this.helpful = helpful;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+        this.status = status;
     }
 }
 exports.Review = Review;

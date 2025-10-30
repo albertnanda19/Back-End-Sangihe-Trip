@@ -5,7 +5,7 @@ export class AdminReviewQueryDto {
   @IsOptional()
   @IsString()
   @IsIn(['pending', 'active', 'hidden', 'rejected'])
-  status?: string = 'pending';
+  status?: string;
 
   @IsOptional()
   @IsInt()

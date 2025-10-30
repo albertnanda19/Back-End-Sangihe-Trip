@@ -19,12 +19,15 @@ const bcrypt = require("bcryptjs");
 const jwt_1 = require("@nestjs/jwt");
 const uuid_1 = require("uuid");
 const user_entity_1 = require("../domain/user.entity");
+const activity_logger_service_1 = require("./activity-logger.service");
 let AuthUseCase = class AuthUseCase {
     client;
     jwt;
-    constructor(client, jwt) {
+    activityLogger;
+    constructor(client, jwt, activityLogger) {
         this.client = client;
         this.jwt = jwt;
+        this.activityLogger = activityLogger;
     }
     mapRowToUser(row) {
         return new user_entity_1.User(row.id, `${row.first_name} ${row.last_name}`.trim(), row.email, row.first_name, row.last_name, row.avatar_url, new Date(row.created_at));
@@ -65,6 +68,12 @@ let AuthUseCase = class AuthUseCase {
             throw new Error(insertErr?.message ?? 'Failed to create account');
         }
         const user = this.mapRowToUser(created);
+        await this.activityLogger.logUserRegistration(user.id, {
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            userType: 'user',
+        });
         return user;
     }
     async login(dto) {
@@ -110,6 +119,7 @@ let AuthUseCase = class AuthUseCase {
         const refresh_token = this.jwt.sign(refreshPayload, {
             expiresIn: process.env.JWT_REFRESH_EXPIRES_IN ?? '7d',
         });
+        await this.activityLogger.logLogin(row.id, 'email');
         return { access_token, refresh_token };
     }
 };
@@ -118,6 +128,7 @@ exports.AuthUseCase = AuthUseCase = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, common_1.Inject)('SUPABASE_CLIENT')),
     __metadata("design:paramtypes", [supabase_js_1.SupabaseClient,
-        jwt_1.JwtService])
+        jwt_1.JwtService,
+        activity_logger_service_1.ActivityLoggerService])
 ], AuthUseCase);
 //# sourceMappingURL=auth.use-case.js.map

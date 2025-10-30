@@ -17,7 +17,8 @@ class AdminActivityQueryDto {
     limit = 20;
     action;
     entityType;
-    adminId;
+    userId;
+    userType = 'all';
 }
 exports.AdminActivityQueryDto = AdminActivityQueryDto;
 __decorate([
@@ -38,18 +39,30 @@ __decorate([
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsIn)(['create', 'update', 'delete', 'login', 'approve', 'reject']),
+    (0, class_validator_1.IsIn)([
+        'register', 'login', 'update_profile', 'change_password',
+        'create_trip', 'update_trip', 'delete_trip',
+        'submit_review',
+        'create_destination', 'update_destination',
+        'approve_review', 'reject_review'
+    ]),
     __metadata("design:type", String)
 ], AdminActivityQueryDto.prototype, "action", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsIn)(['user', 'destination', 'review', 'article', 'trip']),
+    (0, class_validator_1.IsIn)(['user', 'destination', 'review', 'article', 'trip_plan', 'user_profile']),
     __metadata("design:type", String)
 ], AdminActivityQueryDto.prototype, "entityType", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], AdminActivityQueryDto.prototype, "adminId", void 0);
+], AdminActivityQueryDto.prototype, "userId", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsIn)(['admin', 'user', 'all']),
+    __metadata("design:type", String)
+], AdminActivityQueryDto.prototype, "userType", void 0);
 //# sourceMappingURL=admin-activity-query.dto.js.map

@@ -14,10 +14,13 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DeleteTripUseCase = void 0;
 const common_1 = require("@nestjs/common");
+const activity_logger_service_1 = require("./activity-logger.service");
 let DeleteTripUseCase = class DeleteTripUseCase {
     tripRepository;
-    constructor(tripRepository) {
+    activityLogger;
+    constructor(tripRepository, activityLogger) {
         this.tripRepository = tripRepository;
+        this.activityLogger = activityLogger;
     }
     async execute(tripId, userId) {
         const trip = await this.tripRepository.findById(tripId);
@@ -27,16 +30,26 @@ let DeleteTripUseCase = class DeleteTripUseCase {
         if (trip.userId !== userId) {
             throw new common_1.ForbiddenException('You do not have permission to delete this trip');
         }
+        const tripData = {
+            name: trip.name,
+            startDate: trip.startDate.toISOString(),
+            endDate: trip.endDate.toISOString(),
+            peopleCount: trip.peopleCount,
+            tripType: trip.tripType,
+            isPublic: trip.isPublic,
+            destinations: trip.destinations,
+        };
         const deleted = await this.tripRepository.delete(tripId);
         if (!deleted) {
             throw new common_1.NotFoundException('Trip not found');
         }
+        await this.activityLogger.logTripPlanAction(userId, 'delete_trip', tripId, undefined, tripData);
     }
 };
 exports.DeleteTripUseCase = DeleteTripUseCase;
 exports.DeleteTripUseCase = DeleteTripUseCase = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, common_1.Inject)('TripPlanRepository')),
-    __metadata("design:paramtypes", [Object])
+    __metadata("design:paramtypes", [Object, activity_logger_service_1.ActivityLoggerService])
 ], DeleteTripUseCase);
 //# sourceMappingURL=delete-trip.use-case.js.map

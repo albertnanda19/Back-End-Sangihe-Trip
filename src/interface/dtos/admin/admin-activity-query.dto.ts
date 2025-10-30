@@ -17,15 +17,28 @@ export class AdminActivityQueryDto {
 
   @IsOptional()
   @IsString()
-  @IsIn(['create', 'update', 'delete', 'login', 'approve', 'reject'])
+  @IsIn([
+    // User actions
+    'register', 'login', 'update_profile', 'change_password',
+    'create_trip', 'update_trip', 'delete_trip',
+    'submit_review',
+    // Admin actions
+    'create_destination', 'update_destination',
+    'approve_review', 'reject_review'
+  ])
   action?: string;
 
   @IsOptional()
   @IsString()
-  @IsIn(['user', 'destination', 'review', 'article', 'trip'])
+  @IsIn(['user', 'destination', 'review', 'article', 'trip_plan', 'user_profile'])
   entityType?: string;
 
   @IsOptional()
   @IsString()
-  adminId?: string;
+  userId?: string; // Can filter by any user (admin or regular user)
+
+  @IsOptional()
+  @IsString()
+  @IsIn(['admin', 'user', 'all'])
+  userType?: 'admin' | 'user' | 'all' = 'all'; // Default to show all activities
 }

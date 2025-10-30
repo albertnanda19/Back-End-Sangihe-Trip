@@ -14,10 +14,13 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UpdateTripUseCase = void 0;
 const common_1 = require("@nestjs/common");
+const activity_logger_service_1 = require("./activity-logger.service");
 let UpdateTripUseCase = class UpdateTripUseCase {
     repository;
-    constructor(repository) {
+    activityLogger;
+    constructor(repository, activityLogger) {
         this.repository = repository;
+        this.activityLogger = activityLogger;
     }
     async execute(command) {
         const existingTrip = await this.repository.findById(command.tripId);
@@ -27,6 +30,16 @@ let UpdateTripUseCase = class UpdateTripUseCase {
         if (existingTrip.userId !== command.userId) {
             throw new common_1.ForbiddenException('Anda tidak memiliki akses untuk mengubah trip ini');
         }
+        const oldTripData = {
+            name: existingTrip.name,
+            startDate: existingTrip.startDate.toISOString(),
+            endDate: existingTrip.endDate.toISOString(),
+            peopleCount: existingTrip.peopleCount,
+            tripType: existingTrip.tripType,
+            isPublic: existingTrip.isPublic,
+            destinations: existingTrip.destinations,
+            notes: existingTrip.notes,
+        };
         const updates = {};
         if (command.name !== undefined)
             updates.name = command.name;
@@ -51,12 +64,23 @@ let UpdateTripUseCase = class UpdateTripUseCase {
         if (command.packingList !== undefined)
             updates.packingList = command.packingList;
         await this.repository.update(command.tripId, updates);
+        const newTripData = {
+            name: updates.name ?? oldTripData.name,
+            startDate: updates.startDate?.toISOString() ?? oldTripData.startDate,
+            endDate: updates.endDate?.toISOString() ?? oldTripData.endDate,
+            peopleCount: updates.peopleCount ?? oldTripData.peopleCount,
+            tripType: updates.tripType ?? oldTripData.tripType,
+            isPublic: updates.isPublic ?? oldTripData.isPublic,
+            destinations: updates.destinations ?? oldTripData.destinations,
+            notes: updates.notes ?? oldTripData.notes,
+        };
+        await this.activityLogger.logTripPlanAction(command.userId, 'update_trip', command.tripId, newTripData, oldTripData);
     }
 };
 exports.UpdateTripUseCase = UpdateTripUseCase;
 exports.UpdateTripUseCase = UpdateTripUseCase = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, common_1.Inject)('TripPlanRepository')),
-    __metadata("design:paramtypes", [Object])
+    __metadata("design:paramtypes", [Object, activity_logger_service_1.ActivityLoggerService])
 ], UpdateTripUseCase);
 //# sourceMappingURL=update-trip.use-case.js.map

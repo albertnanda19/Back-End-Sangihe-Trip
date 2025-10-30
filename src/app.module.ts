@@ -55,6 +55,8 @@ import { AdminActivityController } from './interface/controllers/admin-activity.
 import { AdminActivityUseCase } from './core/application/admin-activity.use-case';
 import { AdminArticleController } from './interface/controllers/admin-article.controller';
 import { AdminArticleUseCase } from './core/application/admin-article.use-case';
+import { SystemSettingsService } from './core/application/system-settings.service';
+import { ActivityLoggerService } from './core/application/activity-logger.service';
 
 @Module({
   imports: [
@@ -115,6 +117,8 @@ import { AdminArticleUseCase } from './core/application/admin-article.use-case';
     AdminArticleUseCase,
     JwtAdminGuard,
     JwtAccessGuard,
+    SystemSettingsService,
+    ActivityLoggerService,
     {
       provide: 'SUPABASE_CLIENT',
       useFactory: () =>

@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { TripPlan } from '../domain/trip-plan.entity';
 import { TripPlanRepositoryPort } from '../domain/trip-plan.repository.port';
+import { ActivityLoggerService } from './activity-logger.service';
 
 export interface CreateTripCommand {
   userId: string;
@@ -22,6 +23,7 @@ export class CreateTripUseCase {
   constructor(
     @Inject('TripPlanRepository')
     private readonly repo: TripPlanRepositoryPort,
+    private readonly activityLogger: ActivityLoggerService,
   ) {}
 
   async execute(cmd: CreateTripCommand): Promise<void> {
@@ -42,5 +44,21 @@ export class CreateTripUseCase {
 
     // Delegate persistence to repository (SRP / DIP)
     await this.repo.create(plan);
+
+    // Log trip creation activity
+    await this.activityLogger.logTripPlanAction(
+      cmd.userId,
+      'create_trip',
+      plan.id,
+      {
+        name: cmd.name,
+        startDate: cmd.startDate,
+        endDate: cmd.endDate,
+        peopleCount: cmd.peopleCount,
+        tripType: cmd.tripType,
+        isPublic: cmd.isPublic,
+        destinations: cmd.destinations,
+      },
+    );
   }
 }

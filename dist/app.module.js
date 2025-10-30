@@ -63,6 +63,8 @@ const admin_activity_controller_1 = require("./interface/controllers/admin-activ
 const admin_activity_use_case_1 = require("./core/application/admin-activity.use-case");
 const admin_article_controller_1 = require("./interface/controllers/admin-article.controller");
 const admin_article_use_case_1 = require("./core/application/admin-article.use-case");
+const system_settings_service_1 = require("./core/application/system-settings.service");
+const activity_logger_service_1 = require("./core/application/activity-logger.service");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -126,6 +128,8 @@ exports.AppModule = AppModule = __decorate([
             admin_article_use_case_1.AdminArticleUseCase,
             jwt_admin_guard_1.JwtAdminGuard,
             jwt_access_guard_1.JwtAccessGuard,
+            system_settings_service_1.SystemSettingsService,
+            activity_logger_service_1.ActivityLoggerService,
             {
                 provide: 'SUPABASE_CLIENT',
                 useFactory: () => (0, supabase_js_1.createClient)(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY),

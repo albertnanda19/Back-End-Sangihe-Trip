@@ -1,5 +1,6 @@
 import { TripPlan } from '../domain/trip-plan.entity';
 import { TripPlanRepositoryPort } from '../domain/trip-plan.repository.port';
+import { ActivityLoggerService } from './activity-logger.service';
 export interface UpdateTripCommand {
     tripId: string;
     userId: string;
@@ -17,6 +18,7 @@ export interface UpdateTripCommand {
 }
 export declare class UpdateTripUseCase {
     private readonly repository;
-    constructor(repository: TripPlanRepositoryPort);
+    private readonly activityLogger;
+    constructor(repository: TripPlanRepositoryPort, activityLogger: ActivityLoggerService);
     execute(command: UpdateTripCommand): Promise<void>;
 }

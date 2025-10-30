@@ -3,5 +3,6 @@ export declare class AdminActivityQueryDto {
     limit?: number;
     action?: string;
     entityType?: string;
-    adminId?: string;
+    userId?: string;
+    userType?: 'admin' | 'user' | 'all';
 }

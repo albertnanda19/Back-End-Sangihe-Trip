@@ -176,7 +176,7 @@ let ReviewRepositoryAdapter = class ReviewRepositoryAdapter {
             destination_id: review.destinationId,
             rating: review.rating,
             content: review.comment,
-            status: 'active',
+            status: review.status,
             helpful_count: 0,
             created_at: review.createdAt.toISOString(),
             updated_at: review.updatedAt.toISOString(),

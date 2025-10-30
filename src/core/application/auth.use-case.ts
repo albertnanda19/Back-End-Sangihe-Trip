@@ -10,6 +10,7 @@ import { JwtService } from '@nestjs/jwt';
 import { v4 as uuidv4 } from 'uuid';
 
 import { User } from '../domain/user.entity';
+import { ActivityLoggerService } from './activity-logger.service';
 
 /**
  * AuthUseCase is responsible only for authenticating users (Curly's Law).
@@ -20,6 +21,7 @@ export class AuthUseCase {
   constructor(
     @Inject('SUPABASE_CLIENT') private readonly client: SupabaseClient,
     private readonly jwt: JwtService,
+    private readonly activityLogger: ActivityLoggerService,
   ) {}
 
   private mapRowToUser(row: any): User {
@@ -81,6 +83,18 @@ export class AuthUseCase {
     }
 
     const user = this.mapRowToUser(created);
+
+    // Log user registration activity
+    await this.activityLogger.logUserRegistration(
+      user.id,
+      {
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        userType: 'user',
+      },
+    );
+
     return user;
   }
 
@@ -139,6 +153,9 @@ export class AuthUseCase {
     const refresh_token = this.jwt.sign(refreshPayload, {
       expiresIn: process.env.JWT_REFRESH_EXPIRES_IN ?? '7d',
     });
+
+    // Log login activity
+    await this.activityLogger.logLogin(row.id, 'email');
 
     return { access_token, refresh_token };
   }

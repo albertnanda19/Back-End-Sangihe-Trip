@@ -6,7 +6,8 @@ export interface AdminActivityListQuery {
   limit?: number;
   action?: string;
   entityType?: string;
-  adminId?: string;
+  userId?: string;
+  userType?: 'admin' | 'user' | 'all';
 }
 
 export interface AdminAlertListQuery {
@@ -15,6 +16,23 @@ export interface AdminAlertListQuery {
   status?: string;
   type?: string;
   severity?: string;
+}
+
+export interface ActivityLogData {
+  id: number;
+  user_id: string;
+  action: string;
+  model_type: string;
+  model_id: string;
+  old_values?: any;
+  new_values?: any;
+  metadata?: any;
+  created_at: string;
+  users?: {
+    first_name: string;
+    last_name: string;
+    email: string;
+  };
 }
 
 @Injectable()
@@ -29,13 +47,52 @@ export class AdminActivityUseCase {
     const limit = query.limit || 20;
     const offset = (page - 1) * limit;
 
-    // Build query for admin activity logs
-    // Since we don't have an activity_logs table yet, we'll create synthetic data
-    // from actual database changes (reviews moderation, destination updates, etc.)
-    
     let activities: any[] = [];
 
-    // Get recent review moderations (approve/reject actions)
+    // Get activities from activity_logs table (user activities)
+    const { data: loggedActivities } = await this.supabase
+      .from('activity_logs')
+      .select(`
+        id,
+        user_id,
+        action,
+        model_type,
+        model_id,
+        old_values,
+        new_values,
+        metadata,
+        created_at,
+        users!activity_logs_user_id_fkey(first_name, last_name, email)
+      `)
+      .order('created_at', { ascending: false })
+      .limit(50); // Get more to combine with admin activities
+
+    console.log('Logged activities from DB:', loggedActivities);
+
+    if (loggedActivities) {
+      loggedActivities.forEach((activity: any) => {
+        activities.push({
+          id: `user_${(activity as any).id}`,
+          action: (activity as any).action,
+          entityType: (activity as any).model_type,
+          entityId: (activity as any).model_id,
+          entityName: this.getEntityName(activity),
+          userId: (activity as any).user_id,
+          userName: (activity as any).users
+            ? `${(activity as any).users.first_name} ${(activity as any).users.last_name}`.trim()
+            : 'Unknown User',
+          userEmail: (activity as any).users?.email,
+          details: this.getActivityDetails(activity),
+          timestamp: (activity as any).created_at,
+          userType: 'user',
+          oldValues: (activity as any).old_values,
+          newValues: (activity as any).new_values,
+          metadata: (activity as any).metadata,
+        });
+      });
+    }
+
+    // Get recent review moderations (admin activities)
     const { data: reviews } = await this.supabase
       .from('reviews')
       .select(`
@@ -54,19 +111,21 @@ export class AdminActivityUseCase {
     if (reviews) {
       reviews.forEach((review: any) => {
         activities.push({
-          id: `review_${review.id}`,
-          action: review.status === 'active' ? 'approve' : 'reject',
+          id: `admin_review_${review.id}`,
+          action: review.status === 'active' ? 'approve_review' : 'reject_review',
           entityType: 'review',
           entityId: review.id,
           entityName: review.destinations?.name || 'Unknown Destination',
           adminId: review.moderated_by,
-          details: `Review for ${review.destinations?.name} by ${review.users?.first_name || 'User'}`,
+          userName: 'Admin',
+          details: `Review moderation: ${review.status === 'active' ? 'Approved' : 'Rejected'} review for "${review.destinations?.name}"`,
           timestamp: review.moderated_at,
+          userType: 'admin',
         });
       });
     }
 
-    // Get recent destination creations/updates
+    // Get recent destination creations/updates (admin activities)
     const { data: destinations } = await this.supabase
       .from('destinations')
       .select('id, name, created_at, updated_at, created_by')
@@ -77,14 +136,16 @@ export class AdminActivityUseCase {
       destinations.forEach((dest: any) => {
         const isNew = new Date(dest.created_at).getTime() === new Date(dest.updated_at).getTime();
         activities.push({
-          id: `destination_${dest.id}`,
-          action: isNew ? 'create' : 'update',
+          id: `admin_destination_${dest.id}`,
+          action: isNew ? 'create_destination' : 'update_destination',
           entityType: 'destination',
           entityId: dest.id,
           entityName: dest.name,
           adminId: dest.created_by,
+          userName: 'Admin',
           details: `${isNew ? 'Created' : 'Updated'} destination: ${dest.name}`,
           timestamp: dest.updated_at,
+          userType: 'admin',
         });
       });
     }
@@ -99,8 +160,11 @@ export class AdminActivityUseCase {
     if (query.entityType) {
       activities = activities.filter(a => a.entityType === query.entityType);
     }
-    if (query.adminId) {
-      activities = activities.filter(a => a.adminId === query.adminId);
+    if (query.userId) {
+      activities = activities.filter(a => a.userId === query.userId || a.adminId === query.userId);
+    }
+    if (query.userType && query.userType !== 'all') {
+      activities = activities.filter(a => a.userType === query.userType);
     }
 
     const total = activities.length;
@@ -114,6 +178,46 @@ export class AdminActivityUseCase {
         total,
       },
     };
+  }
+
+  private getEntityName(activity: any): string {
+    switch (activity.model_type) {
+      case 'trip_plan':
+        return 'Trip Plan';
+      case 'review':
+        return 'Review';
+      case 'user':
+        return 'User Profile';
+      case 'article':
+        return 'Article';
+      default:
+        return activity.model_type || 'Unknown';
+    }
+  }
+
+  private getActivityDetails(activity: any): string {
+    const action = activity.action;
+    const entityType = activity.model_type;
+    const userName = activity.users ? `${activity.users.first_name} ${activity.users.last_name}`.trim() : 'Unknown User';
+
+    switch (action) {
+      case 'user_registration':
+        return `${userName} registered a new account`;
+      case 'user_login':
+        return `${userName} logged into their account`;
+      case 'create_trip_plan':
+        return `${userName} created a new trip plan`;
+      case 'update_trip_plan':
+        return `${userName} updated their trip plan`;
+      case 'delete_trip_plan':
+        return `${userName} deleted their trip plan`;
+      case 'update_profile':
+        return `${userName} updated their profile`;
+      case 'submit_review':
+        return `${userName} submitted a review`;
+      default:
+        return `${userName} performed ${action} on ${entityType}`;
+    }
   }
 
   async getAlerts(query: AdminAlertListQuery): Promise<any> {

@@ -14,16 +14,24 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UpdateUserProfileUseCase = void 0;
 const common_1 = require("@nestjs/common");
+const activity_logger_service_1 = require("./activity-logger.service");
 let UpdateUserProfileUseCase = class UpdateUserProfileUseCase {
     userRepository;
-    constructor(userRepository) {
+    activityLogger;
+    constructor(userRepository, activityLogger) {
         this.userRepository = userRepository;
+        this.activityLogger = activityLogger;
     }
     async execute(userId, data) {
         const user = await this.userRepository.findById(userId);
         if (!user) {
             throw new common_1.NotFoundException('User not found');
         }
+        const oldProfile = {
+            firstName: user.firstName,
+            lastName: user.lastName,
+            avatarUrl: user.avatarUrl,
+        };
         const updateData = {};
         if (data.firstName || data.first_name) {
             updateData.firstName = data.firstName || data.first_name;
@@ -38,6 +46,12 @@ let UpdateUserProfileUseCase = class UpdateUserProfileUseCase {
         if (!updatedUser) {
             throw new common_1.NotFoundException('Failed to update user');
         }
+        const newProfile = {
+            firstName: updatedUser.firstName,
+            lastName: updatedUser.lastName,
+            avatarUrl: updatedUser.avatarUrl,
+        };
+        await this.activityLogger.logProfileUpdate(userId, oldProfile, newProfile);
         return {
             id: updatedUser.id,
             email: updatedUser.email,
@@ -54,6 +68,6 @@ exports.UpdateUserProfileUseCase = UpdateUserProfileUseCase;
 exports.UpdateUserProfileUseCase = UpdateUserProfileUseCase = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, common_1.Inject)('UserRepository')),
-    __metadata("design:paramtypes", [Object])
+    __metadata("design:paramtypes", [Object, activity_logger_service_1.ActivityLoggerService])
 ], UpdateUserProfileUseCase);
 //# sourceMappingURL=update-user-profile.use-case.js.map

@@ -9,5 +9,6 @@ export class Review {
     public helpful: number = 0,
     public readonly createdAt: Date = new Date(),
     public updatedAt: Date = new Date(),
+    public status: string = 'pending',
   ) {}
 }

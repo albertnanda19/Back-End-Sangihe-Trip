@@ -13,7 +13,7 @@ exports.AdminReviewQueryDto = void 0;
 const class_validator_1 = require("class-validator");
 const class_transformer_1 = require("class-transformer");
 class AdminReviewQueryDto {
-    status = 'pending';
+    status;
     page = 1;
     limit = 20;
     search;

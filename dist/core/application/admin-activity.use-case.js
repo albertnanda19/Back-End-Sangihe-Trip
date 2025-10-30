@@ -25,6 +25,45 @@ let AdminActivityUseCase = class AdminActivityUseCase {
         const limit = query.limit || 20;
         const offset = (page - 1) * limit;
         let activities = [];
+        const { data: loggedActivities } = await this.supabase
+            .from('activity_logs')
+            .select(`
+        id,
+        user_id,
+        action,
+        model_type,
+        model_id,
+        old_values,
+        new_values,
+        metadata,
+        created_at,
+        users!activity_logs_user_id_fkey(first_name, last_name, email)
+      `)
+            .order('created_at', { ascending: false })
+            .limit(50);
+        console.log('Logged activities from DB:', loggedActivities);
+        if (loggedActivities) {
+            loggedActivities.forEach((activity) => {
+                activities.push({
+                    id: `user_${activity.id}`,
+                    action: activity.action,
+                    entityType: activity.model_type,
+                    entityId: activity.model_id,
+                    entityName: this.getEntityName(activity),
+                    userId: activity.user_id,
+                    userName: activity.users
+                        ? `${activity.users.first_name} ${activity.users.last_name}`.trim()
+                        : 'Unknown User',
+                    userEmail: activity.users?.email,
+                    details: this.getActivityDetails(activity),
+                    timestamp: activity.created_at,
+                    userType: 'user',
+                    oldValues: activity.old_values,
+                    newValues: activity.new_values,
+                    metadata: activity.metadata,
+                });
+            });
+        }
         const { data: reviews } = await this.supabase
             .from('reviews')
             .select(`
@@ -42,14 +81,16 @@ let AdminActivityUseCase = class AdminActivityUseCase {
         if (reviews) {
             reviews.forEach((review) => {
                 activities.push({
-                    id: `review_${review.id}`,
-                    action: review.status === 'active' ? 'approve' : 'reject',
+                    id: `admin_review_${review.id}`,
+                    action: review.status === 'active' ? 'approve_review' : 'reject_review',
                     entityType: 'review',
                     entityId: review.id,
                     entityName: review.destinations?.name || 'Unknown Destination',
                     adminId: review.moderated_by,
-                    details: `Review for ${review.destinations?.name} by ${review.users?.first_name || 'User'}`,
+                    userName: 'Admin',
+                    details: `Review moderation: ${review.status === 'active' ? 'Approved' : 'Rejected'} review for "${review.destinations?.name}"`,
                     timestamp: review.moderated_at,
+                    userType: 'admin',
                 });
             });
         }
@@ -62,14 +103,16 @@ let AdminActivityUseCase = class AdminActivityUseCase {
             destinations.forEach((dest) => {
                 const isNew = new Date(dest.created_at).getTime() === new Date(dest.updated_at).getTime();
                 activities.push({
-                    id: `destination_${dest.id}`,
-                    action: isNew ? 'create' : 'update',
+                    id: `admin_destination_${dest.id}`,
+                    action: isNew ? 'create_destination' : 'update_destination',
                     entityType: 'destination',
                     entityId: dest.id,
                     entityName: dest.name,
                     adminId: dest.created_by,
+                    userName: 'Admin',
                     details: `${isNew ? 'Created' : 'Updated'} destination: ${dest.name}`,
                     timestamp: dest.updated_at,
+                    userType: 'admin',
                 });
             });
         }
@@ -80,8 +123,11 @@ let AdminActivityUseCase = class AdminActivityUseCase {
         if (query.entityType) {
             activities = activities.filter(a => a.entityType === query.entityType);
         }
-        if (query.adminId) {
-            activities = activities.filter(a => a.adminId === query.adminId);
+        if (query.userId) {
+            activities = activities.filter(a => a.userId === query.userId || a.adminId === query.userId);
+        }
+        if (query.userType && query.userType !== 'all') {
+            activities = activities.filter(a => a.userType === query.userType);
         }
         const total = activities.length;
         const paginatedActivities = activities.slice(offset, offset + limit);
@@ -93,6 +139,43 @@ let AdminActivityUseCase = class AdminActivityUseCase {
                 total,
             },
         };
+    }
+    getEntityName(activity) {
+        switch (activity.model_type) {
+            case 'trip_plan':
+                return 'Trip Plan';
+            case 'review':
+                return 'Review';
+            case 'user':
+                return 'User Profile';
+            case 'article':
+                return 'Article';
+            default:
+                return activity.model_type || 'Unknown';
+        }
+    }
+    getActivityDetails(activity) {
+        const action = activity.action;
+        const entityType = activity.model_type;
+        const userName = activity.users ? `${activity.users.first_name} ${activity.users.last_name}`.trim() : 'Unknown User';
+        switch (action) {
+            case 'user_registration':
+                return `${userName} registered a new account`;
+            case 'user_login':
+                return `${userName} logged into their account`;
+            case 'create_trip_plan':
+                return `${userName} created a new trip plan`;
+            case 'update_trip_plan':
+                return `${userName} updated their trip plan`;
+            case 'delete_trip_plan':
+                return `${userName} deleted their trip plan`;
+            case 'update_profile':
+                return `${userName} updated their profile`;
+            case 'submit_review':
+                return `${userName} submitted a review`;
+            default:
+                return `${userName} performed ${action} on ${entityType}`;
+        }
     }
     async getAlerts(query) {
         const page = query.page || 1;
