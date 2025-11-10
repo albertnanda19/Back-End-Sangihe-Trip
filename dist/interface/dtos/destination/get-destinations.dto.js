@@ -82,14 +82,16 @@ __decorate([
 class DestinationListItemDto {
     id;
     name;
-    category;
-    rating;
-    totalReviews;
-    location;
-    price;
-    image;
-    facilities;
+    slug;
     description;
+    address;
+    opening_hours;
+    entry_fee;
+    category;
+    avg_rating;
+    total_reviews;
+    is_featured;
+    images;
 }
 exports.DestinationListItemDto = DestinationListItemDto;
 class GetDestinationsMetaDto {

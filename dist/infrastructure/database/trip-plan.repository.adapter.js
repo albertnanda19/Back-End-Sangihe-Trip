@@ -27,9 +27,33 @@ let TripPlanRepositoryAdapter = class TripPlanRepositoryAdapter {
     }
     async create(plan) {
         const estimatedBudget = this.calcEstimatedBudget(plan.budget);
+        const daysData = plan.schedule.map((day) => {
+            const dayDate = new Date(plan.startDate.getTime() + (day.day - 1) * 24 * 60 * 60 * 1000);
+            return {
+                day_number: day.day,
+                date: dayDate.toISOString().split('T')[0],
+                title: `Hari ${day.day}`,
+                description: null,
+                daily_budget: 0,
+                items: (day.items || []).map((item) => ({
+                    id: (0, uuid_1.v4)(),
+                    destination_id: item.destinationId || null,
+                    title: item.activity,
+                    description: item.notes || null,
+                    start_time: item.startTime,
+                    end_time: item.endTime,
+                    duration_minutes: null,
+                    estimated_cost: 0,
+                    actual_cost: 0,
+                    item_type: 'destination',
+                    sort_order: 0,
+                })),
+            };
+        });
         const { error: planErr } = await this.client.from('trip_plans').insert({
             id: plan.id,
             user_id: plan.userId,
+            destination_ids: plan.destinations || [],
             title: plan.name,
             description: plan.notes,
             start_date: plan.startDate.toISOString().split('T')[0],
@@ -37,57 +61,19 @@ let TripPlanRepositoryAdapter = class TripPlanRepositoryAdapter {
             total_people: plan.peopleCount,
             trip_type: plan.tripType,
             estimated_budget: estimatedBudget,
-            privacy_level: plan.isPublic ? 'public' : 'private',
             status: 'planning',
             settings: {
                 budget: plan.budget,
-                packingList: plan.packingList,
-                destinations: plan.destinations,
             },
+            days: daysData,
+            notes: [],
+            collaborators: [],
+            packing_list: plan.packingList || [],
             created_at: plan.createdAt.toISOString(),
             updated_at: plan.createdAt.toISOString(),
         });
         if (planErr)
             throw new Error(planErr.message);
-        await Promise.all(plan.schedule.map(async (day) => {
-            const dayId = (0, uuid_1.v4)();
-            const dayDate = new Date(plan.startDate.getTime() + (day.day - 1) * 24 * 60 * 60 * 1000);
-            const { error: dayErr } = await this.client
-                .from('trip_plan_days')
-                .insert({
-                id: dayId,
-                trip_plan_id: plan.id,
-                day_number: day.day,
-                date: dayDate.toISOString().split('T')[0],
-                title: `Hari ${day.day}`,
-                description: null,
-                created_at: plan.createdAt.toISOString(),
-                updated_at: plan.createdAt.toISOString(),
-            });
-            if (dayErr)
-                throw new Error(dayErr.message);
-            if (day.items?.length) {
-                const itemRows = day.items.map((item) => ({
-                    id: (0, uuid_1.v4)(),
-                    trip_plan_day_id: dayId,
-                    destination_id: item.destinationId,
-                    title: item.activity,
-                    description: item.notes ?? null,
-                    start_time: item.startTime,
-                    end_time: item.endTime,
-                    estimated_cost: 0,
-                    item_type: 'destination',
-                    sort_order: 0,
-                    created_at: plan.createdAt.toISOString(),
-                    updated_at: plan.createdAt.toISOString(),
-                }));
-                const { error: itemsErr } = await this.client
-                    .from('trip_plan_items')
-                    .insert(itemRows);
-                if (itemsErr)
-                    throw new Error(itemsErr.message);
-            }
-        }));
     }
     async findById(id) {
         const { data: planRow, error: planErr } = await this.client
@@ -99,16 +85,10 @@ let TripPlanRepositoryAdapter = class TripPlanRepositoryAdapter {
             return null;
         if (planErr)
             throw new Error(planErr.message);
-        const { data: dayRows, error: dayErr } = await this.client
-            .from('trip_plan_days')
-            .select('*, trip_plan_items(*)')
-            .eq('trip_plan_id', id)
-            .order('day_number', { ascending: true });
-        if (dayErr)
-            throw new Error(dayErr.message);
-        const schedule = (dayRows || []).map((d) => ({
+        const daysData = planRow.days || [];
+        const schedule = daysData.map((d) => ({
             day: d.day_number,
-            items: (d.trip_plan_items || []).map((it) => ({
+            items: (d.items || []).map((it) => ({
                 destinationId: it.destination_id,
                 startTime: it.start_time,
                 endTime: it.end_time,
@@ -118,9 +98,9 @@ let TripPlanRepositoryAdapter = class TripPlanRepositoryAdapter {
         }));
         const settings = planRow.settings || {};
         const budget = settings.budget || {};
-        const packingList = settings.packingList || [];
-        const destinations = settings.destinations || [];
-        return new trip_plan_entity_1.TripPlan(planRow.user_id, planRow.title, new Date(planRow.start_date), new Date(planRow.end_date), planRow.total_people, planRow.trip_type, planRow.privacy_level === 'public', destinations, schedule, budget, planRow.description, packingList, planRow.id, new Date(planRow.created_at));
+        const packingList = planRow.packing_list || [];
+        const destinations = [];
+        return new trip_plan_entity_1.TripPlan(planRow.user_id, planRow.title, new Date(planRow.start_date), new Date(planRow.end_date), planRow.total_people, planRow.trip_type, false, destinations, schedule, budget, planRow.description, packingList, planRow.id, new Date(planRow.created_at));
     }
     async findAllByUser(query) {
         const { userId, page = 1, pageSize = 10 } = query;
@@ -129,7 +109,7 @@ let TripPlanRepositoryAdapter = class TripPlanRepositoryAdapter {
         const to = from + safePageSize - 1;
         const supabaseQuery = this.client
             .from('trip_plans')
-            .select(`id, user_id, title, start_date, end_date, total_people, trip_type, estimated_budget, privacy_level, created_at, updated_at`, { count: 'exact' })
+            .select(`id, user_id, title, start_date, end_date, total_people, trip_type, estimated_budget, created_at, updated_at`, { count: 'exact' })
             .eq('user_id', userId)
             .order('created_at', { ascending: false })
             .range(from, to);
@@ -137,7 +117,7 @@ let TripPlanRepositoryAdapter = class TripPlanRepositoryAdapter {
         if (error) {
             throw new Error(error.message);
         }
-        const mapped = (data || []).map((row) => new trip_plan_entity_1.TripPlan(row.user_id, row.title, row.start_date ? new Date(row.start_date) : new Date(), row.end_date ? new Date(row.end_date) : new Date(), row.total_people ?? 0, row.trip_type ?? '', row.privacy_level === 'public', [], [], {}, null, [], row.id, row.created_at ? new Date(row.created_at) : new Date()));
+        const mapped = (data || []).map((row) => new trip_plan_entity_1.TripPlan(row.user_id, row.title, row.start_date ? new Date(row.start_date) : new Date(), row.end_date ? new Date(row.end_date) : new Date(), row.total_people ?? 0, row.trip_type ?? '', false, [], [], {}, null, [], row.id, row.created_at ? new Date(row.created_at) : new Date()));
         return {
             data: mapped,
             totalItems: count || 0,
@@ -173,77 +153,48 @@ let TripPlanRepositoryAdapter = class TripPlanRepositoryAdapter {
             updateData.total_people = updates.peopleCount;
         if (updates.tripType !== undefined)
             updateData.trip_type = updates.tripType;
-        if (updates.isPublic !== undefined)
-            updateData.privacy_level = updates.isPublic ? 'public' : 'private';
         if (updates.notes !== undefined)
             updateData.description = updates.notes;
-        const currentSettings = existingTrip.settings || {};
-        const newSettings = { ...currentSettings };
         if (updates.budget !== undefined) {
-            newSettings.budget = updates.budget;
+            updateData.settings = { budget: updates.budget };
             updateData.estimated_budget = this.calcEstimatedBudget(updates.budget);
         }
         if (updates.packingList !== undefined) {
-            newSettings.packingList = updates.packingList;
+            updateData.packing_list = updates.packingList;
         }
-        if (updates.destinations !== undefined) {
-            newSettings.destinations = updates.destinations;
+        if (updates.schedule !== undefined) {
+            const baseDate = updates.startDate || existingTrip.startDate;
+            const daysData = updates.schedule.map((day) => {
+                const dayDate = new Date(baseDate.getTime() + (day.day - 1) * 24 * 60 * 60 * 1000);
+                return {
+                    day_number: day.day,
+                    date: dayDate.toISOString().split('T')[0],
+                    title: `Hari ${day.day}`,
+                    description: null,
+                    daily_budget: 0,
+                    items: (day.items || []).map((item) => ({
+                        id: (0, uuid_1.v4)(),
+                        destination_id: item.destinationId || null,
+                        title: item.activity,
+                        description: item.notes || null,
+                        start_time: item.startTime,
+                        end_time: item.endTime,
+                        duration_minutes: null,
+                        estimated_cost: 0,
+                        actual_cost: 0,
+                        item_type: 'destination',
+                        sort_order: 0,
+                    })),
+                };
+            });
+            updateData.days = daysData;
         }
-        updateData.settings = newSettings;
         const { error: planErr } = await this.client
             .from('trip_plans')
             .update(updateData)
             .eq('id', id);
         if (planErr)
             throw new Error(planErr.message);
-        if (updates.schedule !== undefined) {
-            const { error: deleteErr } = await this.client
-                .from('trip_plan_days')
-                .delete()
-                .eq('trip_plan_id', id);
-            if (deleteErr)
-                throw new Error(deleteErr.message);
-            await Promise.all(updates.schedule.map(async (day) => {
-                const dayId = (0, uuid_1.v4)();
-                const baseDate = updates.startDate || existingTrip.startDate;
-                const dayDate = new Date(baseDate.getTime() + (day.day - 1) * 24 * 60 * 60 * 1000);
-                const { error: dayErr } = await this.client
-                    .from('trip_plan_days')
-                    .insert({
-                    id: dayId,
-                    trip_plan_id: id,
-                    day_number: day.day,
-                    date: dayDate.toISOString().split('T')[0],
-                    title: `Hari ${day.day}`,
-                    description: null,
-                    created_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString(),
-                });
-                if (dayErr)
-                    throw new Error(dayErr.message);
-                if (day.items?.length) {
-                    const itemRows = day.items.map((item) => ({
-                        id: (0, uuid_1.v4)(),
-                        trip_plan_day_id: dayId,
-                        destination_id: item.destinationId,
-                        title: item.activity,
-                        description: item.notes ?? null,
-                        start_time: item.startTime,
-                        end_time: item.endTime,
-                        estimated_cost: 0,
-                        item_type: 'destination',
-                        sort_order: 0,
-                        created_at: new Date().toISOString(),
-                        updated_at: new Date().toISOString(),
-                    }));
-                    const { error: itemsErr } = await this.client
-                        .from('trip_plan_items')
-                        .insert(itemRows);
-                    if (itemsErr)
-                        throw new Error(itemsErr.message);
-                }
-            }));
-        }
         return this.findById(id);
     }
 };

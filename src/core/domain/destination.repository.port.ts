@@ -26,6 +26,10 @@ export interface DestinationRepositoryPort {
    */
   findById(id: string): Promise<Destination>;
   /**
+   * Retrieves a single destination by its slug and increments view count (for public access).
+   */
+  findBySlug(slug: string): Promise<Destination>;
+  /**
    * Removes a destination by its ID and returns the deleted entity (or throws if not found).
    */
   delete(id: string): Promise<Destination>;

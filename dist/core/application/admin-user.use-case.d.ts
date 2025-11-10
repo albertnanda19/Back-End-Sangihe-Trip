@@ -1,4 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js';
+import { ActivityLoggerService } from './activity-logger.service';
 export interface AdminUserListQuery {
     page?: number;
     limit?: number;
@@ -16,9 +17,10 @@ export interface AdminUserListResult {
 }
 export declare class AdminUserUseCase {
     private readonly supabase;
-    constructor(supabase: SupabaseClient);
+    private readonly activityLogger;
+    constructor(supabase: SupabaseClient, activityLogger: ActivityLoggerService);
     list(query: AdminUserListQuery): Promise<AdminUserListResult>;
     getById(id: string): Promise<any>;
-    update(id: string, data: any): Promise<any>;
+    update(id: string, data: any, adminUser?: any, ipAddress?: string, userAgent?: string): Promise<any>;
     delete(id: string, hard?: boolean): Promise<void>;
 }

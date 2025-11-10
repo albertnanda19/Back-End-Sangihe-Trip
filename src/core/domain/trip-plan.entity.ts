@@ -8,9 +8,10 @@ export interface TripBudget {
 
 export interface TripItem {
   destinationId: string;
-  startTime: string; // HH:mm format
-  endTime: string; // HH:mm format
+  startTime: string;
+  endTime: string;
   activity: string;
+  activityName?: string;
   notes?: string;
 }
 

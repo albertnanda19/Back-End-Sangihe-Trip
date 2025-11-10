@@ -13,9 +13,20 @@ export class SubmitReviewUseCase {
     private readonly reviewRepository: ReviewRepositoryPort,
     private readonly systemSettingsService: SystemSettingsService,
     private readonly activityLogger: ActivityLoggerService,
+    @Inject('SUPABASE_CLIENT')
+    private readonly supabase: any,
   ) {}
 
   async execute(userId: string, dto: CreateReviewDto): Promise<Review> {
+    // Check if user has completed a trip with this destination
+    const hasCompletedTrip = await this.checkUserCompletedTrip(userId, dto.destinationId);
+    
+    if (!hasCompletedTrip) {
+      throw new BadRequestException(
+        'You can only review destinations from completed trips',
+      );
+    }
+
     const existingReview = await this.reviewRepository.findByUserAndDestination(
       userId,
       dto.destinationId,
@@ -45,7 +56,7 @@ export class SubmitReviewUseCase {
       0,
       new Date(),
       new Date(),
-      defaultStatus, // Add status parameter
+      defaultStatus,
     );
 
     const createdReview = await this.reviewRepository.create(review);
@@ -63,5 +74,41 @@ export class SubmitReviewUseCase {
     );
 
     return createdReview;
+  }
+
+  /**
+   * Check if user has completed a trip that includes this destination
+   */
+  private async checkUserCompletedTrip(
+    userId: string,
+    destinationId: string,
+  ): Promise<boolean> {
+    const { data, error } = await this.supabase
+      .from('trip_plans')
+      .select('id, days')
+      .eq('user_id', userId)
+      .eq('status', 'completed')
+      .not('days', 'is', null);
+
+    if (error) {
+      console.error('Error checking completed trip:', error);
+      return false;
+    }
+
+    if (!data || data.length === 0) {
+      return false;
+    }
+
+    for (const trip of data) {
+      const days = (trip.days as any[]) || [];
+      for (const day of days) {
+        const items = (day.items || []) as any[];
+        if (items.some((item: any) => item.destination_id === destinationId)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 }

@@ -54,6 +54,7 @@ export class ReviewRepositoryAdapter implements ReviewRepositoryPort {
           row.helpful_count ?? 0,
           new Date(row.created_at),
           new Date(row.updated_at),
+          row.status || 'pending',
         ),
     );
 
@@ -116,6 +117,7 @@ export class ReviewRepositoryAdapter implements ReviewRepositoryPort {
         destination_id,
         rating,
         content,
+        status,
         helpful_count,
         created_at,
         updated_at,
@@ -177,6 +179,7 @@ export class ReviewRepositoryAdapter implements ReviewRepositoryPort {
           row.helpful_count ?? 0,
           new Date(row.created_at),
           new Date(row.updated_at),
+          row.status || 'pending',
         ),
         {
           user: {
@@ -223,6 +226,7 @@ export class ReviewRepositoryAdapter implements ReviewRepositoryPort {
       data.helpful_count ?? 0,
       new Date(data.created_at),
       new Date(data.updated_at),
+      data.status || 'pending',
     );
   }
 
@@ -255,6 +259,7 @@ export class ReviewRepositoryAdapter implements ReviewRepositoryPort {
       data.helpful_count ?? 0,
       new Date(data.created_at),
       new Date(data.updated_at),
+      data.status || 'pending',
     );
   }
 
@@ -301,6 +306,7 @@ export class ReviewRepositoryAdapter implements ReviewRepositoryPort {
       0,
       review.createdAt,
       review.updatedAt,
+      review.status || 'pending',
     );
   }
 

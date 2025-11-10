@@ -74,7 +74,7 @@ let UpdateTripUseCase = class UpdateTripUseCase {
             destinations: updates.destinations ?? oldTripData.destinations,
             notes: updates.notes ?? oldTripData.notes,
         };
-        await this.activityLogger.logTripPlanAction(command.userId, 'update_trip', command.tripId, newTripData, oldTripData);
+        await this.activityLogger.logTripPlanAction(command.userId, 'update', command.tripId, newTripData, oldTripData);
     }
 };
 exports.UpdateTripUseCase = UpdateTripUseCase;

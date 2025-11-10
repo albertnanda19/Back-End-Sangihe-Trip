@@ -15,10 +15,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AdminArticleUseCase = void 0;
 const common_1 = require("@nestjs/common");
 const supabase_js_1 = require("@supabase/supabase-js");
+const activity_logger_service_1 = require("./activity-logger.service");
 let AdminArticleUseCase = class AdminArticleUseCase {
     supabase;
-    constructor(supabase) {
+    activityLogger;
+    constructor(supabase, activityLogger) {
         this.supabase = supabase;
+        this.activityLogger = activityLogger;
     }
     async list(query) {
         const page = query.page || 1;
@@ -51,16 +54,12 @@ let AdminArticleUseCase = class AdminArticleUseCase {
         const transformedData = (data || []).map((article) => ({
             id: article.id,
             title: article.title,
-            slug: article.slug,
-            excerpt: article.excerpt,
             category: article.category,
-            featuredImage: article.featured_image,
             status: article.status,
             viewCount: article.view_count,
             author: {
                 firstName: article.users?.first_name,
                 lastName: article.users?.last_name,
-                email: article.users?.email,
             },
             createdAt: article.created_at,
             updatedAt: article.updated_at,
@@ -95,6 +94,7 @@ let AdminArticleUseCase = class AdminArticleUseCase {
             featuredImage: article.featured_image,
             status: article.status,
             viewCount: article.view_count,
+            readingTime: article.reading_time,
             author: {
                 firstName: article.users?.first_name,
                 lastName: article.users?.last_name,
@@ -106,8 +106,9 @@ let AdminArticleUseCase = class AdminArticleUseCase {
             publishedAt: article.published_at,
         };
     }
-    async create(data, adminId) {
-        const slug = this.generateSlug(data.title);
+    async create(data, adminId, adminUser, ipAddress, userAgent) {
+        const slug = await this.generateUniqueSlug(data.title);
+        const readingTime = this.calculateReadingTime(data.content);
         const articleData = {
             title: data.title,
             slug,
@@ -118,6 +119,7 @@ let AdminArticleUseCase = class AdminArticleUseCase {
             status: data.status || 'draft',
             author_id: adminId,
             view_count: 0,
+            reading_time: readingTime,
         };
         if (articleData.status === 'published') {
             articleData.published_at = new Date().toISOString();
@@ -131,17 +133,26 @@ let AdminArticleUseCase = class AdminArticleUseCase {
         if (error) {
             throw new Error(`Failed to create article: ${error.message}`);
         }
+        if (adminUser) {
+            const adminName = adminUser.name || 'Admin';
+            await this.activityLogger.logAdminAction(adminUser.id, 'create', 'article', article.id, {
+                articleTitle: data.title,
+                description: `${adminName} created article "${data.title}"`,
+            }, article, adminName, adminUser.email, data.title, ipAddress, userAgent);
+        }
         return this.getById(article.id);
     }
-    async update(id, data) {
-        await this.getById(id);
+    async update(id, data, adminUser, ipAddress, userAgent) {
+        const existingArticle = await this.getById(id);
         const updateData = {};
         if (data.title !== undefined) {
             updateData.title = data.title;
-            updateData.slug = this.generateSlug(data.title);
+            updateData.slug = await this.generateUniqueSlug(data.title, id);
         }
-        if (data.content !== undefined)
+        if (data.content !== undefined) {
             updateData.content = data.content;
+            updateData.reading_time = this.calculateReadingTime(data.content);
+        }
         if (data.excerpt !== undefined)
             updateData.excerpt = data.excerpt;
         if (data.category !== undefined)
@@ -168,28 +179,59 @@ let AdminArticleUseCase = class AdminArticleUseCase {
         if (error) {
             throw new Error(`Failed to update article: ${error.message}`);
         }
-        return this.getById(id);
-    }
-    async delete(id, hard = false) {
-        await this.getById(id);
-        if (hard) {
-            const { error } = await this.supabase.from('articles').delete().eq('id', id);
-            if (error) {
-                throw new Error(`Failed to delete article: ${error.message}`);
+        const updatedArticle = await this.getById(id);
+        if (adminUser && Object.keys(updateData).length > 0) {
+            const adminName = adminUser.name || 'Admin';
+            const articleTitle = updatedArticle.title;
+            const oldValues = {};
+            const newValues = {};
+            if (data.title !== undefined) {
+                oldValues.title = existingArticle.title;
+                newValues.title = data.title;
             }
-        }
-        else {
-            const { error } = await this.supabase
-                .from('articles')
-                .update({ deleted_at: new Date().toISOString() })
-                .eq('id', id);
-            if (error) {
-                throw new Error(`Failed to delete article: ${error.message}`);
+            if (data.content !== undefined) {
+                oldValues.content = existingArticle.content;
+                newValues.content = data.content;
             }
+            if (data.excerpt !== undefined) {
+                oldValues.excerpt = existingArticle.excerpt;
+                newValues.excerpt = data.excerpt;
+            }
+            if (data.category !== undefined) {
+                oldValues.category = existingArticle.category;
+                newValues.category = data.category;
+            }
+            if (data.coverImage !== undefined) {
+                oldValues.featured_image = existingArticle.featuredImage;
+                newValues.featured_image = data.coverImage;
+            }
+            if (data.status !== undefined) {
+                oldValues.status = existingArticle.status;
+                newValues.status = data.status;
+            }
+            await this.activityLogger.logAdminAction(adminUser.id, 'update', 'article', id, {
+                articleTitle,
+                description: `${adminName} updated article "${articleTitle}"`,
+            }, newValues, adminName, adminUser.email, articleTitle, ipAddress, userAgent, oldValues);
+        }
+        return updatedArticle;
+    }
+    async delete(id, adminUser, ipAddress, userAgent) {
+        const existing = await this.getById(id);
+        if (adminUser) {
+            const adminName = adminUser.name || 'Admin';
+            await this.activityLogger.logAdminAction(adminUser.id, 'delete', 'article', id, {
+                articleTitle: existing.title,
+                description: `${adminName} deleted article "${existing.title}"`,
+            }, null, adminName, adminUser.email, existing.title, ipAddress, userAgent);
+        }
+        const { error } = await this.supabase.from('articles').delete().eq('id', id);
+        if (error) {
+            throw new Error(`Failed to delete article: ${error.message}`);
         }
     }
-    async publish(id) {
-        await this.getById(id);
+    async publish(id, adminUser, ipAddress, userAgent) {
+        const existingArticle = await this.getById(id);
         const updateData = {
             status: 'published',
             published_at: new Date().toISOString(),
@@ -201,7 +243,16 @@ let AdminArticleUseCase = class AdminArticleUseCase {
         if (error) {
             throw new Error(`Failed to publish article: ${error.message}`);
         }
-        return this.getById(id);
+        const updatedArticle = await this.getById(id);
+        if (adminUser) {
+            const adminName = adminUser.name || 'Admin';
+            const articleTitle = updatedArticle.title;
+            await this.activityLogger.logAdminAction(adminUser.id, 'update', 'article', id, {
+                articleTitle,
+                description: `${adminName} published article "${articleTitle}"`,
+            }, { status: 'published', published_at: updateData.published_at }, adminName, adminUser.email, articleTitle, ipAddress, userAgent, { status: existingArticle.status, published_at: existingArticle.publishedAt });
+        }
+        return updatedArticle;
     }
     generateSlug(title) {
         return title
@@ -211,11 +262,46 @@ let AdminArticleUseCase = class AdminArticleUseCase {
             .replace(/-+/g, '-')
             .trim();
     }
+    async generateUniqueSlug(title, excludeId) {
+        const baseSlug = this.generateSlug(title);
+        let slug = baseSlug;
+        let counter = 1;
+        while (true) {
+            let query = this.supabase
+                .from('articles')
+                .select('id')
+                .eq('slug', slug)
+                .is('deleted_at', null);
+            if (excludeId) {
+                query = query.neq('id', excludeId);
+            }
+            const { data, error } = await query.maybeSingle();
+            if (error) {
+                throw new Error(`Failed to check slug uniqueness: ${error.message}`);
+            }
+            if (!data) {
+                return slug;
+            }
+            slug = `${baseSlug}-${counter}`;
+            counter++;
+        }
+    }
+    calculateReadingTime(content) {
+        if (!content)
+            return 1;
+        const words = content
+            .trim()
+            .split(/\s+/)
+            .filter((word) => word.length > 0);
+        const minutes = Math.ceil(words.length / 200);
+        return Math.max(1, minutes);
+    }
 };
 exports.AdminArticleUseCase = AdminArticleUseCase;
 exports.AdminArticleUseCase = AdminArticleUseCase = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, common_1.Inject)('SUPABASE_CLIENT')),
-    __metadata("design:paramtypes", [supabase_js_1.SupabaseClient])
+    __metadata("design:paramtypes", [supabase_js_1.SupabaseClient,
+        activity_logger_service_1.ActivityLoggerService])
 ], AdminArticleUseCase);
 //# sourceMappingURL=admin-article.use-case.js.map

@@ -21,7 +21,7 @@ export class AdminArticleQueryDto {
 
   @IsOptional()
   @IsString()
-  @IsIn(['draft', 'published', 'archived'])
+  @IsIn(['draft', 'published'])
   status?: string;
 
   @IsOptional()

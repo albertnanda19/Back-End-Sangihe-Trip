@@ -32,8 +32,8 @@ let AuthUseCase = class AuthUseCase {
     mapRowToUser(row) {
         return new user_entity_1.User(row.id, `${row.first_name} ${row.last_name}`.trim(), row.email, row.first_name, row.last_name, row.avatar_url, new Date(row.created_at));
     }
-    async execute(dto) {
-        const { email, password, name } = dto;
+    async execute(dto, ipAddress, userAgent) {
+        const { email, password, firstName, lastName = '' } = dto;
         const { data: existing } = await this.client
             .from('users')
             .select('id')
@@ -58,8 +58,8 @@ let AuthUseCase = class AuthUseCase {
             id: newUserId,
             email,
             password_hash: hashed,
-            first_name: name,
-            last_name: '',
+            first_name: firstName,
+            last_name: lastName,
             role_id: userRole.id,
         })
             .select()
@@ -73,10 +73,10 @@ let AuthUseCase = class AuthUseCase {
             firstName: user.firstName,
             lastName: user.lastName,
             userType: 'user',
-        });
+        }, ipAddress, userAgent);
         return user;
     }
-    async login(dto) {
+    async login(dto, ipAddress, userAgent) {
         const { email, password } = dto;
         const { data: row } = await this.client
             .from('users')
@@ -119,7 +119,8 @@ let AuthUseCase = class AuthUseCase {
         const refresh_token = this.jwt.sign(refreshPayload, {
             expiresIn: process.env.JWT_REFRESH_EXPIRES_IN ?? '7d',
         });
-        await this.activityLogger.logLogin(row.id, 'email');
+        const actorRole = role === 'admin' ? 'admin' : 'user';
+        await this.activityLogger.logLogin(row.id, name, row.email, 'email', ipAddress, userAgent, actorRole);
         return { access_token, refresh_token };
     }
 };

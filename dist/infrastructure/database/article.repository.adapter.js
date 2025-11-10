@@ -191,6 +191,9 @@ let ArticleRepositoryAdapter = class ArticleRepositoryAdapter {
         }
         if (!articleRow)
             return null;
+        if (!isUUID) {
+            void this.incrementViewCount(articleRow.id, articleRow.view_count || 0);
+        }
         const [authorRes, categoryRes, relatedRes, commentsRes, statsRes] = await Promise.all([
             this.client
                 .from('users')
@@ -269,6 +272,7 @@ let ArticleRepositoryAdapter = class ArticleRepositoryAdapter {
             tags: articleRow.tags ?? [],
             content: articleRow.content,
             wordCount,
+            viewCount: articleRow.view_count || 0,
         };
         const related = (relatedRes.data || []).map((r) => ({
             id: r.id,
@@ -308,6 +312,16 @@ let ArticleRepositoryAdapter = class ArticleRepositoryAdapter {
             relatedArticles: related,
             comments: rootComments,
         };
+    }
+    async incrementViewCount(articleId, currentCount) {
+        try {
+            await this.client
+                .from('articles')
+                .update({ view_count: currentCount + 1 })
+                .eq('id', articleId);
+        }
+        catch (error) {
+        }
     }
 };
 exports.ArticleRepositoryAdapter = ArticleRepositoryAdapter;

@@ -27,6 +27,10 @@ class TripItemDto {
 
   @IsOptional()
   @IsString()
+  activityName?: string;
+
+  @IsOptional()
+  @IsString()
   notes?: string;
 }
 

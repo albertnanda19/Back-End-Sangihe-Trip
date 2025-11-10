@@ -4,6 +4,11 @@ declare class LocationDto {
     city: string;
     province: string;
 }
+declare class ActivityDto {
+    name: string;
+    startTime: string;
+    endTime: string;
+}
 declare class ImageDto {
     url: string;
     alt?: string;
@@ -25,6 +30,7 @@ export declare class CreateAdminDestinationDto {
     entryFee?: number;
     categories?: string[];
     facilities?: string[];
+    activities?: ActivityDto[];
     images?: ImageDto[];
     published?: boolean;
     isFeatured?: boolean;
@@ -45,6 +51,7 @@ export declare class UpdateAdminDestinationDto {
     entryFee?: number;
     categories?: string[];
     facilities?: string[];
+    activities?: ActivityDto[];
     images?: ImageDto[];
     published?: boolean;
     isFeatured?: boolean;

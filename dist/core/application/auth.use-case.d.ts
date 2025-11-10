@@ -9,14 +9,15 @@ export declare class AuthUseCase {
     constructor(client: SupabaseClient, jwt: JwtService, activityLogger: ActivityLoggerService);
     private mapRowToUser;
     execute(dto: {
-        name: string;
+        firstName: string;
+        lastName?: string;
         email: string;
         password: string;
-    }): Promise<User>;
+    }, ipAddress?: string, userAgent?: string): Promise<User>;
     login(dto: {
         email: string;
         password: string;
-    }): Promise<{
+    }, ipAddress?: string, userAgent?: string): Promise<{
         access_token: string;
         refresh_token: string;
     }>;

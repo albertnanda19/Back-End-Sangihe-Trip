@@ -40,7 +40,7 @@ export class DeleteTripUseCase {
     // Log trip deletion activity
     await this.activityLogger.logTripPlanAction(
       userId,
-      'delete_trip',
+      'delete',
       tripId,
       undefined, // no new data
       tripData, // old data

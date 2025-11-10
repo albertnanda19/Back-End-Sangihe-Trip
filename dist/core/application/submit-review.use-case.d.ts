@@ -7,6 +7,8 @@ export declare class SubmitReviewUseCase {
     private readonly reviewRepository;
     private readonly systemSettingsService;
     private readonly activityLogger;
-    constructor(reviewRepository: ReviewRepositoryPort, systemSettingsService: SystemSettingsService, activityLogger: ActivityLoggerService);
+    private readonly supabase;
+    constructor(reviewRepository: ReviewRepositoryPort, systemSettingsService: SystemSettingsService, activityLogger: ActivityLoggerService, supabase: any);
     execute(userId: string, dto: CreateReviewDto): Promise<Review>;
+    private checkUserCompletedTrip;
 }

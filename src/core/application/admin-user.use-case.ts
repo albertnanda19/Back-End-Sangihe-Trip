@@ -1,5 +1,6 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { SupabaseClient } from '@supabase/supabase-js';
+import { ActivityLoggerService } from './activity-logger.service';
 
 export interface AdminUserListQuery {
   page?: number;
@@ -23,6 +24,7 @@ export class AdminUserUseCase {
   constructor(
     @Inject('SUPABASE_CLIENT')
     private readonly supabase: SupabaseClient,
+    private readonly activityLogger: ActivityLoggerService,
   ) {}
 
   async list(query: AdminUserListQuery): Promise<AdminUserListResult> {
@@ -146,9 +148,9 @@ export class AdminUserUseCase {
     };
   }
 
-  async update(id: string, data: any): Promise<any> {
+  async update(id: string, data: any, adminUser?: any, ipAddress?: string, userAgent?: string): Promise<any> {
     // Check if user exists
-    await this.getById(id);
+    const existingUser = await this.getById(id);
 
     const updateData: any = {};
     if (data.status !== undefined) updateData.status = data.status;
@@ -179,7 +181,47 @@ export class AdminUserUseCase {
       }
     }
 
-    return this.getById(id);
+    const updatedUser = await this.getById(id);
+
+    // Log admin action if admin user provided
+    if (adminUser && Object.keys(updateData).length > 0) {
+      const adminName = adminUser.name || 'Admin';
+      const userName = `${updatedUser.first_name} ${updatedUser.last_name}`.trim();
+
+      // Prepare old and new values for logging - only include changed fields
+      const oldValues: any = {};
+      const newValues: any = {};
+
+      if (data.status !== undefined) {
+        oldValues.status = existingUser.status;
+        newValues.status = data.status;
+      }
+
+      if (data.role !== undefined) {
+        oldValues.role = existingUser.role?.name;
+        newValues.role = data.role;
+      }
+
+      await this.activityLogger.logAdminAction(
+        adminUser.id,
+        'update',
+        'user',
+        id,
+        {
+          userName,
+          description: `${adminName} updated user "${userName}"`,
+        },
+        newValues,
+        adminName,
+        adminUser.email,
+        userName,
+        ipAddress,
+        userAgent,
+        oldValues,
+      );
+    }
+
+    return updatedUser;
   }
 
   async delete(id: string, hard: boolean = false): Promise<void> {

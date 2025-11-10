@@ -21,15 +21,17 @@ let AdminMetricsUseCase = class AdminMetricsUseCase {
         this.supabase = supabase;
     }
     async getSummary(range) {
-        const [usersResult, destinationsResult, tripsResult, reviewsResult] = await Promise.all([
+        const [usersResult, destinationsResult, articlesResult, tripsResult, reviewsResult] = await Promise.all([
             this.supabase
                 .from('users')
                 .select('id', { count: 'exact', head: true })
                 .is('deleted_at', null),
             this.supabase
                 .from('destinations')
-                .select('id', { count: 'exact', head: true })
-                .is('deleted_at', null),
+                .select('id', { count: 'exact', head: true }),
+            this.supabase
+                .from('articles')
+                .select('id', { count: 'exact', head: true }),
             this.supabase
                 .from('trip_plans')
                 .select('id', { count: 'exact', head: true })
@@ -42,6 +44,7 @@ let AdminMetricsUseCase = class AdminMetricsUseCase {
         return {
             totalUsers: usersResult.count || 0,
             totalDestinations: destinationsResult.count || 0,
+            totalArticles: articlesResult.count || 0,
             totalTripPlans: tripsResult.count || 0,
             totalReviews: reviewsResult.count || 0,
         };
@@ -77,7 +80,6 @@ let AdminMetricsUseCase = class AdminMetricsUseCase {
                 .from('destinations')
                 .select('id, name, slug, view_count')
                 .eq('status', 'active')
-                .is('deleted_at', null)
                 .order('view_count', { ascending: false })
                 .limit(limit);
             return (destinations?.map((d) => ({

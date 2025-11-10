@@ -8,6 +8,7 @@ import {
   Body,
   UseGuards,
   HttpCode,
+  Req,
 } from '@nestjs/common';
 import { JwtAdminGuard } from '../../common/guards/jwt-admin.guard';
 import { ResponseMessage } from '../../common/decorators/response.decorator';
@@ -34,8 +35,12 @@ export class AdminUserController {
 
   @Patch(':id')
   @ResponseMessage('Berhasil memperbarui pengguna')
-  async update(@Param('id') id: string, @Body() dto: UpdateUserDto) {
-    return await this.userUseCase.update(id, dto);
+  async update(@Param('id') id: string, @Body() dto: UpdateUserDto, @Req() req: any) {
+    const ipAddress = req.ip || req.ips?.[0] || req.connection?.remoteAddress || req.socket?.remoteAddress || '127.0.0.1';
+    const userAgent = req.headers?.['user-agent'] || req.get?.('User-Agent') || 'Unknown';
+    const adminUser = req.user; // From JWT guard
+
+    return await this.userUseCase.update(id, dto, adminUser, ipAddress, userAgent);
   }
 
   @Delete(':id')

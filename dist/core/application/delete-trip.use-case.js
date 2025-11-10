@@ -43,7 +43,7 @@ let DeleteTripUseCase = class DeleteTripUseCase {
         if (!deleted) {
             throw new common_1.NotFoundException('Trip not found');
         }
-        await this.activityLogger.logTripPlanAction(userId, 'delete_trip', tripId, undefined, tripData);
+        await this.activityLogger.logTripPlanAction(userId, 'delete', tripId, undefined, tripData);
     }
 };
 exports.DeleteTripUseCase = DeleteTripUseCase;

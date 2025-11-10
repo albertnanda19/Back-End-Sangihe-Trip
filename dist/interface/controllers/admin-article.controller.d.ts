@@ -7,7 +7,7 @@ export declare class AdminArticleController {
     list(query: AdminArticleQueryDto): Promise<any>;
     getById(id: string): Promise<any>;
     create(dto: CreateAdminArticleDto, req: any): Promise<any>;
-    update(id: string, dto: UpdateAdminArticleDto): Promise<any>;
-    delete(id: string, hard?: string): Promise<null>;
-    publish(id: string): Promise<any>;
+    update(id: string, dto: UpdateAdminArticleDto, req: any): Promise<any>;
+    delete(id: string, req: any): Promise<null>;
+    publish(id: string, req: any): Promise<any>;
 }

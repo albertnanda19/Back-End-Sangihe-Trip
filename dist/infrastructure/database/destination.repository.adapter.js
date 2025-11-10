@@ -21,27 +21,15 @@ let DestinationRepositoryAdapter = class DestinationRepositoryAdapter {
     constructor(client) {
         this.client = client;
     }
-    parseImages(images) {
-        if (Array.isArray(images))
-            return images;
-        if (typeof images === 'string') {
-            return images
-                .replace(/^{|}$/g, '')
-                .split(',')
-                .map((s) => s.trim().replace(/^"|"$/g, ''))
-                .filter(Boolean);
-        }
-        return [];
-    }
     mapRowToEntity(row) {
-        return new destination_entity_1.Destination(row.id, row.name, row.category, {
+        return new destination_entity_1.Destination(row.id, row.name, row.slug ?? '', row.category, {
             address: row.address,
             lat: row.latitude ?? 0,
             lng: row.longitude ?? 0,
-        }, 0, row.price, row.opening_hours ?? '', row.description, row.facilities ?? [], [], this.parseImages(row.images), undefined, row.created_at ? new Date(row.created_at) : new Date());
+        }, 0, row.entry_fee ?? 0, row.opening_hours ?? '', row.description, row.facilities ?? [], [], [], undefined, row.created_at ? new Date(row.created_at) : new Date(), 0, 0, 0, Array.isArray(row.activities) ? row.activities : [], row.phone ?? '', row.email ?? '', row.website ?? '', row.is_featured ?? false);
     }
     toRow(dest) {
-        const { id, name, category, location, distanceKm, price, openHours, description, facilities, tips, images, video, createdAt, } = dest;
+        const { id, name, category, location, price, openHours, description, facilities, video, createdAt, activities, } = dest;
         return {
             id,
             name,
@@ -51,11 +39,10 @@ let DestinationRepositoryAdapter = class DestinationRepositoryAdapter {
             latitude: location.lat,
             longitude: location.lng,
             opening_hours: openHours,
-            price,
             entry_fee: price,
             category,
             facilities: Array.isArray(facilities) ? facilities : [],
-            images: Array.isArray(images) ? images : [],
+            activities: Array.isArray(activities) ? activities : [],
             video: video ?? null,
             created_at: createdAt.toISOString(),
             updated_at: createdAt.toISOString(),
@@ -74,10 +61,11 @@ let DestinationRepositoryAdapter = class DestinationRepositoryAdapter {
         return destination;
     }
     async findAll(query) {
-        const { search, category, location, minRating, priceMin, priceMax, sortBy = 'popular', page = 1, pageSize = 12, } = query;
+        const { search, category, location, priceMin, priceMax, sortBy = 'popular', page = 1, pageSize = 12, } = query;
         let supabaseQuery = this.client
             .from('destinations')
-            .select(`id, name, category, address, price, images, facilities, description, created_at`, { count: 'exact' });
+            .select(`id, name, slug, category, address, latitude, longitude, phone, email, website, opening_hours, entry_fee, facilities, activities, description, is_featured, avg_rating, total_reviews, created_at`, { count: 'exact' })
+            .eq('status', 'active');
         if (search) {
             supabaseQuery = supabaseQuery.ilike('name', `%${search}%`);
         }
@@ -87,23 +75,28 @@ let DestinationRepositoryAdapter = class DestinationRepositoryAdapter {
         if (location) {
             supabaseQuery = supabaseQuery.ilike('address', `%${location}%`);
         }
+        if (typeof query.minRating === 'number') {
+            supabaseQuery = supabaseQuery.gte('avg_rating', query.minRating);
+        }
         if (typeof priceMin === 'number') {
-            supabaseQuery = supabaseQuery.gte('price', priceMin);
+            supabaseQuery = supabaseQuery.gte('entry_fee', priceMin);
         }
         if (typeof priceMax === 'number') {
-            supabaseQuery = supabaseQuery.lte('price', priceMax);
+            supabaseQuery = supabaseQuery.lte('entry_fee', priceMax);
         }
         switch (sortBy) {
             case 'price-low':
-                supabaseQuery = supabaseQuery.order('price', { ascending: true });
+                supabaseQuery = supabaseQuery.order('entry_fee', { ascending: true });
+                break;
+            case 'rating':
+                supabaseQuery = supabaseQuery.order('avg_rating', { ascending: false, nullsFirst: false });
                 break;
             case 'newest':
                 supabaseQuery = supabaseQuery.order('created_at', { ascending: false });
                 break;
             case 'popular':
-            case 'rating':
             default:
-                supabaseQuery = supabaseQuery.order('created_at', { ascending: false });
+                supabaseQuery = supabaseQuery.order('view_count', { ascending: false });
         }
         const safePageSize = Math.min(Math.max(pageSize, 1), 50);
         const from = (page - 1) * safePageSize;
@@ -113,28 +106,12 @@ let DestinationRepositoryAdapter = class DestinationRepositoryAdapter {
         if (error) {
             throw new Error(error.message);
         }
-        function parsePgArray(str) {
-            if (!str)
-                return [];
-            return str
-                .replace(/^{|}$/g, '')
-                .split(',')
-                .map((s) => s.trim().replace(/^"|"$/g, ''))
-                .filter(Boolean);
-        }
         const mapped = (data || []).map((row) => {
-            let imagesArr = [];
-            if (Array.isArray(row.images)) {
-                imagesArr = row.images;
-            }
-            else if (typeof row.images === 'string') {
-                imagesArr = parsePgArray(row.images);
-            }
-            return new destination_entity_1.Destination(row.id, row.name, row.category, {
+            return new destination_entity_1.Destination(row.id, row.name, row.slug ?? '', row.category, {
                 address: row.address,
                 lat: row.latitude ?? 0,
                 lng: row.longitude ?? 0,
-            }, 0, row.price, row.opening_hours ?? '', row.description, row.facilities ?? [], [], imagesArr, undefined, row.created_at ? new Date(row.created_at) : new Date());
+            }, 0, row.entry_fee ?? 0, row.opening_hours ?? '', row.description, row.facilities ?? [], [], [], undefined, row.created_at ? new Date(row.created_at) : new Date(), 0, 0, 0, []);
         });
         return {
             data: mapped,
@@ -144,7 +121,7 @@ let DestinationRepositoryAdapter = class DestinationRepositoryAdapter {
     async findAllNoPagination() {
         const { data, error } = await this.client
             .from('destinations')
-            .select('id, name, category, address, latitude, longitude, price, opening_hours, description, facilities, images, created_at')
+            .select('id, name, slug, category, address, latitude, longitude, phone, email, website, opening_hours, entry_fee, description, facilities, activities, is_featured, created_at')
             .order('created_at', { ascending: false });
         if (error) {
             throw new Error(error.message);
@@ -154,17 +131,17 @@ let DestinationRepositoryAdapter = class DestinationRepositoryAdapter {
     async delete(id) {
         const { data: row, error: fetchError } = await this.client
             .from('destinations')
-            .select('id, name, category, address, latitude, longitude, price, opening_hours, description, facilities, images, video, created_at')
+            .select('id, name, slug, category, address, latitude, longitude, phone, email, website, opening_hours, entry_fee, description, facilities, activities, is_featured, created_at')
             .eq('id', id)
             .single();
         if (fetchError || !row) {
             throw new Error(fetchError?.message || 'Destination not found');
         }
-        const destination = new destination_entity_1.Destination(row.id, row.name, row.category, {
+        const destination = new destination_entity_1.Destination(row.id, row.name, row.slug ?? '', row.category, {
             address: row.address,
             lat: row.latitude ?? 0,
             lng: row.longitude ?? 0,
-        }, 0, row.price, row.opening_hours ?? '', row.description, row.facilities ?? [], [], row.images ?? [], row.video ?? undefined, row.created_at ? new Date(row.created_at) : new Date());
+        }, 0, row.entry_fee, row.opening_hours ?? '', row.description, row.facilities ?? [], [], [], undefined, row.created_at ? new Date(row.created_at) : new Date(), 0, 0, 0, Array.isArray(row.activities) ? row.activities : [], row.phone ?? '', row.email ?? '', row.website ?? '', row.is_featured ?? false);
         const { error: deleteError } = await this.client
             .from('destinations')
             .delete()
@@ -177,35 +154,52 @@ let DestinationRepositoryAdapter = class DestinationRepositoryAdapter {
     async findById(id) {
         const { data: row, error } = await this.client
             .from('destinations')
-            .select(`id, name, category, address, latitude, longitude, price, opening_hours, description, facilities, images, video, avg_rating, total_reviews, created_at`)
+            .select(`id, name, slug, category, address, latitude, longitude, phone, email, website, opening_hours, entry_fee, description, facilities, activities, avg_rating, total_reviews, view_count, is_featured, created_at`)
             .eq('id', id)
+            .eq('status', 'active')
             .single();
         if (error || !row) {
             throw new Error(error?.message || 'Destination not found');
         }
-        const parsePgArray = (str) => {
-            if (!str)
-                return [];
-            return str
-                .replace(/^{|}$/g, '')
-                .split(',')
-                .map((s) => s.trim().replace(/^"|"$/g, ''))
-                .filter(Boolean);
-        };
-        let imagesArr = [];
-        if (Array.isArray(row.images)) {
-            imagesArr = row.images;
-        }
-        else if (typeof row.images === 'string') {
-            imagesArr = parsePgArray(row.images);
-        }
         const facilities = Array.isArray(row.facilities) ? row.facilities : [];
-        const destination = new destination_entity_1.Destination(row.id, row.name, row.category, {
+        const activities = Array.isArray(row.activities) ? row.activities : [];
+        const destination = new destination_entity_1.Destination(row.id, row.name, row.slug ?? '', row.category, {
             address: row.address,
             lat: row.latitude ?? 0,
             lng: row.longitude ?? 0,
-        }, 0, row.price, row.opening_hours ?? '', row.description, facilities, [], imagesArr, row.video ?? undefined, row.created_at ? new Date(row.created_at) : new Date(), Number(row.avg_rating ?? 0), Number(row.total_reviews ?? 0));
+        }, 0, row.entry_fee, row.opening_hours ?? '', row.description, facilities, [], [], undefined, row.created_at ? new Date(row.created_at) : new Date(), Number(row.avg_rating ?? 0), Number(row.total_reviews ?? 0), Number(row.view_count ?? 0), activities, row.phone ?? '', row.email ?? '', row.website ?? '', row.is_featured ?? false);
         return destination;
+    }
+    async findBySlug(slug) {
+        const { data: row, error } = await this.client
+            .from('destinations')
+            .select(`id, name, slug, category, address, latitude, longitude, phone, email, website, opening_hours, entry_fee, description, facilities, activities, avg_rating, total_reviews, view_count, is_featured, created_at`)
+            .eq('slug', slug)
+            .eq('status', 'active')
+            .single();
+        if (error || !row) {
+            throw new Error(error?.message || 'Destination not found');
+        }
+        void this.incrementViewCount(row.id, row.view_count || 0);
+        const facilities = Array.isArray(row.facilities) ? row.facilities : [];
+        const activities = Array.isArray(row.activities) ? row.activities : [];
+        const destination = new destination_entity_1.Destination(row.id, row.name, row.slug ?? '', row.category, {
+            address: row.address,
+            lat: row.latitude ?? 0,
+            lng: row.longitude ?? 0,
+        }, 0, row.entry_fee, row.opening_hours ?? '', row.description, facilities, [], [], undefined, row.created_at ? new Date(row.created_at) : new Date(), Number(row.avg_rating ?? 0), Number(row.total_reviews ?? 0), Number(row.view_count ?? 0), activities, row.phone ?? '', row.email ?? '', row.website ?? '', row.is_featured ?? false);
+        return destination;
+    }
+    async incrementViewCount(destinationId, currentCount) {
+        try {
+            await this.client
+                .from('destinations')
+                .update({ view_count: currentCount + 1 })
+                .eq('id', destinationId);
+        }
+        catch (error) {
+            console.error('Failed to increment destination view count:', error);
+        }
     }
 };
 exports.DestinationRepositoryAdapter = DestinationRepositoryAdapter;

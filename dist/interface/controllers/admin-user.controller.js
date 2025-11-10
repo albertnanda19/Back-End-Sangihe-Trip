@@ -30,8 +30,11 @@ let AdminUserController = class AdminUserController {
     async getById(id) {
         return await this.userUseCase.getById(id);
     }
-    async update(id, dto) {
-        return await this.userUseCase.update(id, dto);
+    async update(id, dto, req) {
+        const ipAddress = req.ip || req.ips?.[0] || req.connection?.remoteAddress || req.socket?.remoteAddress || '127.0.0.1';
+        const userAgent = req.headers?.['user-agent'] || req.get?.('User-Agent') || 'Unknown';
+        const adminUser = req.user;
+        return await this.userUseCase.update(id, dto, adminUser, ipAddress, userAgent);
     }
     async delete(id, hard) {
         await this.userUseCase.delete(id, hard === 'true');
@@ -60,8 +63,9 @@ __decorate([
     (0, response_decorator_1.ResponseMessage)('Berhasil memperbarui pengguna'),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, admin_user_update_dto_1.UpdateUserDto]),
+    __metadata("design:paramtypes", [String, admin_user_update_dto_1.UpdateUserDto, Object]),
     __metadata("design:returntype", Promise)
 ], AdminUserController.prototype, "update", null);
 __decorate([

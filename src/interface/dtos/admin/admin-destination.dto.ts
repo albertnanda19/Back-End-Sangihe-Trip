@@ -24,6 +24,17 @@ class LocationDto {
   province: string;
 }
 
+class ActivityDto {
+  @IsString()
+  name: string;
+
+  @IsString()
+  startTime: string; // Format: HH:mm
+
+  @IsString()
+  endTime: string; // Format: HH:mm
+}
+
 class ImageDto {
   @IsUrl()
   url: string;
@@ -102,6 +113,12 @@ export class CreateAdminDestinationDto {
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
+  @Type(() => ActivityDto)
+  activities?: ActivityDto[];
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
   @Type(() => ImageDto)
   images?: ImageDto[];
 
@@ -114,7 +131,7 @@ export class CreateAdminDestinationDto {
   isFeatured?: boolean;
 
   @IsOptional()
-  @IsEnum(['active', 'inactive', 'pending', 'rejected'])
+  @IsEnum(['active', 'inactive'])
   status?: string;
 }
 
@@ -177,6 +194,12 @@ export class UpdateAdminDestinationDto {
   @IsArray()
   @IsString({ each: true })
   facilities?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ActivityDto)
+  activities?: ActivityDto[];
 
   @IsOptional()
   @IsArray()

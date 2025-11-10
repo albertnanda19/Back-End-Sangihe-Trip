@@ -37,11 +37,12 @@ export class AuthUseCase {
   }
 
   async execute(dto: {
-    name: string;
+    firstName: string;
+    lastName?: string;
     email: string;
     password: string;
-  }): Promise<User> {
-    const { email, password, name } = dto;
+  }, ipAddress?: string, userAgent?: string): Promise<User> {
+    const { email, password, firstName, lastName = '' } = dto;
 
     const { data: existing } = await this.client
       .from('users')
@@ -72,8 +73,8 @@ export class AuthUseCase {
         id: newUserId,
         email,
         password_hash: hashed,
-        first_name: name,
-        last_name: '',
+        first_name: firstName,
+        last_name: lastName,
         role_id: userRole.id, // Set default role sebagai 'user'
       })
       .select()
@@ -93,6 +94,8 @@ export class AuthUseCase {
         lastName: user.lastName,
         userType: 'user',
       },
+      ipAddress,
+      userAgent,
     );
 
     return user;
@@ -101,7 +104,7 @@ export class AuthUseCase {
   async login(dto: {
     email: string;
     password: string;
-  }): Promise<{ access_token: string; refresh_token: string }> {
+  }, ipAddress?: string, userAgent?: string): Promise<{ access_token: string; refresh_token: string }> {
     const { email, password } = dto;
     const { data: row } = await this.client
       .from('users')
@@ -155,7 +158,16 @@ export class AuthUseCase {
     });
 
     // Log login activity
-    await this.activityLogger.logLogin(row.id, 'email');
+    const actorRole = role === 'admin' ? 'admin' : 'user';
+    await this.activityLogger.logLogin(
+      row.id,
+      name,
+      row.email,
+      'email',
+      ipAddress,
+      userAgent,
+      actorRole,
+    );
 
     return { access_token, refresh_token };
   }

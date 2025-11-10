@@ -20,14 +20,6 @@ import {
   UpdateAdminDestinationDto,
 } from '../dtos/admin/admin-destination.dto';
 
-interface AuthenticatedRequest {
-  user?: {
-    id: string;
-    email: string;
-    name: string;
-  };
-}
-
 @Controller('admin/destinations')
 @UseGuards(JwtAdminGuard)
 export class AdminDestinationController {
@@ -52,10 +44,14 @@ export class AdminDestinationController {
   @ResponseMessage('Berhasil membuat destinasi baru')
   async create(
     @Body() dto: CreateAdminDestinationDto,
-    @Req() req: AuthenticatedRequest,
+    @Req() req: any,
   ) {
     const adminId = req.user?.id as string;
-    return await this.destinationUseCase.create(dto, adminId);
+    const adminUser = req.user;
+    const ipAddress = req.ip || req.ips?.[0] || req.connection?.remoteAddress || req.socket?.remoteAddress || '127.0.0.1';
+    const userAgent = req.headers?.['user-agent'] || req.get?.('User-Agent') || 'Unknown';
+
+    return await this.destinationUseCase.create(dto, adminId, adminUser, ipAddress, userAgent);
   }
 
   @Patch(':id')
@@ -63,15 +59,24 @@ export class AdminDestinationController {
   async update(
     @Param('id') id: string,
     @Body() dto: UpdateAdminDestinationDto,
+    @Req() req: any,
   ) {
-    return await this.destinationUseCase.update(id, dto);
+    const adminUser = req.user;
+    const ipAddress = req.ip || req.ips?.[0] || req.connection?.remoteAddress || req.socket?.remoteAddress || '127.0.0.1';
+    const userAgent = req.headers?.['user-agent'] || req.get?.('User-Agent') || 'Unknown';
+
+    return await this.destinationUseCase.update(id, dto, adminUser, ipAddress, userAgent);
   }
 
   @Delete(':id')
   @HttpCode(204)
   @ResponseMessage('Berhasil menghapus destinasi')
-  async delete(@Param('id') id: string, @Query('hard') hard?: string) {
-    await this.destinationUseCase.delete(id, hard === 'true');
+  async delete(@Param('id') id: string, @Req() req: any) {
+    const adminUser = req.user;
+    const ipAddress = req.ip || req.ips?.[0] || req.connection?.remoteAddress || req.socket?.remoteAddress || '127.0.0.1';
+    const userAgent = req.headers?.['user-agent'] || req.get?.('User-Agent') || 'Unknown';
+
+    await this.destinationUseCase.delete(id, adminUser, ipAddress, userAgent);
     return null;
   }
 }

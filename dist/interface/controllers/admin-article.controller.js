@@ -34,19 +34,31 @@ let AdminArticleController = class AdminArticleController {
     }
     async create(dto, req) {
         const adminId = req.user.id;
-        const result = await this.adminArticleUseCase.create(dto, adminId);
+        const ipAddress = req.ip || req.ips?.[0] || req.connection?.remoteAddress || req.socket?.remoteAddress || '127.0.0.1';
+        const userAgent = req.headers?.['user-agent'] || req.get?.('User-Agent') || 'Unknown';
+        const adminUser = req.user;
+        const result = await this.adminArticleUseCase.create(dto, adminId, adminUser, ipAddress, userAgent);
         return result;
     }
-    async update(id, dto) {
-        const result = await this.adminArticleUseCase.update(id, dto);
+    async update(id, dto, req) {
+        const ipAddress = req.ip || req.ips?.[0] || req.connection?.remoteAddress || req.socket?.remoteAddress || '127.0.0.1';
+        const userAgent = req.headers?.['user-agent'] || req.get?.('User-Agent') || 'Unknown';
+        const adminUser = req.user;
+        const result = await this.adminArticleUseCase.update(id, dto, adminUser, ipAddress, userAgent);
         return result;
     }
-    async delete(id, hard) {
-        await this.adminArticleUseCase.delete(id, hard === 'true');
+    async delete(id, req) {
+        const ipAddress = req.ip || req.ips?.[0] || req.connection?.remoteAddress || req.socket?.remoteAddress || '127.0.0.1';
+        const userAgent = req.headers?.['user-agent'] || req.get?.('User-Agent') || 'Unknown';
+        const adminUser = req.user;
+        await this.adminArticleUseCase.delete(id, adminUser, ipAddress, userAgent);
         return null;
     }
-    async publish(id) {
-        const result = await this.adminArticleUseCase.publish(id);
+    async publish(id, req) {
+        const ipAddress = req.ip || req.ips?.[0] || req.connection?.remoteAddress || req.socket?.remoteAddress || '127.0.0.1';
+        const userAgent = req.headers?.['user-agent'] || req.get?.('User-Agent') || 'Unknown';
+        const adminUser = req.user;
+        const result = await this.adminArticleUseCase.publish(id, adminUser, ipAddress, userAgent);
         return result;
     }
 };
@@ -77,29 +89,31 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], AdminArticleController.prototype, "create", null);
 __decorate([
-    (0, common_1.Put)(':id'),
+    (0, common_1.Patch)(':id'),
     (0, response_decorator_1.ResponseMessage)('Berhasil memperbarui artikel'),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Request)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, admin_article_dto_1.UpdateAdminArticleDto]),
+    __metadata("design:paramtypes", [String, admin_article_dto_1.UpdateAdminArticleDto, Object]),
     __metadata("design:returntype", Promise)
 ], AdminArticleController.prototype, "update", null);
 __decorate([
     (0, common_1.Delete)(':id'),
     (0, response_decorator_1.ResponseMessage)('Berhasil menghapus artikel'),
     __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Query)('hard')),
+    __param(1, (0, common_1.Request)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], AdminArticleController.prototype, "delete", null);
 __decorate([
     (0, common_1.Put)(':id/publish'),
     (0, response_decorator_1.ResponseMessage)('Berhasil mempublikasikan artikel'),
     __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Request)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], AdminArticleController.prototype, "publish", null);
 exports.AdminArticleController = AdminArticleController = __decorate([

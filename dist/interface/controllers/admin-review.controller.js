@@ -32,11 +32,17 @@ let AdminReviewController = class AdminReviewController {
     }
     async approve(id, dto, req) {
         const adminId = req.user?.id;
-        return await this.reviewUseCase.approve(id, adminId, dto.moderatorNote);
+        const ipAddress = req.ip || req.ips?.[0] || req.connection?.remoteAddress || req.socket?.remoteAddress || '127.0.0.1';
+        const userAgent = req.headers?.['user-agent'] || req.get?.('User-Agent') || 'Unknown';
+        const adminUser = req.user;
+        return await this.reviewUseCase.approve(id, adminId, dto.moderatorNote, adminUser, ipAddress, userAgent);
     }
     async reject(id, dto, req) {
         const adminId = req.user?.id;
-        return await this.reviewUseCase.reject(id, adminId, dto.reason, dto.moderatorNote);
+        const ipAddress = req.ip || req.ips?.[0] || req.connection?.remoteAddress || req.socket?.remoteAddress || '127.0.0.1';
+        const userAgent = req.headers?.['user-agent'] || req.get?.('User-Agent') || 'Unknown';
+        const adminUser = req.user;
+        return await this.reviewUseCase.reject(id, adminId, dto.reason, dto.moderatorNote, adminUser, ipAddress, userAgent);
     }
 };
 exports.AdminReviewController = AdminReviewController;

@@ -271,6 +271,12 @@ export class ArticleRepositoryAdapter implements ArticleRepositoryPort {
     }
     if (!articleRow) return null;
 
+    // Increment view count when accessed via slug (public view)
+    if (!isUUID) {
+      // Fire and forget - increment asynchronously without blocking
+      void this.incrementViewCount(articleRow.id, articleRow.view_count || 0);
+    }
+
     // Parallel fetches for related data to keep latency low (<1s)
     const [authorRes, categoryRes, relatedRes, commentsRes, statsRes] =
       await Promise.all([
@@ -358,6 +364,7 @@ export class ArticleRepositoryAdapter implements ArticleRepositoryPort {
       tags: articleRow.tags ?? [],
       content: articleRow.content,
       wordCount,
+      viewCount: articleRow.view_count || 0,
     };
 
     const related = (relatedRes.data || []).map((r: any) => ({
@@ -401,5 +408,19 @@ export class ArticleRepositoryAdapter implements ArticleRepositoryPort {
       relatedArticles: related,
       comments: rootComments,
     };
+  }
+
+  /**
+   * Increment view count asynchronously (fire and forget)
+   */
+  private async incrementViewCount(articleId: string, currentCount: number): Promise<void> {
+    try {
+      await this.client
+        .from('articles')
+        .update({ view_count: currentCount + 1 })
+        .eq('id', articleId);
+    } catch (error) {
+      // Silently ignore errors - view count is not critical
+    }
   }
 }

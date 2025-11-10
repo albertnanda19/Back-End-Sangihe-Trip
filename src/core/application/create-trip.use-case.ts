@@ -48,7 +48,7 @@ export class CreateTripUseCase {
     // Log trip creation activity
     await this.activityLogger.logTripPlanAction(
       cmd.userId,
-      'create_trip',
+      'create',
       plan.id,
       {
         name: cmd.name,

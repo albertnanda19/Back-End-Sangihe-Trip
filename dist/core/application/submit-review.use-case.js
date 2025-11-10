@@ -22,12 +22,18 @@ let SubmitReviewUseCase = class SubmitReviewUseCase {
     reviewRepository;
     systemSettingsService;
     activityLogger;
-    constructor(reviewRepository, systemSettingsService, activityLogger) {
+    supabase;
+    constructor(reviewRepository, systemSettingsService, activityLogger, supabase) {
         this.reviewRepository = reviewRepository;
         this.systemSettingsService = systemSettingsService;
         this.activityLogger = activityLogger;
+        this.supabase = supabase;
     }
     async execute(userId, dto) {
+        const hasCompletedTrip = await this.checkUserCompletedTrip(userId, dto.destinationId);
+        if (!hasCompletedTrip) {
+            throw new common_1.BadRequestException('You can only review destinations from completed trips');
+        }
         const existingReview = await this.reviewRepository.findByUserAndDestination(userId, dto.destinationId);
         if (existingReview) {
             throw new common_1.BadRequestException('You have already submitted a review for this destination');
@@ -47,12 +53,38 @@ let SubmitReviewUseCase = class SubmitReviewUseCase {
         });
         return createdReview;
     }
+    async checkUserCompletedTrip(userId, destinationId) {
+        const { data, error } = await this.supabase
+            .from('trip_plans')
+            .select('id, days')
+            .eq('user_id', userId)
+            .eq('status', 'completed')
+            .not('days', 'is', null);
+        if (error) {
+            console.error('Error checking completed trip:', error);
+            return false;
+        }
+        if (!data || data.length === 0) {
+            return false;
+        }
+        for (const trip of data) {
+            const days = trip.days || [];
+            for (const day of days) {
+                const items = (day.items || []);
+                if (items.some((item) => item.destination_id === destinationId)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 };
 exports.SubmitReviewUseCase = SubmitReviewUseCase;
 exports.SubmitReviewUseCase = SubmitReviewUseCase = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, common_1.Inject)('ReviewRepository')),
+    __param(3, (0, common_1.Inject)('SUPABASE_CLIENT')),
     __metadata("design:paramtypes", [Object, system_settings_service_1.SystemSettingsService,
-        activity_logger_service_1.ActivityLoggerService])
+        activity_logger_service_1.ActivityLoggerService, Object])
 ], SubmitReviewUseCase);
 //# sourceMappingURL=submit-review.use-case.js.map

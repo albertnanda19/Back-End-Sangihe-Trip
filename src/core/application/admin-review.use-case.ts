@@ -1,5 +1,6 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { SupabaseClient } from '@supabase/supabase-js';
+import { ActivityLoggerService } from './activity-logger.service';
 
 export interface AdminReviewListQuery {
   status?: string;
@@ -23,6 +24,7 @@ export class AdminReviewUseCase {
   constructor(
     @Inject('SUPABASE_CLIENT')
     private readonly supabase: SupabaseClient,
+    private readonly activityLogger: ActivityLoggerService,
   ) {}
 
   async list(
@@ -108,6 +110,9 @@ export class AdminReviewUseCase {
     reviewId: string,
     adminId: string,
     moderatorNote?: string,
+    adminUser?: any,
+    ipAddress?: string,
+    userAgent?: string,
   ): Promise<any> {
     // Get review
     const review = await this.getById(reviewId);
@@ -130,7 +135,39 @@ export class AdminReviewUseCase {
     // Recalculate destination rating
     await this.recalculateDestinationRating(review.destination_id);
 
-    return this.getById(reviewId);
+    const updatedReview = await this.getById(reviewId);
+
+    // Log admin action
+    if (adminUser) {
+      const adminName = adminUser.name || 'Admin';
+      const reviewTitle = review.title || `Review for ${review.destinations?.name || 'Destination'}`;
+
+      await this.activityLogger.logAdminAction(
+        adminUser.id,
+        'update',
+        'review',
+        reviewId,
+        {
+          reviewTitle,
+          description: `${adminName} approved review "${reviewTitle}"`,
+        },
+        {
+          status: 'active',
+          moderated_by: adminId,
+          moderation_notes: moderatorNote,
+        },
+        adminName,
+        adminUser.email,
+        reviewTitle,
+        ipAddress,
+        userAgent,
+        {
+          status: review.status,
+        },
+      );
+    }
+
+    return updatedReview;
   }
 
   async reject(
@@ -138,6 +175,9 @@ export class AdminReviewUseCase {
     adminId: string,
     reason: string,
     moderatorNote?: string,
+    adminUser?: any,
+    ipAddress?: string,
+    userAgent?: string,
   ): Promise<any> {
     // Get review
     const review = await this.getById(reviewId);
@@ -162,7 +202,39 @@ export class AdminReviewUseCase {
     // Recalculate destination rating (in case it was active before)
     await this.recalculateDestinationRating(review.destination_id);
 
-    return this.getById(reviewId);
+    const updatedReview = await this.getById(reviewId);
+
+    // Log admin action
+    if (adminUser) {
+      const adminName = adminUser.name || 'Admin';
+      const reviewTitle = review.title || `Review for ${review.destinations?.name || 'Destination'}`;
+
+      await this.activityLogger.logAdminAction(
+        adminUser.id,
+        'update', 
+        'review',
+        reviewId,
+        {
+          reviewTitle,
+          description: `${adminName} rejected review "${reviewTitle}"`,
+        },
+        {
+          status: 'rejected',
+          moderated_by: adminId,
+          moderation_notes: moderatorNote ? `${reason}. ${moderatorNote}` : reason,
+        },
+        adminName,
+        adminUser.email,
+        reviewTitle,
+        ipAddress,
+        userAgent,
+        {
+          status: review.status,
+        },
+      );
+    }
+
+    return updatedReview;
   }
 
   private async recalculateDestinationRating(

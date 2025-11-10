@@ -13,4 +13,5 @@ export declare class ArticleRepositoryAdapter implements ArticleRepositoryPort {
         sidebar?: any;
     }>;
     findByIdWithDetails(idOrSlug: string): Promise<any>;
+    private incrementViewCount;
 }

@@ -26,7 +26,7 @@ let CreateTripUseCase = class CreateTripUseCase {
     async execute(cmd) {
         const plan = new trip_plan_entity_1.TripPlan(cmd.userId, cmd.name, new Date(cmd.startDate), new Date(cmd.endDate), cmd.peopleCount, cmd.tripType, cmd.isPublic, cmd.destinations, cmd.schedule, cmd.budget, cmd.notes ?? null, cmd.packingList ?? []);
         await this.repo.create(plan);
-        await this.activityLogger.logTripPlanAction(cmd.userId, 'create_trip', plan.id, {
+        await this.activityLogger.logTripPlanAction(cmd.userId, 'create', plan.id, {
             name: cmd.name,
             startDate: cmd.startDate,
             endDate: cmd.endDate,

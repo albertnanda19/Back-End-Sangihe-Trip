@@ -32,13 +32,22 @@ let AdminDestinationController = class AdminDestinationController {
     }
     async create(dto, req) {
         const adminId = req.user?.id;
-        return await this.destinationUseCase.create(dto, adminId);
+        const adminUser = req.user;
+        const ipAddress = req.ip || req.ips?.[0] || req.connection?.remoteAddress || req.socket?.remoteAddress || '127.0.0.1';
+        const userAgent = req.headers?.['user-agent'] || req.get?.('User-Agent') || 'Unknown';
+        return await this.destinationUseCase.create(dto, adminId, adminUser, ipAddress, userAgent);
     }
-    async update(id, dto) {
-        return await this.destinationUseCase.update(id, dto);
+    async update(id, dto, req) {
+        const adminUser = req.user;
+        const ipAddress = req.ip || req.ips?.[0] || req.connection?.remoteAddress || req.socket?.remoteAddress || '127.0.0.1';
+        const userAgent = req.headers?.['user-agent'] || req.get?.('User-Agent') || 'Unknown';
+        return await this.destinationUseCase.update(id, dto, adminUser, ipAddress, userAgent);
     }
-    async delete(id, hard) {
-        await this.destinationUseCase.delete(id, hard === 'true');
+    async delete(id, req) {
+        const adminUser = req.user;
+        const ipAddress = req.ip || req.ips?.[0] || req.connection?.remoteAddress || req.socket?.remoteAddress || '127.0.0.1';
+        const userAgent = req.headers?.['user-agent'] || req.get?.('User-Agent') || 'Unknown';
+        await this.destinationUseCase.delete(id, adminUser, ipAddress, userAgent);
         return null;
     }
 };
@@ -74,8 +83,9 @@ __decorate([
     (0, response_decorator_1.ResponseMessage)('Berhasil memperbarui destinasi'),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, admin_destination_dto_1.UpdateAdminDestinationDto]),
+    __metadata("design:paramtypes", [String, admin_destination_dto_1.UpdateAdminDestinationDto, Object]),
     __metadata("design:returntype", Promise)
 ], AdminDestinationController.prototype, "update", null);
 __decorate([
@@ -83,9 +93,9 @@ __decorate([
     (0, common_1.HttpCode)(204),
     (0, response_decorator_1.ResponseMessage)('Berhasil menghapus destinasi'),
     __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Query)('hard')),
+    __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], AdminDestinationController.prototype, "delete", null);
 exports.AdminDestinationController = AdminDestinationController = __decorate([

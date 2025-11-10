@@ -92,7 +92,7 @@ export class UpdateTripUseCase {
 
     await this.activityLogger.logTripPlanAction(
       command.userId,
-      'update_trip',
+      'update',
       command.tripId,
       newTripData,
       oldTripData,

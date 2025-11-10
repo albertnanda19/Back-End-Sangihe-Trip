@@ -3,6 +3,12 @@ export declare class AdminActivityQueryDto {
     limit?: number;
     action?: string;
     entityType?: string;
+    entityId?: string;
+    actorRole?: string;
     userId?: string;
-    userType?: 'admin' | 'user' | 'all';
+    search?: string;
+    search_fields?: string;
+    dateFrom?: string;
+    dateTo?: string;
+    ipAddress?: string;
 }

@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Put,
   Delete,
   Body,
@@ -42,28 +43,44 @@ export class AdminArticleController {
   @ResponseMessage('Berhasil membuat artikel baru')
   async create(@Body() dto: CreateAdminArticleDto, @Request() req: any) {
     const adminId = req.user.id;
-    const result = await this.adminArticleUseCase.create(dto, adminId);
+    const ipAddress = req.ip || req.ips?.[0] || req.connection?.remoteAddress || req.socket?.remoteAddress || '127.0.0.1';
+    const userAgent = req.headers?.['user-agent'] || req.get?.('User-Agent') || 'Unknown';
+    const adminUser = req.user;
+
+    const result = await this.adminArticleUseCase.create(dto, adminId, adminUser, ipAddress, userAgent);
     return result;
   }
 
-  @Put(':id')
+  @Patch(':id')
   @ResponseMessage('Berhasil memperbarui artikel')
-  async update(@Param('id') id: string, @Body() dto: UpdateAdminArticleDto) {
-    const result = await this.adminArticleUseCase.update(id, dto);
+  async update(@Param('id') id: string, @Body() dto: UpdateAdminArticleDto, @Request() req: any) {
+    const ipAddress = req.ip || req.ips?.[0] || req.connection?.remoteAddress || req.socket?.remoteAddress || '127.0.0.1';
+    const userAgent = req.headers?.['user-agent'] || req.get?.('User-Agent') || 'Unknown';
+    const adminUser = req.user;
+
+    const result = await this.adminArticleUseCase.update(id, dto, adminUser, ipAddress, userAgent);
     return result;
   }
 
   @Delete(':id')
   @ResponseMessage('Berhasil menghapus artikel')
-  async delete(@Param('id') id: string, @Query('hard') hard?: string) {
-    await this.adminArticleUseCase.delete(id, hard === 'true');
+  async delete(@Param('id') id: string, @Request() req: any) {
+    const ipAddress = req.ip || req.ips?.[0] || req.connection?.remoteAddress || req.socket?.remoteAddress || '127.0.0.1';
+    const userAgent = req.headers?.['user-agent'] || req.get?.('User-Agent') || 'Unknown';
+    const adminUser = req.user;
+
+    await this.adminArticleUseCase.delete(id, adminUser, ipAddress, userAgent);
     return null;
   }
 
   @Put(':id/publish')
   @ResponseMessage('Berhasil mempublikasikan artikel')
-  async publish(@Param('id') id: string) {
-    const result = await this.adminArticleUseCase.publish(id);
+  async publish(@Param('id') id: string, @Request() req: any) {
+    const ipAddress = req.ip || req.ips?.[0] || req.connection?.remoteAddress || req.socket?.remoteAddress || '127.0.0.1';
+    const userAgent = req.headers?.['user-agent'] || req.get?.('User-Agent') || 'Unknown';
+    const adminUser = req.user;
+
+    const result = await this.adminArticleUseCase.publish(id, adminUser, ipAddress, userAgent);
     return result;
   }
 }

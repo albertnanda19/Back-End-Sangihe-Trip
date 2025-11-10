@@ -17,8 +17,14 @@ class AdminActivityQueryDto {
     limit = 20;
     action;
     entityType;
+    entityId;
+    actorRole;
     userId;
-    userType = 'all';
+    search;
+    search_fields;
+    dateFrom;
+    dateTo;
+    ipAddress;
 }
 exports.AdminActivityQueryDto = AdminActivityQueryDto;
 __decorate([
@@ -40,20 +46,39 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsIn)([
-        'register', 'login', 'update_profile', 'change_password',
-        'create_trip', 'update_trip', 'delete_trip',
-        'submit_review',
-        'create_destination', 'update_destination',
-        'approve_review', 'reject_review'
+        'create',
+        'update',
+        'delete',
+        'register',
+        'login',
     ]),
     __metadata("design:type", String)
 ], AdminActivityQueryDto.prototype, "action", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsIn)(['user', 'destination', 'review', 'article', 'trip_plan', 'user_profile']),
+    (0, class_validator_1.IsIn)([
+        'auth',
+        'user',
+        'destination',
+        'review',
+        'article',
+        'trip_plan',
+        'user_profile',
+    ]),
     __metadata("design:type", String)
 ], AdminActivityQueryDto.prototype, "entityType", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], AdminActivityQueryDto.prototype, "entityId", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsIn)(['user', 'admin']),
+    __metadata("design:type", String)
+], AdminActivityQueryDto.prototype, "actorRole", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
@@ -62,7 +87,26 @@ __decorate([
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsIn)(['admin', 'user', 'all']),
     __metadata("design:type", String)
-], AdminActivityQueryDto.prototype, "userType", void 0);
+], AdminActivityQueryDto.prototype, "search", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], AdminActivityQueryDto.prototype, "search_fields", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsDateString)(),
+    __metadata("design:type", String)
+], AdminActivityQueryDto.prototype, "dateFrom", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsDateString)(),
+    __metadata("design:type", String)
+], AdminActivityQueryDto.prototype, "dateTo", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], AdminActivityQueryDto.prototype, "ipAddress", void 0);
 //# sourceMappingURL=admin-activity-query.dto.js.map

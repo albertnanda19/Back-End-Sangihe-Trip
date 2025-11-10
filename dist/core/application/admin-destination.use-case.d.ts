@@ -1,4 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js';
+import { ActivityLoggerService } from './activity-logger.service';
 export interface AdminDestinationListQuery {
     search?: string;
     page?: number;
@@ -17,12 +18,14 @@ export interface AdminDestinationListResult {
 }
 export declare class AdminDestinationUseCase {
     private readonly supabase;
-    constructor(supabase: SupabaseClient);
+    private readonly activityLogger;
+    constructor(supabase: SupabaseClient, activityLogger: ActivityLoggerService);
     list(query: AdminDestinationListQuery): Promise<AdminDestinationListResult>;
     getById(id: string): Promise<any>;
-    create(data: any, adminId: string): Promise<any>;
-    update(id: string, data: any): Promise<any>;
-    delete(id: string, hard?: boolean): Promise<void>;
+    create(data: any, adminId: string, adminUser?: any, ipAddress?: string, userAgent?: string): Promise<any>;
+    update(id: string, data: any, adminUser?: any, ipAddress?: string, userAgent?: string): Promise<any>;
+    delete(id: string, adminUser?: any, ipAddress?: string, userAgent?: string): Promise<void>;
     private mapSortField;
     private generateSlug;
+    private generateUniqueSlug;
 }

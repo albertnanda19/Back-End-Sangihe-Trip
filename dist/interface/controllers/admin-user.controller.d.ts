@@ -6,6 +6,6 @@ export declare class AdminUserController {
     constructor(userUseCase: AdminUserUseCase);
     list(query: AdminUserQueryDto): Promise<import("../../core/application/admin-user.use-case").AdminUserListResult>;
     getById(id: string): Promise<any>;
-    update(id: string, dto: UpdateUserDto): Promise<any>;
+    update(id: string, dto: UpdateUserDto, req: any): Promise<any>;
     delete(id: string, hard?: string): Promise<null>;
 }

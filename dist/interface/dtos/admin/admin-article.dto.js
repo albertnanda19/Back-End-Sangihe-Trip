@@ -42,7 +42,7 @@ __decorate([
 ], CreateAdminArticleDto.prototype, "excerpt", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsEnum)(['tips', 'guide', 'culture', 'food', 'adventure', 'news']),
     __metadata("design:type", String)
 ], CreateAdminArticleDto.prototype, "category", void 0);
 __decorate([
@@ -58,7 +58,7 @@ __decorate([
 ], CreateAdminArticleDto.prototype, "tags", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsEnum)(['draft', 'published', 'archived']),
+    (0, class_validator_1.IsEnum)(['draft', 'published']),
     __metadata("design:type", String)
 ], CreateAdminArticleDto.prototype, "status", void 0);
 class UpdateAdminArticleDto {
@@ -92,7 +92,7 @@ __decorate([
 ], UpdateAdminArticleDto.prototype, "excerpt", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsEnum)(['tips', 'guide', 'culture', 'food', 'adventure', 'news']),
     __metadata("design:type", String)
 ], UpdateAdminArticleDto.prototype, "category", void 0);
 __decorate([
@@ -108,7 +108,7 @@ __decorate([
 ], UpdateAdminArticleDto.prototype, "tags", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsEnum)(['draft', 'published', 'archived']),
+    (0, class_validator_1.IsEnum)(['draft', 'published']),
     __metadata("design:type", String)
 ], UpdateAdminArticleDto.prototype, "status", void 0);
 //# sourceMappingURL=admin-article.dto.js.map

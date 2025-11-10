@@ -4,7 +4,6 @@ import { DestinationRepositoryPort } from '../../core/domain/destination.reposit
 export declare class DestinationRepositoryAdapter implements DestinationRepositoryPort {
     private readonly client;
     constructor(client: SupabaseClient);
-    private parseImages;
     private mapRowToEntity;
     private toRow;
     save(destination: Destination, _uploadedBy: string): Promise<Destination>;
@@ -15,4 +14,6 @@ export declare class DestinationRepositoryAdapter implements DestinationReposito
     findAllNoPagination(): Promise<Destination[]>;
     delete(id: string): Promise<Destination>;
     findById(id: string): Promise<Destination>;
+    findBySlug(slug: string): Promise<Destination>;
+    private incrementViewCount;
 }

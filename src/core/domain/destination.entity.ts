@@ -10,10 +10,17 @@ export interface Facility {
   available: boolean;
 }
 
+export interface Activity {
+  name: string;
+  startTime: string; // Format: HH:mm
+  endTime: string; // Format: HH:mm
+}
+
 export class Destination {
   constructor(
     public readonly id: string,
     public name: string,
+    public slug: string,
     public category: string,
     public location: Location,
     public distanceKm: number,
@@ -25,9 +32,13 @@ export class Destination {
     public images: string[],
     public video?: string,
     public readonly createdAt: Date = new Date(),
-    /** Average rating (0-5) */
     public rating: number = 0,
-    /** Total number of active reviews */
     public totalReviews: number = 0,
+    public viewCount: number = 0,
+    public activities: Activity[] = [],
+    public phone: string = '',
+    public email: string = '',
+    public website: string = '',
+    public isFeatured: boolean = false,
   ) {}
 }

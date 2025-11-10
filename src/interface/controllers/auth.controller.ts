@@ -1,4 +1,4 @@
-import { Body, Controller, HttpCode, Post } from '@nestjs/common';
+import { Body, Controller, HttpCode, Post, Req } from '@nestjs/common';
 import { ResponseMessage } from '../../common/decorators/response.decorator';
 import { AuthUseCase } from '../../core/application/auth.use-case';
 import { LoginDto } from '../dtos/auth/login.dto';
@@ -11,8 +11,11 @@ export class AuthController {
   @Post('register')
   @HttpCode(200)
   @ResponseMessage('Berhasil mendaftarkan akun. Silahkan melakukan login')
-  async register(@Body() body: RegisterDto) {
-    const user = await this.authUseCase.execute(body);
+  async register(@Body() body: RegisterDto, @Req() req: any) {
+    const ipAddress = req.ip || req.ips?.[0] || req.connection?.remoteAddress || req.socket?.remoteAddress || '127.0.0.1';
+    const userAgent = req.headers?.['user-agent'] || req.get?.('User-Agent') || 'Unknown';
+
+    const user = await this.authUseCase.execute(body, ipAddress, userAgent);
     return {
       id: user.id,
       name: user.name,
@@ -23,8 +26,11 @@ export class AuthController {
   @Post('login')
   @HttpCode(200)
   @ResponseMessage('Berhasil melakukan login!')
-  async login(@Body() body: LoginDto) {
-    const tokens = await this.authUseCase.login(body);
+  async login(@Body() body: LoginDto, @Req() req: any) {
+    const ipAddress = req.ip || req.ips?.[0] || req.connection?.remoteAddress || req.socket?.remoteAddress || '127.0.0.1';
+    const userAgent = req.headers?.['user-agent'] || req.get?.('User-Agent') || 'Unknown';
+
+    const tokens = await this.authUseCase.login(body, ipAddress, userAgent);
     return tokens;
   }
 }

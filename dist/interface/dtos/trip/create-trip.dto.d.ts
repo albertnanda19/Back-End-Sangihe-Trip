@@ -3,6 +3,7 @@ declare class TripItemDto {
     startTime: string;
     endTime: string;
     activity: string;
+    activityName?: string;
     notes?: string;
 }
 declare class TripDayDto {

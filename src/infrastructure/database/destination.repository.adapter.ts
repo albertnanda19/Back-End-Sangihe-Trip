@@ -12,26 +12,13 @@ export class DestinationRepositoryAdapter implements DestinationRepositoryPort {
   // ----------------------------------------------
   // Helper utilities
   // ----------------------------------------------
-  /**
-   * Normalize the images column that can be either text[] or JSON string
-   */
-  private parseImages(images: any): string[] {
-    if (Array.isArray(images)) return images as string[];
-    if (typeof images === 'string') {
-      return images
-        .replace(/^{|}$/g, '')
-        .split(',')
-        .map((s) => s.trim().replace(/^"|"$/g, ''))
-        .filter(Boolean);
-    }
-    return [];
-  }
 
   /** Converts a DB row to a Destination domain entity */
   private mapRowToEntity(row: any): Destination {
     return new Destination(
       row.id,
       row.name,
+      row.slug ?? '',
       row.category,
       {
         address: row.address,
@@ -39,14 +26,22 @@ export class DestinationRepositoryAdapter implements DestinationRepositoryPort {
         lng: row.longitude ?? 0,
       },
       0,
-      row.price,
+      row.entry_fee ?? 0,
       row.opening_hours ?? '',
       row.description,
       row.facilities ?? [],
       [],
-      this.parseImages(row.images),
+      [],
       undefined,
       row.created_at ? new Date(row.created_at) : new Date(),
+      0,
+      0,
+      0,
+      Array.isArray(row.activities) ? row.activities : [],
+      row.phone ?? '',
+      row.email ?? '',
+      row.website ?? '',
+      row.is_featured ?? false,
     );
   }
 
@@ -59,15 +54,13 @@ export class DestinationRepositoryAdapter implements DestinationRepositoryPort {
       name,
       category,
       location,
-      distanceKm,
       price,
       openHours,
       description,
       facilities,
-      tips,
-      images,
       video,
       createdAt,
+      activities,
     } = dest;
 
     return {
@@ -79,11 +72,10 @@ export class DestinationRepositoryAdapter implements DestinationRepositoryPort {
       latitude: location.lat,
       longitude: location.lng,
       opening_hours: openHours,
-      price,
-      entry_fee: price, // for backward compatibility, but prefer price
+      entry_fee: price,
       category,
       facilities: Array.isArray(facilities) ? facilities : [],
-      images: Array.isArray(images) ? images : [],
+      activities: Array.isArray(activities) ? activities : [],
       video: video ?? null,
       created_at: createdAt.toISOString(),
       updated_at: createdAt.toISOString(),
@@ -117,7 +109,6 @@ export class DestinationRepositoryAdapter implements DestinationRepositoryPort {
       search,
       category,
       location,
-      minRating,
       priceMin,
       priceMax,
       sortBy = 'popular',
@@ -128,9 +119,10 @@ export class DestinationRepositoryAdapter implements DestinationRepositoryPort {
     let supabaseQuery = this.client
       .from('destinations')
       .select(
-        `id, name, category, address, price, images, facilities, description, created_at`,
+        `id, name, slug, category, address, latitude, longitude, phone, email, website, opening_hours, entry_fee, facilities, activities, description, is_featured, avg_rating, total_reviews, created_at`,
         { count: 'exact' },
-      );
+      )
+      .eq('status', 'active');
 
     if (search) {
       supabaseQuery = supabaseQuery.ilike('name', `%${search}%`);
@@ -141,30 +133,30 @@ export class DestinationRepositoryAdapter implements DestinationRepositoryPort {
     if (location) {
       supabaseQuery = supabaseQuery.ilike('address', `%${location}%`);
     }
-    // minRating filter is ignored because there is no rating column
-    // if (typeof minRating === 'number') {
-    //   supabaseQuery = supabaseQuery.gte('rating', minRating);
-    // }
+    if (typeof query.minRating === 'number') {
+      supabaseQuery = supabaseQuery.gte('avg_rating', query.minRating);
+    }
     if (typeof priceMin === 'number') {
-      supabaseQuery = supabaseQuery.gte('price', priceMin);
+      supabaseQuery = supabaseQuery.gte('entry_fee', priceMin);
     }
     if (typeof priceMax === 'number') {
-      supabaseQuery = supabaseQuery.lte('price', priceMax);
+      supabaseQuery = supabaseQuery.lte('entry_fee', priceMax);
     }
 
     // Sorting
     switch (sortBy) {
       case 'price-low':
-        supabaseQuery = supabaseQuery.order('price', { ascending: true });
+        supabaseQuery = supabaseQuery.order('entry_fee', { ascending: true });
+        break;
+      case 'rating':
+        supabaseQuery = supabaseQuery.order('avg_rating', { ascending: false, nullsFirst: false });
         break;
       case 'newest':
         supabaseQuery = supabaseQuery.order('created_at', { ascending: false });
         break;
-      // For 'popular' and 'rating', fallback to 'created_at' since we have no review/rating column
       case 'popular':
-      case 'rating':
       default:
-        supabaseQuery = supabaseQuery.order('created_at', { ascending: false });
+        supabaseQuery = supabaseQuery.order('view_count', { ascending: false });
     }
 
     // Pagination
@@ -179,25 +171,11 @@ export class DestinationRepositoryAdapter implements DestinationRepositoryPort {
     }
 
     // Map DB rows to Destination domain entities
-    function parsePgArray(str: string): string[] {
-      if (!str) return [];
-      return str
-        .replace(/^{|}$/g, '')
-        .split(',')
-        .map((s) => s.trim().replace(/^"|"$/g, ''))
-        .filter(Boolean);
-    }
-
     const mapped = (data || []).map((row: any) => {
-      let imagesArr: string[] = [];
-      if (Array.isArray(row.images)) {
-        imagesArr = row.images;
-      } else if (typeof row.images === 'string') {
-        imagesArr = parsePgArray(row.images);
-      }
       return new Destination(
         row.id,
         row.name,
+        row.slug ?? '',
         row.category,
         {
           address: row.address,
@@ -205,16 +183,18 @@ export class DestinationRepositoryAdapter implements DestinationRepositoryPort {
           lng: row.longitude ?? 0,
         },
         0,
-        row.price,
+        row.entry_fee ?? 0,
         row.opening_hours ?? '',
         row.description,
         row.facilities ?? [],
         [], // tips
-        imagesArr,
+        [],
         undefined, // video
         row.created_at ? new Date(row.created_at) : new Date(),
-        // Tambahan untuk rating dan totalReviews, set ke 0
-        // (Jika nanti ingin diisi dari agregasi, bisa diubah)
+        0, // rating
+        0, // totalReviews
+        0, // viewCount
+        [], // activities
       );
     });
 
@@ -231,7 +211,7 @@ export class DestinationRepositoryAdapter implements DestinationRepositoryPort {
     const { data, error } = await this.client
       .from('destinations')
       .select(
-        'id, name, category, address, latitude, longitude, price, opening_hours, description, facilities, images, created_at',
+        'id, name, slug, category, address, latitude, longitude, phone, email, website, opening_hours, entry_fee, description, facilities, activities, is_featured, created_at',
       )
       .order('created_at', { ascending: false });
 
@@ -251,7 +231,7 @@ export class DestinationRepositoryAdapter implements DestinationRepositoryPort {
     const { data: row, error: fetchError } = await this.client
       .from('destinations')
       .select(
-        'id, name, category, address, latitude, longitude, price, opening_hours, description, facilities, images, video, created_at',
+        'id, name, slug, category, address, latitude, longitude, phone, email, website, opening_hours, entry_fee, description, facilities, activities, is_featured, created_at',
       )
       .eq('id', id)
       .single();
@@ -263,6 +243,7 @@ export class DestinationRepositoryAdapter implements DestinationRepositoryPort {
     const destination = new Destination(
       row.id,
       row.name,
+      row.slug ?? '',
       row.category,
       {
         address: row.address,
@@ -270,14 +251,22 @@ export class DestinationRepositoryAdapter implements DestinationRepositoryPort {
         lng: row.longitude ?? 0,
       },
       0,
-      row.price,
+      row.entry_fee,
       row.opening_hours ?? '',
       row.description,
       row.facilities ?? [],
       [],
-      row.images ?? [],
-      row.video ?? undefined,
+      [],
+      undefined,
       row.created_at ? new Date(row.created_at) : new Date(),
+      0,
+      0,
+      0,
+      Array.isArray(row.activities) ? row.activities : [],
+      row.phone ?? '',
+      row.email ?? '',
+      row.website ?? '',
+      row.is_featured ?? false,
     );
 
     // Perform the deletion
@@ -300,39 +289,26 @@ export class DestinationRepositoryAdapter implements DestinationRepositoryPort {
     const { data: row, error } = await this.client
       .from('destinations')
       .select(
-        `id, name, category, address, latitude, longitude, price, opening_hours, description, facilities, images, video, avg_rating, total_reviews, created_at`,
+        `id, name, slug, category, address, latitude, longitude, phone, email, website, opening_hours, entry_fee, description, facilities, activities, avg_rating, total_reviews, view_count, is_featured, created_at`,
       )
       .eq('id', id)
+      .eq('status', 'active')
       .single();
 
     if (error || !row) {
       throw new Error(error?.message || 'Destination not found');
     }
 
-    // Helper to parse Postgres array text to JS string[]
-    const parsePgArray = (str: string): string[] => {
-      if (!str) return [];
-      return str
-        .replace(/^{|}$/g, '')
-        .split(',')
-        .map((s) => s.trim().replace(/^"|"$/g, ''))
-        .filter(Boolean);
-    };
-
-    // Normalize images column (may come as text[] or JSON array)
-    let imagesArr: string[] = [];
-    if (Array.isArray(row.images)) {
-      imagesArr = row.images;
-    } else if (typeof row.images === 'string') {
-      imagesArr = parsePgArray(row.images);
-    }
-
     // Normalize facilities column (can be JSON or any)
     const facilities = Array.isArray(row.facilities) ? row.facilities : [];
+    
+    // Normalize activities column (can be JSON or any)
+    const activities = Array.isArray(row.activities) ? row.activities : [];
 
     const destination = new Destination(
       row.id,
       row.name,
+      row.slug ?? '',
       row.category,
       {
         address: row.address,
@@ -340,18 +316,102 @@ export class DestinationRepositoryAdapter implements DestinationRepositoryPort {
         lng: row.longitude ?? 0,
       },
       0, // distanceKm (to be calculated on FE)
-      row.price,
+      row.entry_fee,
       row.opening_hours ?? '',
       row.description,
       facilities,
       [],
-      imagesArr,
-      row.video ?? undefined,
+      [],
+      undefined,
       row.created_at ? new Date(row.created_at) : new Date(),
       Number(row.avg_rating ?? 0),
       Number(row.total_reviews ?? 0),
+      Number(row.view_count ?? 0),
+      activities,
+      row.phone ?? '',
+      row.email ?? '',
+      row.website ?? '',
+      row.is_featured ?? false,
     );
 
     return destination;
+  }
+
+  /**
+   * Find a single destination by slug (WITH view count increment).
+   * This is for public access - increments view count automatically.
+   */
+  async findBySlug(slug: string): Promise<Destination> {
+    const { data: row, error } = await this.client
+      .from('destinations')
+      .select(
+        `id, name, slug, category, address, latitude, longitude, phone, email, website, opening_hours, entry_fee, description, facilities, activities, avg_rating, total_reviews, view_count, is_featured, created_at`,
+      )
+      .eq('slug', slug)
+      .eq('status', 'active')
+      .single();
+
+    if (error || !row) {
+      throw new Error(error?.message || 'Destination not found');
+    }
+
+    // Increment view count asynchronously (fire-and-forget)
+    void this.incrementViewCount(row.id, row.view_count || 0);
+
+    // Normalize facilities column (can be JSON or any)
+    const facilities = Array.isArray(row.facilities) ? row.facilities : [];
+    
+    // Normalize activities column (can be JSON or any)
+    const activities = Array.isArray(row.activities) ? row.activities : [];
+
+    const destination = new Destination(
+      row.id,
+      row.name,
+      row.slug ?? '',
+      row.category,
+      {
+        address: row.address,
+        lat: row.latitude ?? 0,
+        lng: row.longitude ?? 0,
+      },
+      0,
+      row.entry_fee,
+      row.opening_hours ?? '',
+      row.description,
+      facilities,
+      [],
+      [],
+      undefined,
+      row.created_at ? new Date(row.created_at) : new Date(),
+      Number(row.avg_rating ?? 0),
+      Number(row.total_reviews ?? 0),
+      Number(row.view_count ?? 0),
+      activities,
+      row.phone ?? '',
+      row.email ?? '',
+      row.website ?? '',
+      row.is_featured ?? false,
+    );
+
+    return destination;
+  }
+
+  /**
+   * Increment view count for a destination (fire-and-forget).
+   * This method is called asynchronously without blocking the response.
+   */
+  private async incrementViewCount(
+    destinationId: string,
+    currentCount: number,
+  ): Promise<void> {
+    try {
+      await this.client
+        .from('destinations')
+        .update({ view_count: currentCount + 1 })
+        .eq('id', destinationId);
+    } catch (error) {
+      // Silent fail - don't block response if view count update fails
+      console.error('Failed to increment destination view count:', error);
+    }
   }
 }

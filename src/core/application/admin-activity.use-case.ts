@@ -6,8 +6,14 @@ export interface AdminActivityListQuery {
   limit?: number;
   action?: string;
   entityType?: string;
+  entityId?: string;
   userId?: string;
-  userType?: 'admin' | 'user' | 'all';
+  search?: string;
+  search_fields?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  ipAddress?: string;
+  actorRole?: string;
 }
 
 export interface AdminAlertListQuery {
@@ -19,20 +25,20 @@ export interface AdminAlertListQuery {
 }
 
 export interface ActivityLogData {
-  id: number;
+  id: string;
   user_id: string;
+  user_name: string;
+  user_email: string;
   action: string;
   model_type: string;
   model_id: string;
+  model_name: string;
+  description: string;
   old_values?: any;
   new_values?: any;
-  metadata?: any;
+  ip_address?: string;
+  user_agent?: string;
   created_at: string;
-  users?: {
-    first_name: string;
-    last_name: string;
-    email: string;
-  };
 }
 
 @Injectable()
@@ -47,137 +53,141 @@ export class AdminActivityUseCase {
     const limit = query.limit || 20;
     const offset = (page - 1) * limit;
 
-    let activities: any[] = [];
-
-    // Get activities from activity_logs table (user activities)
-    const { data: loggedActivities } = await this.supabase
+    // Build query with filters - join with users table to get user info
+    let dbQuery = this.supabase
       .from('activity_logs')
-      .select(`
-        id,
-        user_id,
-        action,
-        model_type,
-        model_id,
-        old_values,
-        new_values,
-        metadata,
-        created_at,
+      .select(
+        `
+        *,
         users!activity_logs_user_id_fkey(first_name, last_name, email)
-      `)
-      .order('created_at', { ascending: false })
-      .limit(50); // Get more to combine with admin activities
-
-    console.log('Logged activities from DB:', loggedActivities);
-
-    if (loggedActivities) {
-      loggedActivities.forEach((activity: any) => {
-        activities.push({
-          id: `user_${(activity as any).id}`,
-          action: (activity as any).action,
-          entityType: (activity as any).model_type,
-          entityId: (activity as any).model_id,
-          entityName: this.getEntityName(activity),
-          userId: (activity as any).user_id,
-          userName: (activity as any).users
-            ? `${(activity as any).users.first_name} ${(activity as any).users.last_name}`.trim()
-            : 'Unknown User',
-          userEmail: (activity as any).users?.email,
-          details: this.getActivityDetails(activity),
-          timestamp: (activity as any).created_at,
-          userType: 'user',
-          oldValues: (activity as any).old_values,
-          newValues: (activity as any).new_values,
-          metadata: (activity as any).metadata,
-        });
-      });
-    }
-
-    // Get recent review moderations (admin activities)
-    const { data: reviews } = await this.supabase
-      .from('reviews')
-      .select(`
-        id,
-        status,
-        moderated_at,
-        moderated_by,
-        destination_id,
-        destinations(name),
-        users!reviews_user_id_fkey(first_name, last_name, email)
-      `)
-      .not('moderated_at', 'is', null)
-      .order('moderated_at', { ascending: false })
-      .limit(20);
-
-    if (reviews) {
-      reviews.forEach((review: any) => {
-        activities.push({
-          id: `admin_review_${review.id}`,
-          action: review.status === 'active' ? 'approve_review' : 'reject_review',
-          entityType: 'review',
-          entityId: review.id,
-          entityName: review.destinations?.name || 'Unknown Destination',
-          adminId: review.moderated_by,
-          userName: 'Admin',
-          details: `Review moderation: ${review.status === 'active' ? 'Approved' : 'Rejected'} review for "${review.destinations?.name}"`,
-          timestamp: review.moderated_at,
-          userType: 'admin',
-        });
-      });
-    }
-
-    // Get recent destination creations/updates (admin activities)
-    const { data: destinations } = await this.supabase
-      .from('destinations')
-      .select('id, name, created_at, updated_at, created_by')
-      .order('updated_at', { ascending: false })
-      .limit(20);
-
-    if (destinations) {
-      destinations.forEach((dest: any) => {
-        const isNew = new Date(dest.created_at).getTime() === new Date(dest.updated_at).getTime();
-        activities.push({
-          id: `admin_destination_${dest.id}`,
-          action: isNew ? 'create_destination' : 'update_destination',
-          entityType: 'destination',
-          entityId: dest.id,
-          entityName: dest.name,
-          adminId: dest.created_by,
-          userName: 'Admin',
-          details: `${isNew ? 'Created' : 'Updated'} destination: ${dest.name}`,
-          timestamp: dest.updated_at,
-          userType: 'admin',
-        });
-      });
-    }
-
-    // Sort all activities by timestamp
-    activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      `,
+        { count: 'exact' },
+      )
+      .order('created_at', { ascending: false });
 
     // Apply filters
     if (query.action) {
-      activities = activities.filter(a => a.action === query.action);
+      dbQuery = dbQuery.eq('action', query.action);
     }
     if (query.entityType) {
-      activities = activities.filter(a => a.entityType === query.entityType);
+      dbQuery = dbQuery.eq('model_type', query.entityType);
+    }
+    if (query.entityId) {
+      dbQuery = dbQuery.eq('model_id', query.entityId);
     }
     if (query.userId) {
-      activities = activities.filter(a => a.userId === query.userId || a.adminId === query.userId);
+      dbQuery = dbQuery.eq('user_id', query.userId);
     }
-    if (query.userType && query.userType !== 'all') {
-      activities = activities.filter(a => a.userType === query.userType);
+    if (query.ipAddress) {
+      dbQuery = dbQuery.eq('ip_address', query.ipAddress);
+    }
+    if (query.dateFrom) {
+      dbQuery = dbQuery.gte('created_at', query.dateFrom);
+    }
+    if (query.dateTo) {
+      dbQuery = dbQuery.lte('created_at', query.dateTo);
+    }
+    if (query.actorRole) {
+      dbQuery = dbQuery.eq('actor_role', query.actorRole);
     }
 
-    const total = activities.length;
-    const paginatedActivities = activities.slice(offset, offset + limit);
+    // If there's NO search query, apply pagination at database level
+    if (!query.search || !query.search_fields) {
+      dbQuery = dbQuery.range(offset, offset + limit - 1);
+    }
+
+    const { data: loggedActivities, count, error } = await dbQuery;
+
+    if (error) {
+      console.error('Error fetching activities:', error);
+      throw new Error(`Failed to fetch activities: ${error.message}`);
+    }
+
+    // Apply global search with search_fields (only for search queries)
+    let finalActivities = loggedActivities || [];
+    let finalTotal = count || 0;
+
+    if (query.search && query.search_fields) {
+      const searchTerm = query.search.toLowerCase();
+      const searchFields = query.search_fields.split(',').map((f) => f.trim());
+
+      finalActivities = finalActivities.filter((activity: any) => {
+        return searchFields.some((field) => {
+          switch (field) {
+            case 'entityName':
+              return activity.model_name?.toLowerCase().includes(searchTerm);
+            case 'userName': {
+              const fullName = activity.users
+                ? `${activity.users.first_name} ${activity.users.last_name}`.trim()
+                : '';
+              return fullName.toLowerCase().includes(searchTerm);
+            }
+            case 'userEmail':
+              return activity.users?.email?.toLowerCase().includes(searchTerm);
+            default:
+              return false;
+          }
+        });
+      });
+
+      // Update total after search filtering
+      finalTotal = finalActivities.length;
+
+      // Apply pagination AFTER search filtering (only for search queries)
+      const searchOffset = (page - 1) * limit;
+      finalActivities = finalActivities.slice(searchOffset, searchOffset + limit);
+    }
+    // If no search, finalActivities is already paginated from database
+
+    const activities = finalActivities.map((activity: any) => ({
+      id: activity.id,
+      action: activity.action,
+      entityType: activity.model_type,
+      entityId: activity.model_id,
+      entityName: activity.model_name || activity.model_type || 'Unknown',
+      userId: activity.user_id,
+      userName: activity.users ?
+        `${activity.users.first_name} ${activity.users.last_name}`.trim() :
+        'Unknown User',
+      userEmail: activity.users?.email || '',
+      actorRole: activity.actor_role || 'user',
+      details: activity.description || this.formatActivityDescription(activity),
+      timestamp: activity.created_at,
+      oldValues: activity.old_values,
+      newValues: activity.new_values,
+      ipAddress: activity.ip_address,
+      userAgent: activity.user_agent,
+    }));
 
     return {
-      data: paginatedActivities,
+      data: activities,
       meta: {
         page,
         limit,
-        total,
+        total: finalTotal,
       },
     };
+  }
+
+  private formatActivityDescription(activity: ActivityLogData): string {
+    const action = activity.action;
+    const entityType = activity.model_type;
+    const entityName = activity.model_name || activity.new_values?.name || activity.new_values?.title || 'item';
+    const userName = activity.user_name || 'User';
+
+    const actionDescriptions: Record<string, string> = {
+      create: `${userName} created ${entityType} "${entityName}"`,
+      update: `${userName} updated ${entityType} "${entityName}"`,
+      delete: `${userName} deleted ${entityType} "${entityName}"`,
+      login: `${userName} logged in`,
+      logout: `${userName} logged out`,
+      register: `${userName} registered`,
+      approve: `${userName} approved ${entityType} "${entityName}"`,
+      reject: `${userName} rejected ${entityType} "${entityName}"`,
+      submit: `${userName} submitted ${entityType} "${entityName}"`,
+    };
+
+    return actionDescriptions[action] || `${userName} performed ${action} on ${entityType}`;
   }
 
   private getEntityName(activity: any): string {

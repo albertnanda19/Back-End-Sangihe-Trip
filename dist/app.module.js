@@ -19,7 +19,6 @@ const user_controller_1 = require("./interface/controllers/user.controller");
 const destination_controller_1 = require("./interface/controllers/destination.controller");
 const article_controller_1 = require("./interface/controllers/article.controller");
 const landing_page_controller_1 = require("./interface/controllers/landing-page.controller");
-const all_destination_controller_1 = require("./interface/controllers/all-destination.controller");
 const auth_controller_1 = require("./interface/controllers/auth.controller");
 const user_repository_adapter_1 = require("./infrastructure/database/user.repository.adapter");
 const destination_repository_adapter_1 = require("./infrastructure/database/destination.repository.adapter");
@@ -29,12 +28,10 @@ const user_use_case_1 = require("./core/application/user.use-case");
 const update_user_profile_use_case_1 = require("./core/application/update-user-profile.use-case");
 const update_password_use_case_1 = require("./core/application/update-password.use-case");
 const destination_use_case_1 = require("./core/application/destination.use-case");
-const delete_destination_use_case_1 = require("./core/application/delete-destination.use-case");
 const create_article_use_case_1 = require("./core/application/create-article.use-case");
 const list_articles_use_case_1 = require("./core/application/list-articles.use-case");
 const get_article_use_case_1 = require("./core/application/get-article.use-case");
 const landing_page_use_case_1 = require("./core/application/landing-page.use-case");
-const list_all_destinations_use_case_1 = require("./core/application/list-all-destinations.use-case");
 const list_user_reviews_use_case_1 = require("./core/application/list-user-reviews.use-case");
 const auth_use_case_1 = require("./core/application/auth.use-case");
 const firebase_module_1 = require("./infrastructure/firebase/firebase.module");
@@ -63,6 +60,8 @@ const admin_activity_controller_1 = require("./interface/controllers/admin-activ
 const admin_activity_use_case_1 = require("./core/application/admin-activity.use-case");
 const admin_article_controller_1 = require("./interface/controllers/admin-article.controller");
 const admin_article_use_case_1 = require("./core/application/admin-article.use-case");
+const admin_trip_controller_1 = require("./interface/controllers/admin-trip.controller");
+const admin_trip_use_case_1 = require("./core/application/admin-trip.use-case");
 const system_settings_service_1 = require("./core/application/system-settings.service");
 const activity_logger_service_1 = require("./core/application/activity-logger.service");
 let AppModule = class AppModule {
@@ -90,13 +89,13 @@ exports.AppModule = AppModule = __decorate([
             landing_page_controller_1.LandingPageController,
             trip_controller_1.TripController,
             review_controller_1.ReviewController,
-            all_destination_controller_1.AllDestinationController,
             admin_metrics_controller_1.AdminMetricsController,
             admin_destination_controller_1.AdminDestinationController,
             admin_review_controller_1.AdminReviewController,
             admin_user_controller_1.AdminUserController,
             admin_activity_controller_1.AdminActivityController,
             admin_article_controller_1.AdminArticleController,
+            admin_trip_controller_1.AdminTripController,
         ],
         providers: [
             app_service_1.AppService,
@@ -105,12 +104,10 @@ exports.AppModule = AppModule = __decorate([
             update_user_profile_use_case_1.UpdateUserProfileUseCase,
             update_password_use_case_1.UpdatePasswordUseCase,
             destination_use_case_1.DestinationUseCase,
-            delete_destination_use_case_1.DeleteDestinationUseCase,
             create_article_use_case_1.CreateArticleUseCase,
             list_articles_use_case_1.ListArticlesUseCase,
             get_article_use_case_1.GetArticleUseCase,
             landing_page_use_case_1.LandingPageUseCase,
-            list_all_destinations_use_case_1.ListAllDestinationsUseCase,
             list_user_reviews_use_case_1.ListUserReviewsUseCase,
             create_trip_use_case_1.CreateTripUseCase,
             delete_trip_use_case_1.DeleteTripUseCase,
@@ -126,13 +123,32 @@ exports.AppModule = AppModule = __decorate([
             admin_user_use_case_1.AdminUserUseCase,
             admin_activity_use_case_1.AdminActivityUseCase,
             admin_article_use_case_1.AdminArticleUseCase,
+            admin_trip_use_case_1.AdminTripUseCase,
             jwt_admin_guard_1.JwtAdminGuard,
             jwt_access_guard_1.JwtAccessGuard,
             system_settings_service_1.SystemSettingsService,
             activity_logger_service_1.ActivityLoggerService,
             {
                 provide: 'SUPABASE_CLIENT',
-                useFactory: () => (0, supabase_js_1.createClient)(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY),
+                useFactory: async () => {
+                    const client = (0, supabase_js_1.createClient)(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, {
+                        db: {
+                            schema: 'public',
+                        },
+                        global: {
+                            headers: {
+                                'X-Client-Info': 'supabase-js-node',
+                            },
+                        },
+                    });
+                    try {
+                        await client.rpc('set_timezone_wita');
+                    }
+                    catch {
+                        console.warn('Timezone function not found. Please run set-timezone.sql in Supabase SQL Editor.');
+                    }
+                    return client;
+                },
             },
             { provide: 'UserRepository', useClass: user_repository_adapter_1.UserRepositoryAdapter },
             {

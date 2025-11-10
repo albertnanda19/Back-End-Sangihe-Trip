@@ -28,6 +28,7 @@ export declare class TripController {
                 startTime: string;
                 endTime: string;
                 activity: string;
+                activityName?: string;
                 notes?: string;
             }[];
         }[];

@@ -10,6 +10,7 @@ export interface TripItem {
     startTime: string;
     endTime: string;
     activity: string;
+    activityName?: string;
     notes?: string;
 }
 export interface TripDay {

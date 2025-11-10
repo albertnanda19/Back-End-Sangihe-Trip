@@ -34,6 +34,23 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], LocationDto.prototype, "province", void 0);
+class ActivityDto {
+    name;
+    startTime;
+    endTime;
+}
+__decorate([
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], ActivityDto.prototype, "name", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], ActivityDto.prototype, "startTime", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], ActivityDto.prototype, "endTime", void 0);
 class ImageDto {
     url;
     alt;
@@ -74,6 +91,7 @@ class CreateAdminDestinationDto {
     entryFee;
     categories;
     facilities;
+    activities;
     images;
     published;
     isFeatured;
@@ -155,6 +173,13 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsArray)(),
     (0, class_validator_1.ValidateNested)({ each: true }),
+    (0, class_transformer_1.Type)(() => ActivityDto),
+    __metadata("design:type", Array)
+], CreateAdminDestinationDto.prototype, "activities", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.ValidateNested)({ each: true }),
     (0, class_transformer_1.Type)(() => ImageDto),
     __metadata("design:type", Array)
 ], CreateAdminDestinationDto.prototype, "images", void 0);
@@ -170,7 +195,7 @@ __decorate([
 ], CreateAdminDestinationDto.prototype, "isFeatured", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsEnum)(['active', 'inactive', 'pending', 'rejected']),
+    (0, class_validator_1.IsEnum)(['active', 'inactive']),
     __metadata("design:type", String)
 ], CreateAdminDestinationDto.prototype, "status", void 0);
 class UpdateAdminDestinationDto {
@@ -188,6 +213,7 @@ class UpdateAdminDestinationDto {
     entryFee;
     categories;
     facilities;
+    activities;
     images;
     published;
     isFeatured;
@@ -267,6 +293,13 @@ __decorate([
     (0, class_validator_1.IsString)({ each: true }),
     __metadata("design:type", Array)
 ], UpdateAdminDestinationDto.prototype, "facilities", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.ValidateNested)({ each: true }),
+    (0, class_transformer_1.Type)(() => ActivityDto),
+    __metadata("design:type", Array)
+], UpdateAdminDestinationDto.prototype, "activities", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsArray)(),

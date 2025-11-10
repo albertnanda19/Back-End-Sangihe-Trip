@@ -59,14 +59,23 @@ export class GetDestinationsQueryDto {
 export class DestinationListItemDto {
   id: string;
   name: string;
-  category: string;
-  rating: number;
-  totalReviews: number;
-  location: string;
-  price: number;
-  image: string;
-  facilities: string[];
+  slug: string;
   description: string;
+  address: string;
+  opening_hours: string;
+  entry_fee: number;
+  category: string;
+  avg_rating: number;
+  total_reviews: number;
+  is_featured: boolean;
+  images: {
+    id: string;
+    image_url: string;
+    alt_text: string;
+    image_type: string;
+    sort_order: number;
+    is_featured: boolean;
+  }[];
 }
 
 export class GetDestinationsMetaDto {

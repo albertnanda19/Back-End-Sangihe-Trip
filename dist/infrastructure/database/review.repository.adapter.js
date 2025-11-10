@@ -37,7 +37,7 @@ let ReviewRepositoryAdapter = class ReviewRepositoryAdapter {
         if (error) {
             throw new Error(error.message);
         }
-        const mapped = (data || []).map((row) => new review_entity_1.Review(row.id, row.user_id, row.destination_id, row.rating, row.content || '', this.parseImages(row.review_images), row.helpful_count ?? 0, new Date(row.created_at), new Date(row.updated_at)));
+        const mapped = (data || []).map((row) => new review_entity_1.Review(row.id, row.user_id, row.destination_id, row.rating, row.content || '', this.parseImages(row.review_images), row.helpful_count ?? 0, new Date(row.created_at), new Date(row.updated_at), row.status || 'pending'));
         return {
             data: mapped,
             totalItems: count || 0,
@@ -79,6 +79,7 @@ let ReviewRepositoryAdapter = class ReviewRepositoryAdapter {
         destination_id,
         rating,
         content,
+        status,
         helpful_count,
         created_at,
         updated_at,
@@ -119,7 +120,7 @@ let ReviewRepositoryAdapter = class ReviewRepositoryAdapter {
         }
         const mapped = (data || []).map((row) => {
             const user = row.users || {};
-            return Object.assign(new review_entity_1.Review(row.id, row.user_id, row.destination_id, row.rating, row.content || '', imagesByReview[row.id] || [], row.helpful_count ?? 0, new Date(row.created_at), new Date(row.updated_at)), {
+            return Object.assign(new review_entity_1.Review(row.id, row.user_id, row.destination_id, row.rating, row.content || '', imagesByReview[row.id] || [], row.helpful_count ?? 0, new Date(row.created_at), new Date(row.updated_at), row.status || 'pending'), {
                 user: {
                     id: user.id || row.user_id,
                     name: `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Anonymous',
@@ -149,7 +150,7 @@ let ReviewRepositoryAdapter = class ReviewRepositoryAdapter {
             .from('review_images')
             .select('image_url')
             .eq('review_id', id);
-        return new review_entity_1.Review(data.id, data.user_id, data.destination_id, data.rating, data.content || '', (imagesData || []).map((img) => img.image_url), data.helpful_count ?? 0, new Date(data.created_at), new Date(data.updated_at));
+        return new review_entity_1.Review(data.id, data.user_id, data.destination_id, data.rating, data.content || '', (imagesData || []).map((img) => img.image_url), data.helpful_count ?? 0, new Date(data.created_at), new Date(data.updated_at), data.status || 'pending');
     }
     async findByUserAndDestination(userId, destinationId) {
         const { data, error } = await this.client
@@ -166,7 +167,7 @@ let ReviewRepositoryAdapter = class ReviewRepositoryAdapter {
             .from('review_images')
             .select('image_url')
             .eq('review_id', data.id);
-        return new review_entity_1.Review(data.id, data.user_id, data.destination_id, data.rating, data.content || '', (imagesData || []).map((img) => img.image_url), data.helpful_count ?? 0, new Date(data.created_at), new Date(data.updated_at));
+        return new review_entity_1.Review(data.id, data.user_id, data.destination_id, data.rating, data.content || '', (imagesData || []).map((img) => img.image_url), data.helpful_count ?? 0, new Date(data.created_at), new Date(data.updated_at), data.status || 'pending');
     }
     async create(review) {
         const reviewId = review.id || (0, uuid_1.v4)();
@@ -197,7 +198,7 @@ let ReviewRepositoryAdapter = class ReviewRepositoryAdapter {
             if (imagesError)
                 throw new Error(imagesError.message);
         }
-        return new review_entity_1.Review(reviewId, review.userId, review.destinationId, review.rating, review.comment, review.images, 0, review.createdAt, review.updatedAt);
+        return new review_entity_1.Review(reviewId, review.userId, review.destinationId, review.rating, review.comment, review.images, 0, review.createdAt, review.updatedAt, review.status || 'pending');
     }
     async toggleLike(reviewId, userId) {
         const { data: existingLike } = await this.client

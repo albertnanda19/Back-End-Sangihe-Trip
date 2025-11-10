@@ -1,138 +1,26 @@
-import {
-  Controller,
-  HttpCode,
-  Post,
-  UseGuards,
-  Inject,
-  Req,
-  Get,
-  Query,
-  Param,
-  Delete,
-} from '@nestjs/common';
-import { FastifyRequest } from 'fastify';
+import { Controller, HttpCode, Inject, Get, Param, Query } from '@nestjs/common';
 import { ResponseMessage } from '../../common/decorators/response.decorator';
 import { DestinationUseCase } from '../../core/application/destination.use-case';
-import { DeleteDestinationUseCase } from '../../core/application/delete-destination.use-case';
-import { AdminGuard } from '../../common/guards/admin.guard';
-import { randomUUID } from 'crypto';
-import {
-  deleteObject,
-  getDownloadURL,
-  ref,
-  StorageReference,
-  uploadBytes,
-} from 'firebase/storage';
-import { FirebaseStorage } from 'firebase/storage';
-import { FIREBASE_STORAGE } from '../../infrastructure/firebase/firebase.provider';
-import { CreateDestinationDto } from '../dtos/destination/create-destination.dto';
 import {
   GetDestinationsQueryDto,
   GetDestinationsResponseDto,
 } from '../dtos/destination/get-destinations.dto';
-import { plainToInstance } from 'class-transformer';
-import { validateOrReject } from 'class-validator';
 
 @Controller('destination')
 export class DestinationController {
   constructor(
     private readonly destinationUseCase: DestinationUseCase,
-    private readonly deleteDestinationUc: DeleteDestinationUseCase,
-    @Inject(FIREBASE_STORAGE) private readonly storage: FirebaseStorage,
+    @Inject('SUPABASE_CLIENT') private readonly supabase: any,
   ) {}
 
-  @Post()
-  @HttpCode(200)
-  @UseGuards(AdminGuard)
-  @ResponseMessage('Berhasil menambahkan destinasi baru!')
-  async createDestination(@Req() req: FastifyRequest) {
-    const uploadedImageRefs: StorageReference[] = [];
-    let payloadJson = '';
-
-    try {
-      const parts = (req as any).parts();
-      const uploadedImageUrls: string[] = [];
-      let videoUrl: string | undefined;
-
-      const fileProcessingPromises: Promise<void>[] = [];
-
-      for await (const part of parts) {
-        // Handle nested "parts" streams concurrently without blocking iteration
-        if (part.type === 'file') {
-          // Launch an async task quickly so that the iterator can continue
-          const task = (async () => {
-            const buffer = await part.toBuffer();
-
-            const extension = (
-              part.filename?.split('.').pop() ?? ''
-            ).toLowerCase();
-            const filename = `${randomUUID()}.${extension}`;
-            const storageRef = ref(this.storage, `destinations/${filename}`);
-
-            await uploadBytes(storageRef, buffer, {
-              contentType: part.mimetype,
-            });
-
-            // Keep reference for rollback *after* successful upload
-            uploadedImageRefs.push(storageRef);
-
-            const url = await getDownloadURL(storageRef);
-
-            if (part.fieldname === 'video') {
-              videoUrl = url;
-            } else if (part.fieldname.startsWith('images')) {
-              // Handles: images, images[], images[0], images1, etc.
-              uploadedImageUrls.push(url);
-            }
-          })();
-
-          fileProcessingPromises.push(task);
-        } else if (part.type === 'field' && part.fieldname === 'payload') {
-          payloadJson = part.value as string;
-        }
-      }
-
-      // Wait until *every* upload is finished before moving on
-      await Promise.all(fileProcessingPromises);
-
-      if (!payloadJson) {
-        throw new Error('Missing payload field');
-      }
-
-      const dto = plainToInstance(
-        CreateDestinationDto,
-        JSON.parse(payloadJson),
-        {
-          enableImplicitConversion: true,
-        },
-      );
-
-      await validateOrReject(dto as object, { whitelist: true });
-
-      const result = await this.destinationUseCase.execute({
-        ...dto,
-        images: uploadedImageUrls,
-        video: videoUrl,
-        uploaderId: (req as any).user.id,
-      });
-
-      return result;
-    } catch (err) {
-      await Promise.all(
-        uploadedImageRefs.map((fileRef) =>
-          deleteObject(fileRef).catch(console.error),
-        ),
-      );
-      throw err;
-    }
-  }
-
+  // ----------------------------------------------
+  // GET DESTINATIONS (with pagination and filtering)
+  // ----------------------------------------------
   @ResponseMessage('Berhasil mendapatkan data daftar destinasi')
   @Get()
   @HttpCode(200)
   async getDestinations(
     @Query() query: GetDestinationsQueryDto,
-    @Req() req: any,
   ): Promise<GetDestinationsResponseDto> {
     const result = await this.destinationUseCase.findAll(query);
     const { data, totalItems } = result;
@@ -140,25 +28,49 @@ export class DestinationController {
     const pageSize = query.pageSize ?? 12;
     const totalPages = Math.ceil(totalItems / pageSize);
 
+    // Fetch images for all destinations in a single query
+    const destinationIds = data.map((d) => d.id);
+    const { data: allImages } = await this.supabase
+      .from('destination_images')
+      .select('*')
+      .in('destination_id', destinationIds)
+      .order('sort_order', { ascending: true });
+
+    // Group images by destination_id
+    const imagesByDestination = (allImages || []).reduce(
+      (acc: any, img: any) => {
+        if (!acc[img.destination_id]) {
+          acc[img.destination_id] = [];
+        }
+        acc[img.destination_id].push(img);
+        return acc;
+      },
+      {},
+    );
+
     return {
       data: data.map((destination) => {
-        // The images from the database are already full Firebase URLs or old filenames.
-        // We don't need to prepend any base URL here.
-        const images: string[] = destination.images ?? [];
+        const images = imagesByDestination[destination.id] || [];
         return {
           id: destination.id,
           name: destination.name,
-          category: destination.category,
-          rating: 0, // Placeholder
-          totalReviews: 0, // Placeholder
-          location: destination.location.address,
-          price: destination.price,
-          image: images[0] ?? '',
-          images: images,
-          facilities: Array.isArray(destination.facilities)
-            ? destination.facilities.map((f: any) => f.name || f.icon || f)
-            : [],
+          slug: destination.slug,
           description: destination.description,
+          address: destination.location.address,
+          opening_hours: destination.openHours,
+          entry_fee: destination.price,
+          category: destination.category,
+          avg_rating: destination.rating,
+          total_reviews: destination.totalReviews,
+          is_featured: destination.isFeatured,
+          images: images.map((img: any) => ({
+            id: img.id,
+            image_url: img.image_url,
+            alt_text: img.alt_text,
+            image_type: img.image_type,
+            sort_order: img.sort_order,
+            is_featured: img.is_featured,
+          })),
         };
       }),
       meta: {
@@ -171,46 +83,98 @@ export class DestinationController {
   }
 
   // ----------------------------------------------
-  // GET DESTINATION DETAIL
+  // GET DESTINATION DETAIL BY ID (no view count increment)
   // ----------------------------------------------
   @Get(':id')
   @HttpCode(200)
   @ResponseMessage('Berhasil mengambil data destinasi {name}')
-  async getDestinationDetail(@Param('id') id: string) {
+  async getDestinationById(@Param('id') id: string) {
     const dest = await this.destinationUseCase.findById(id);
 
+    // Fetch images from destination_images table
+    const { data: images } = await this.supabase
+      .from('destination_images')
+      .select('*')
+      .eq('destination_id', dest.id)
+      .order('sort_order', { ascending: true });
+
     return {
-      // Used for placeholder interpolation in the response message
       id: dest.id,
       name: dest.name,
-      category: dest.category,
-      location: {
-        address: dest.location.address,
-        lat: dest.location.lat,
-        lng: dest.location.lng,
-      },
-      price: dest.price,
-      openHours: dest.openHours,
+      slug: dest.slug,
       description: dest.description,
-      facilities: dest.facilities,
-      tips: dest.tips,
-      images: dest.images,
-      video: dest.video,
-      rating: dest.rating,
-      totalReviews: dest.totalReviews,
+      address: dest.location.address,
+      latitude: dest.location.lat,
+      longitude: dest.location.lng,
+      phone: dest.phone,
+      email: dest.email,
+      website: dest.website,
+      opening_hours: dest.openHours,
+      entry_fee: dest.price,
+      category: dest.category,
+      facilities: Array.isArray(dest.facilities)
+        ? dest.facilities.map((f) => (typeof f === 'object' ? f.name : f))
+        : [],
+      avg_rating: dest.rating,
+      total_reviews: dest.totalReviews,
+      is_featured: dest.isFeatured,
+      activities: dest.activities,
+      images: (images || []).map((img: any) => ({
+        id: img.id,
+        image_url: img.image_url,
+        alt_text: img.alt_text,
+        image_type: img.image_type,
+        sort_order: img.sort_order,
+        is_featured: img.is_featured,
+      })),
     };
   }
 
   // ----------------------------------------------
-  // DELETE DESTINATION
+  // GET DESTINATION DETAIL BY SLUG (with view count increment)
   // ----------------------------------------------
-  @Delete(':id')
+  @Get('slug/:slug')
   @HttpCode(200)
-  @ResponseMessage('Berhasil menghapus destinasi {name}!')
-  async deleteDestination(@Param('id') id: string) {
-    // The use case returns the deleted entity so we can interpolate its name
-    const deleted = await this.deleteDestinationUc.execute(id);
-    // Return only the fields needed for interpolation to keep payload small
-    return { name: deleted.name };
+  @ResponseMessage('Berhasil mengambil data destinasi {name}')
+  async getDestinationBySlug(@Param('slug') slug: string) {
+    const dest = await this.destinationUseCase.findBySlug(slug);
+
+    // Fetch images from destination_images table
+    const { data: images } = await this.supabase
+      .from('destination_images')
+      .select('*')
+      .eq('destination_id', dest.id)
+      .order('sort_order', { ascending: true });
+
+    return {
+      id: dest.id,
+      name: dest.name,
+      slug: dest.slug,
+      description: dest.description,
+      address: dest.location.address,
+      latitude: dest.location.lat,
+      longitude: dest.location.lng,
+      phone: dest.phone,
+      email: dest.email,
+      website: dest.website,
+      opening_hours: dest.openHours,
+      entry_fee: dest.price,
+      category: dest.category,
+      facilities: Array.isArray(dest.facilities)
+        ? dest.facilities.map((f) => (typeof f === 'object' ? f.name : f))
+        : [],
+      avg_rating: dest.rating,
+      total_reviews: dest.totalReviews,
+      is_featured: dest.isFeatured,
+      activities: dest.activities,
+      images: (images || []).map((img: any) => ({
+        id: img.id,
+        image_url: img.image_url,
+        alt_text: img.alt_text,
+        image_type: img.image_type,
+        sort_order: img.sort_order,
+        is_featured: img.is_featured,
+      })),
+    };
   }
 }

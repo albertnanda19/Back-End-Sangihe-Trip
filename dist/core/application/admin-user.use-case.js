@@ -15,10 +15,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AdminUserUseCase = void 0;
 const common_1 = require("@nestjs/common");
 const supabase_js_1 = require("@supabase/supabase-js");
+const activity_logger_service_1 = require("./activity-logger.service");
 let AdminUserUseCase = class AdminUserUseCase {
     supabase;
-    constructor(supabase) {
+    activityLogger;
+    constructor(supabase, activityLogger) {
         this.supabase = supabase;
+        this.activityLogger = activityLogger;
     }
     async list(query) {
         const page = query.page || 1;
@@ -109,8 +112,8 @@ let AdminUserUseCase = class AdminUserUseCase {
             reviewsCount: reviewCount || 0,
         };
     }
-    async update(id, data) {
-        await this.getById(id);
+    async update(id, data, adminUser, ipAddress, userAgent) {
+        const existingUser = await this.getById(id);
         const updateData = {};
         if (data.status !== undefined)
             updateData.status = data.status;
@@ -133,7 +136,26 @@ let AdminUserUseCase = class AdminUserUseCase {
                 throw new Error(`Failed to update user: ${error.message}`);
             }
         }
-        return this.getById(id);
+        const updatedUser = await this.getById(id);
+        if (adminUser && Object.keys(updateData).length > 0) {
+            const adminName = adminUser.name || 'Admin';
+            const userName = `${updatedUser.first_name} ${updatedUser.last_name}`.trim();
+            const oldValues = {};
+            const newValues = {};
+            if (data.status !== undefined) {
+                oldValues.status = existingUser.status;
+                newValues.status = data.status;
+            }
+            if (data.role !== undefined) {
+                oldValues.role = existingUser.role?.name;
+                newValues.role = data.role;
+            }
+            await this.activityLogger.logAdminAction(adminUser.id, 'update', 'user', id, {
+                userName,
+                description: `${adminName} updated user "${userName}"`,
+            }, newValues, adminName, adminUser.email, userName, ipAddress, userAgent, oldValues);
+        }
+        return updatedUser;
     }
     async delete(id, hard = false) {
         await this.getById(id);
@@ -161,6 +183,7 @@ exports.AdminUserUseCase = AdminUserUseCase;
 exports.AdminUserUseCase = AdminUserUseCase = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, common_1.Inject)('SUPABASE_CLIENT')),
-    __metadata("design:paramtypes", [supabase_js_1.SupabaseClient])
+    __metadata("design:paramtypes", [supabase_js_1.SupabaseClient,
+        activity_logger_service_1.ActivityLoggerService])
 ], AdminUserUseCase);
 //# sourceMappingURL=admin-user.use-case.js.map

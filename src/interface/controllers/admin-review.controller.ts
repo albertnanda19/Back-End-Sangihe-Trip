@@ -50,7 +50,11 @@ export class AdminReviewController {
     @Req() req: AuthenticatedRequest,
   ) {
     const adminId = req.user?.id as string;
-    return await this.reviewUseCase.approve(id, adminId, dto.moderatorNote);
+    const ipAddress = (req as any).ip || (req as any).ips?.[0] || (req as any).connection?.remoteAddress || (req as any).socket?.remoteAddress || '127.0.0.1';
+    const userAgent = (req as any).headers?.['user-agent'] || (req as any).get?.('User-Agent') || 'Unknown';
+    const adminUser = req.user;
+
+    return await this.reviewUseCase.approve(id, adminId, dto.moderatorNote, adminUser, ipAddress, userAgent);
   }
 
   @Put(':id/reject')
@@ -61,11 +65,18 @@ export class AdminReviewController {
     @Req() req: AuthenticatedRequest,
   ) {
     const adminId = req.user?.id as string;
+    const ipAddress = (req as any).ip || (req as any).ips?.[0] || (req as any).connection?.remoteAddress || (req as any).socket?.remoteAddress || '127.0.0.1';
+    const userAgent = (req as any).headers?.['user-agent'] || (req as any).get?.('User-Agent') || 'Unknown';
+    const adminUser = req.user;
+
     return await this.reviewUseCase.reject(
       id,
       adminId,
       dto.reason,
       dto.moderatorNote,
+      adminUser,
+      ipAddress,
+      userAgent,
     );
   }
 }

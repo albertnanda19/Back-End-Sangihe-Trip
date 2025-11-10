@@ -22,7 +22,13 @@ let DestinationUseCase = class DestinationUseCase {
         this.repository = repository;
     }
     async execute(payload) {
-        const dest = new destination_entity_1.Destination((0, crypto_1.randomUUID)(), payload.name, payload.category, payload.location, payload.distanceKm, payload.price, payload.openHours, payload.description, payload.facilities, payload.tips, payload.images, payload.video);
+        const slug = payload.name
+            .toLowerCase()
+            .replace(/[^a-z0-9\s-]/g, '')
+            .replace(/\s+/g, '-')
+            .replace(/-+/g, '-')
+            .trim();
+        const dest = new destination_entity_1.Destination((0, crypto_1.randomUUID)(), payload.name, slug, payload.category, payload.location, payload.distanceKm, payload.price, payload.openHours, payload.description, payload.facilities, payload.tips, payload.images, payload.video);
         try {
             return await this.repository.save(dest, payload.uploaderId);
         }
@@ -41,6 +47,14 @@ let DestinationUseCase = class DestinationUseCase {
     async findById(id) {
         try {
             return await this.repository.findById(id);
+        }
+        catch (e) {
+            throw new common_1.InternalServerErrorException(e.message);
+        }
+    }
+    async findBySlug(slug) {
+        try {
+            return await this.repository.findBySlug(slug);
         }
         catch (e) {
             throw new common_1.InternalServerErrorException(e.message);

@@ -30,9 +30,17 @@ export class DestinationUseCase {
   ) {}
 
   async execute(payload: CreateDestinationInput) {
+    const slug = payload.name
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .trim();
+
     const dest = new Destination(
       randomUUID(),
       payload.name,
+      slug,
       payload.category,
       payload.location,
       payload.distanceKm,
@@ -65,6 +73,14 @@ export class DestinationUseCase {
   async findById(id: string) {
     try {
       return await this.repository.findById(id);
+    } catch (e) {
+      throw new InternalServerErrorException(e.message);
+    }
+  }
+
+  async findBySlug(slug: string) {
+    try {
+      return await this.repository.findBySlug(slug);
     } catch (e) {
       throw new InternalServerErrorException(e.message);
     }

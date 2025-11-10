@@ -11,7 +11,6 @@ import { UserController } from './interface/controllers/user.controller';
 import { DestinationController } from './interface/controllers/destination.controller';
 import { ArticleController } from './interface/controllers/article.controller';
 import { LandingPageController } from './interface/controllers/landing-page.controller';
-import { AllDestinationController } from './interface/controllers/all-destination.controller';
 import { AuthController } from './interface/controllers/auth.controller';
 import { UserRepositoryAdapter } from './infrastructure/database/user.repository.adapter';
 import { DestinationRepositoryAdapter } from './infrastructure/database/destination.repository.adapter';
@@ -21,12 +20,10 @@ import { UserUseCase } from './core/application/user.use-case';
 import { UpdateUserProfileUseCase } from './core/application/update-user-profile.use-case';
 import { UpdatePasswordUseCase } from './core/application/update-password.use-case';
 import { DestinationUseCase } from './core/application/destination.use-case';
-import { DeleteDestinationUseCase } from './core/application/delete-destination.use-case';
 import { CreateArticleUseCase } from './core/application/create-article.use-case';
 import { ListArticlesUseCase } from './core/application/list-articles.use-case';
 import { GetArticleUseCase } from './core/application/get-article.use-case';
 import { LandingPageUseCase } from './core/application/landing-page.use-case';
-import { ListAllDestinationsUseCase } from './core/application/list-all-destinations.use-case';
 import { ListUserReviewsUseCase } from './core/application/list-user-reviews.use-case';
 import { AuthUseCase } from './core/application/auth.use-case';
 import { FirebaseModule } from './infrastructure/firebase/firebase.module';
@@ -55,6 +52,8 @@ import { AdminActivityController } from './interface/controllers/admin-activity.
 import { AdminActivityUseCase } from './core/application/admin-activity.use-case';
 import { AdminArticleController } from './interface/controllers/admin-article.controller';
 import { AdminArticleUseCase } from './core/application/admin-article.use-case';
+import { AdminTripController } from './interface/controllers/admin-trip.controller';
+import { AdminTripUseCase } from './core/application/admin-trip.use-case';
 import { SystemSettingsService } from './core/application/system-settings.service';
 import { ActivityLoggerService } from './core/application/activity-logger.service';
 
@@ -79,13 +78,13 @@ import { ActivityLoggerService } from './core/application/activity-logger.servic
     LandingPageController,
     TripController,
     ReviewController,
-    AllDestinationController,
     AdminMetricsController,
     AdminDestinationController,
     AdminReviewController,
     AdminUserController,
     AdminActivityController,
     AdminArticleController,
+    AdminTripController,
   ],
   providers: [
     AppService,
@@ -94,12 +93,10 @@ import { ActivityLoggerService } from './core/application/activity-logger.servic
     UpdateUserProfileUseCase,
     UpdatePasswordUseCase,
     DestinationUseCase,
-    DeleteDestinationUseCase,
     CreateArticleUseCase,
     ListArticlesUseCase,
     GetArticleUseCase,
     LandingPageUseCase,
-    ListAllDestinationsUseCase,
     ListUserReviewsUseCase,
     CreateTripUseCase,
     DeleteTripUseCase,
@@ -115,17 +112,42 @@ import { ActivityLoggerService } from './core/application/activity-logger.servic
     AdminUserUseCase,
     AdminActivityUseCase,
     AdminArticleUseCase,
+    AdminTripUseCase,
     JwtAdminGuard,
     JwtAccessGuard,
     SystemSettingsService,
     ActivityLoggerService,
     {
       provide: 'SUPABASE_CLIENT',
-      useFactory: () =>
-        createClient(
+      useFactory: async () => {
+        const client = createClient(
           process.env.SUPABASE_URL as string,
           process.env.SUPABASE_SERVICE_ROLE_KEY as string,
-        ),
+          {
+            db: {
+              schema: 'public',
+            },
+            global: {
+              headers: {
+                'X-Client-Info': 'supabase-js-node',
+              },
+            },
+          },
+        );
+
+        // Set timezone to WITA (GMT+8) - Indonesia Eastern Time
+        // Call the set_timezone_wita() function we created in the database
+        try {
+          await client.rpc('set_timezone_wita');
+        } catch {
+          // If function doesn't exist yet, warn but continue
+          console.warn(
+            'Timezone function not found. Please run set-timezone.sql in Supabase SQL Editor.',
+          );
+        }
+
+        return client;
+      },
     },
     { provide: 'UserRepository', useClass: UserRepositoryAdapter },
     {

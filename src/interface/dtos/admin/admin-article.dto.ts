@@ -26,7 +26,7 @@ export class CreateAdminArticleDto {
   excerpt?: string;
 
   @IsOptional()
-  @IsString()
+  @IsEnum(['tips', 'guide', 'culture', 'food', 'adventure', 'news'])
   category?: string;
 
   @IsOptional()
@@ -39,7 +39,7 @@ export class CreateAdminArticleDto {
   tags?: string[];
 
   @IsOptional()
-  @IsEnum(['draft', 'published', 'archived'])
+  @IsEnum(['draft', 'published'])
   status?: string = 'draft';
 }
 
@@ -61,7 +61,7 @@ export class UpdateAdminArticleDto {
   excerpt?: string;
 
   @IsOptional()
-  @IsString()
+  @IsEnum(['tips', 'guide', 'culture', 'food', 'adventure', 'news'])
   category?: string;
 
   @IsOptional()
@@ -74,6 +74,6 @@ export class UpdateAdminArticleDto {
   tags?: string[];
 
   @IsOptional()
-  @IsEnum(['draft', 'published', 'archived'])
+  @IsEnum(['draft', 'published'])
   status?: string;
 }

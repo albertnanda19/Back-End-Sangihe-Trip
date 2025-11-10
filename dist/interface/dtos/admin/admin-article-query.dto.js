@@ -45,7 +45,7 @@ __decorate([
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsIn)(['draft', 'published', 'archived']),
+    (0, class_validator_1.IsIn)(['draft', 'published']),
     __metadata("design:type", String)
 ], AdminArticleQueryDto.prototype, "status", void 0);
 __decorate([

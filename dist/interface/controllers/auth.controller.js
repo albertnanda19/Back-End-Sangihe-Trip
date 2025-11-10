@@ -23,16 +23,20 @@ let AuthController = class AuthController {
     constructor(authUseCase) {
         this.authUseCase = authUseCase;
     }
-    async register(body) {
-        const user = await this.authUseCase.execute(body);
+    async register(body, req) {
+        const ipAddress = req.ip || req.ips?.[0] || req.connection?.remoteAddress || req.socket?.remoteAddress || '127.0.0.1';
+        const userAgent = req.headers?.['user-agent'] || req.get?.('User-Agent') || 'Unknown';
+        const user = await this.authUseCase.execute(body, ipAddress, userAgent);
         return {
             id: user.id,
             name: user.name,
             email: user.email,
         };
     }
-    async login(body) {
-        const tokens = await this.authUseCase.login(body);
+    async login(body, req) {
+        const ipAddress = req.ip || req.ips?.[0] || req.connection?.remoteAddress || req.socket?.remoteAddress || '127.0.0.1';
+        const userAgent = req.headers?.['user-agent'] || req.get?.('User-Agent') || 'Unknown';
+        const tokens = await this.authUseCase.login(body, ipAddress, userAgent);
         return tokens;
     }
 };
@@ -42,8 +46,9 @@ __decorate([
     (0, common_1.HttpCode)(200),
     (0, response_decorator_1.ResponseMessage)('Berhasil mendaftarkan akun. Silahkan melakukan login'),
     __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [register_dto_1.RegisterDto]),
+    __metadata("design:paramtypes", [register_dto_1.RegisterDto, Object]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "register", null);
 __decorate([
@@ -51,8 +56,9 @@ __decorate([
     (0, common_1.HttpCode)(200),
     (0, response_decorator_1.ResponseMessage)('Berhasil melakukan login!'),
     __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [login_dto_1.LoginDto]),
+    __metadata("design:paramtypes", [login_dto_1.LoginDto, Object]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "login", null);
 exports.AuthController = AuthController = __decorate([

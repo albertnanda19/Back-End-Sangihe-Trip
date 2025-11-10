@@ -23,5 +23,6 @@ export declare class DestinationUseCase {
         totalItems: number;
     }>;
     findById(id: string): Promise<Destination>;
+    findBySlug(slug: string): Promise<Destination>;
 }
 export {};

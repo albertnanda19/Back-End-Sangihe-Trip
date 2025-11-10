@@ -2,6 +2,7 @@ import { SupabaseClient } from '@supabase/supabase-js';
 export interface MetricsSummary {
     totalUsers: number;
     totalDestinations: number;
+    totalArticles: number;
     totalTripPlans: number;
     totalReviews: number;
 }

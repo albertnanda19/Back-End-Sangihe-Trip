@@ -15,10 +15,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AdminReviewUseCase = void 0;
 const common_1 = require("@nestjs/common");
 const supabase_js_1 = require("@supabase/supabase-js");
+const activity_logger_service_1 = require("./activity-logger.service");
 let AdminReviewUseCase = class AdminReviewUseCase {
     supabase;
-    constructor(supabase) {
+    activityLogger;
+    constructor(supabase, activityLogger) {
         this.supabase = supabase;
+        this.activityLogger = activityLogger;
     }
     async list(query) {
         const page = query.page || 1;
@@ -73,7 +76,7 @@ let AdminReviewUseCase = class AdminReviewUseCase {
         }
         return review;
     }
-    async approve(reviewId, adminId, moderatorNote) {
+    async approve(reviewId, adminId, moderatorNote, adminUser, ipAddress, userAgent) {
         const review = await this.getById(reviewId);
         const { error: updateError } = await this.supabase
             .from('reviews')
@@ -88,9 +91,24 @@ let AdminReviewUseCase = class AdminReviewUseCase {
             throw new Error(`Failed to approve review: ${updateError.message}`);
         }
         await this.recalculateDestinationRating(review.destination_id);
-        return this.getById(reviewId);
+        const updatedReview = await this.getById(reviewId);
+        if (adminUser) {
+            const adminName = adminUser.name || 'Admin';
+            const reviewTitle = review.title || `Review for ${review.destinations?.name || 'Destination'}`;
+            await this.activityLogger.logAdminAction(adminUser.id, 'update', 'review', reviewId, {
+                reviewTitle,
+                description: `${adminName} approved review "${reviewTitle}"`,
+            }, {
+                status: 'active',
+                moderated_by: adminId,
+                moderation_notes: moderatorNote,
+            }, adminName, adminUser.email, reviewTitle, ipAddress, userAgent, {
+                status: review.status,
+            });
+        }
+        return updatedReview;
     }
-    async reject(reviewId, adminId, reason, moderatorNote) {
+    async reject(reviewId, adminId, reason, moderatorNote, adminUser, ipAddress, userAgent) {
         const review = await this.getById(reviewId);
         const { error: updateError } = await this.supabase
             .from('reviews')
@@ -107,7 +125,22 @@ let AdminReviewUseCase = class AdminReviewUseCase {
             throw new Error(`Failed to reject review: ${updateError.message}`);
         }
         await this.recalculateDestinationRating(review.destination_id);
-        return this.getById(reviewId);
+        const updatedReview = await this.getById(reviewId);
+        if (adminUser) {
+            const adminName = adminUser.name || 'Admin';
+            const reviewTitle = review.title || `Review for ${review.destinations?.name || 'Destination'}`;
+            await this.activityLogger.logAdminAction(adminUser.id, 'update', 'review', reviewId, {
+                reviewTitle,
+                description: `${adminName} rejected review "${reviewTitle}"`,
+            }, {
+                status: 'rejected',
+                moderated_by: adminId,
+                moderation_notes: moderatorNote ? `${reason}. ${moderatorNote}` : reason,
+            }, adminName, adminUser.email, reviewTitle, ipAddress, userAgent, {
+                status: review.status,
+            });
+        }
+        return updatedReview;
     }
     async recalculateDestinationRating(destinationId) {
         const { data: activeReviews } = await this.supabase
@@ -135,6 +168,7 @@ exports.AdminReviewUseCase = AdminReviewUseCase;
 exports.AdminReviewUseCase = AdminReviewUseCase = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, common_1.Inject)('SUPABASE_CLIENT')),
-    __metadata("design:paramtypes", [supabase_js_1.SupabaseClient])
+    __metadata("design:paramtypes", [supabase_js_1.SupabaseClient,
+        activity_logger_service_1.ActivityLoggerService])
 ], AdminReviewUseCase);
 //# sourceMappingURL=admin-review.use-case.js.map

@@ -4,6 +4,7 @@ import { SupabaseClient } from '@supabase/supabase-js';
 export interface MetricsSummary {
   totalUsers: number;
   totalDestinations: number;
+  totalArticles: number;
   totalTripPlans: number;
   totalReviews: number;
   // monthlyActiveUsers: number | null;  // commented for now
@@ -37,7 +38,7 @@ export class AdminMetricsUseCase {
 
   async getSummary(range?: string): Promise<MetricsSummary> {
     // Get total counts
-    const [usersResult, destinationsResult, tripsResult, reviewsResult] =
+    const [usersResult, destinationsResult, articlesResult, tripsResult, reviewsResult] =
       await Promise.all([
         this.supabase
           .from('users')
@@ -45,8 +46,10 @@ export class AdminMetricsUseCase {
           .is('deleted_at', null),
         this.supabase
           .from('destinations')
-          .select('id', { count: 'exact', head: true })
-          .is('deleted_at', null),
+          .select('id', { count: 'exact', head: true }),
+        this.supabase
+          .from('articles')
+          .select('id', { count: 'exact', head: true }),
         this.supabase
           .from('trip_plans')
           .select('id', { count: 'exact', head: true })
@@ -60,6 +63,7 @@ export class AdminMetricsUseCase {
     return {
       totalUsers: usersResult.count || 0,
       totalDestinations: destinationsResult.count || 0,
+      totalArticles: articlesResult.count || 0,
       totalTripPlans: tripsResult.count || 0,
       totalReviews: reviewsResult.count || 0,
     };
@@ -109,7 +113,6 @@ export class AdminMetricsUseCase {
         .from('destinations')
         .select('id, name, slug, view_count')
         .eq('status', 'active')
-        .is('deleted_at', null)
         .order('view_count', { ascending: false })
         .limit(limit);
 
