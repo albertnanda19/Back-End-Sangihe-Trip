@@ -39,7 +39,6 @@ let ListUserTripsUseCase = class ListUserTripsUseCase {
                     peopleCount: plan.peopleCount,
                     tripType: plan.tripType,
                     destinationCount: plan.destinations.length,
-                    coverImage: plan.destinations?.[0] ?? null,
                     totalBudget,
                     isPublic: plan.isPublic,
                     createdAt: plan.createdAt.toISOString(),

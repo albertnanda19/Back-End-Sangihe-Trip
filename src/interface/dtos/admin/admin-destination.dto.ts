@@ -44,10 +44,6 @@ class ImageDto {
   alt?: string;
 
   @IsOptional()
-  @IsString()
-  caption?: string;
-
-  @IsOptional()
   @IsBoolean()
   isFeatured?: boolean;
 }

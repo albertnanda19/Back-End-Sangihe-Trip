@@ -17,9 +17,11 @@ const common_1 = require("@nestjs/common");
 let LandingPageUseCase = class LandingPageUseCase {
     destinationRepo;
     articleRepo;
-    constructor(destinationRepo, articleRepo) {
+    supabase;
+    constructor(destinationRepo, articleRepo, supabase) {
         this.destinationRepo = destinationRepo;
         this.articleRepo = articleRepo;
+        this.supabase = supabase;
     }
     async execute(category) {
         const hero = {
@@ -52,14 +54,36 @@ let LandingPageUseCase = class LandingPageUseCase {
         const toRupiah = (value) => typeof value === 'number'
             ? `Rp ${value.toLocaleString('id-ID')}`
             : 'Rp -';
-        const destinations = destRes.data.map((d) => ({
-            id: d.id,
-            name: d.name,
-            location: d.location.address,
-            rating: d.rating ?? 0,
-            price: toRupiah(d.price),
-            image: d.images?.[0] ?? '',
-        }));
+        const destinationIds = destRes.data.map((d) => d.id);
+        const { data: allImages } = await this.supabase
+            .from('destination_images')
+            .select('*')
+            .in('destination_id', destinationIds)
+            .order('sort_order', { ascending: true });
+        const imagesByDestination = (allImages || []).reduce((acc, img) => {
+            if (!acc[img.destination_id]) {
+                acc[img.destination_id] = [];
+            }
+            acc[img.destination_id].push(img);
+            return acc;
+        }, {});
+        const destinations = destRes.data.map((d) => {
+            const images = imagesByDestination[d.id] || [];
+            return {
+                id: d.id,
+                name: d.name,
+                location: d.location.address,
+                rating: d.rating ?? 0,
+                price: toRupiah(d.price),
+                images: images.map((img) => ({
+                    id: img.id,
+                    image_url: img.image_url,
+                    alt_text: img.alt_text,
+                    sort_order: img.sort_order,
+                    is_featured: img.is_featured,
+                })),
+            };
+        });
         const articles = artRes.data.map((a) => ({
             id: a.id,
             slug: a.slug,
@@ -81,6 +105,7 @@ exports.LandingPageUseCase = LandingPageUseCase = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, common_1.Inject)('DestinationRepository')),
     __param(1, (0, common_1.Inject)('ArticleRepository')),
-    __metadata("design:paramtypes", [Object, Object])
+    __param(2, (0, common_1.Inject)('SUPABASE_CLIENT')),
+    __metadata("design:paramtypes", [Object, Object, Object])
 ], LandingPageUseCase);
 //# sourceMappingURL=landing-page.use-case.js.map

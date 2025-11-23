@@ -4,11 +4,8 @@ import { ActivityLoggerService } from './activity-logger.service';
 
 interface UpdateProfileData {
   firstName?: string;
-  first_name?: string;
   lastName?: string;
-  last_name?: string;
-  avatar?: string;
-  avatar_url?: string;
+  avatarUrl?: string;
 }
 
 @Injectable()
@@ -38,16 +35,16 @@ export class UpdateUserProfileUseCase {
       avatarUrl?: string;
     } = {};
 
-    if (data.firstName || data.first_name) {
-      updateData.firstName = data.firstName || data.first_name;
+    if (data.firstName) {
+      updateData.firstName = data.firstName;
     }
 
-    if (data.lastName || data.last_name) {
-      updateData.lastName = data.lastName || data.last_name;
+    if (data.lastName) {
+      updateData.lastName = data.lastName;
     }
 
-    if (data.avatar || data.avatar_url) {
-      updateData.avatarUrl = data.avatar || data.avatar_url;
+    if (data.avatarUrl) {
+      updateData.avatarUrl = data.avatarUrl;
     }
 
     const updatedUser = await this.userRepository.update(userId, updateData);
@@ -69,11 +66,8 @@ export class UpdateUserProfileUseCase {
       id: updatedUser.id,
       email: updatedUser.email,
       firstName: updatedUser.firstName,
-      first_name: updatedUser.firstName,
       lastName: updatedUser.lastName,
-      last_name: updatedUser.lastName,
-      avatar: updatedUser.avatarUrl,
-      avatar_url: updatedUser.avatarUrl,
+      avatarUrl: updatedUser.avatarUrl,
     };
   }
 }

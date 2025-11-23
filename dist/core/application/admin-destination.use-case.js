@@ -170,7 +170,6 @@ let AdminDestinationUseCase = class AdminDestinationUseCase {
                 destination_id: destination.id,
                 image_url: img.url,
                 alt_text: img.alt,
-                caption: img.caption,
                 is_featured: img.isFeatured || false,
                 sort_order: index,
                 uploaded_by: adminId,
@@ -312,7 +311,6 @@ let AdminDestinationUseCase = class AdminDestinationUseCase {
                     destination_id: id,
                     image_url: img.url,
                     alt_text: img.alt,
-                    caption: img.caption,
                     is_featured: img.isFeatured || false,
                     sort_order: index,
                 }));

@@ -51,7 +51,7 @@ exports.ReviewController = ReviewController;
 __decorate([
     (0, common_1.Post)(),
     (0, common_1.UseGuards)(jwt_access_guard_1.JwtAccessGuard),
-    (0, response_decorator_1.ResponseMessage)('Review submitted successfully'),
+    (0, response_decorator_1.ResponseMessage)('Berhasil mengirim review'),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, common_1.Request)()),
     __metadata("design:type", Function),
@@ -60,7 +60,7 @@ __decorate([
 ], ReviewController.prototype, "submitReview", null);
 __decorate([
     (0, common_1.Get)('destination/:destinationId'),
-    (0, response_decorator_1.ResponseMessage)('Reviews fetched successfully'),
+    (0, response_decorator_1.ResponseMessage)('Berhasil mengambil daftar review'),
     __param(0, (0, common_1.Param)('destinationId')),
     __param(1, (0, common_1.Query)()),
     __param(2, (0, common_1.Request)()),
@@ -71,7 +71,7 @@ __decorate([
 __decorate([
     (0, common_1.Post)(':reviewId/like'),
     (0, common_1.UseGuards)(jwt_access_guard_1.JwtAccessGuard),
-    (0, response_decorator_1.ResponseMessage)('Review like toggled successfully'),
+    (0, response_decorator_1.ResponseMessage)('Berhasil toggle like review'),
     __param(0, (0, common_1.Param)('reviewId')),
     __param(1, (0, common_1.Request)()),
     __metadata("design:type", Function),

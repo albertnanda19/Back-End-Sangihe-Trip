@@ -62,7 +62,6 @@ let DestinationController = class DestinationController {
                         id: img.id,
                         image_url: img.image_url,
                         alt_text: img.alt_text,
-                        image_type: img.image_type,
                         sort_order: img.sort_order,
                         is_featured: img.is_featured,
                     })),
@@ -74,44 +73,6 @@ let DestinationController = class DestinationController {
                 totalItems,
                 totalPages,
             },
-        };
-    }
-    async getDestinationById(id) {
-        const dest = await this.destinationUseCase.findById(id);
-        const { data: images } = await this.supabase
-            .from('destination_images')
-            .select('*')
-            .eq('destination_id', dest.id)
-            .order('sort_order', { ascending: true });
-        return {
-            id: dest.id,
-            name: dest.name,
-            slug: dest.slug,
-            description: dest.description,
-            address: dest.location.address,
-            latitude: dest.location.lat,
-            longitude: dest.location.lng,
-            phone: dest.phone,
-            email: dest.email,
-            website: dest.website,
-            opening_hours: dest.openHours,
-            entry_fee: dest.price,
-            category: dest.category,
-            facilities: Array.isArray(dest.facilities)
-                ? dest.facilities.map((f) => (typeof f === 'object' ? f.name : f))
-                : [],
-            avg_rating: dest.rating,
-            total_reviews: dest.totalReviews,
-            is_featured: dest.isFeatured,
-            activities: dest.activities,
-            images: (images || []).map((img) => ({
-                id: img.id,
-                image_url: img.image_url,
-                alt_text: img.alt_text,
-                image_type: img.image_type,
-                sort_order: img.sort_order,
-                is_featured: img.is_featured,
-            })),
         };
     }
     async getDestinationBySlug(slug) {
@@ -146,7 +107,43 @@ let DestinationController = class DestinationController {
                 id: img.id,
                 image_url: img.image_url,
                 alt_text: img.alt_text,
-                image_type: img.image_type,
+                sort_order: img.sort_order,
+                is_featured: img.is_featured,
+            })),
+        };
+    }
+    async getDestinationById(id) {
+        const dest = await this.destinationUseCase.findById(id);
+        const { data: images } = await this.supabase
+            .from('destination_images')
+            .select('*')
+            .eq('destination_id', dest.id)
+            .order('sort_order', { ascending: true });
+        return {
+            id: dest.id,
+            name: dest.name,
+            slug: dest.slug,
+            description: dest.description,
+            address: dest.location.address,
+            latitude: dest.location.lat,
+            longitude: dest.location.lng,
+            phone: dest.phone,
+            email: dest.email,
+            website: dest.website,
+            opening_hours: dest.openHours,
+            entry_fee: dest.price,
+            category: dest.category,
+            facilities: Array.isArray(dest.facilities)
+                ? dest.facilities.map((f) => (typeof f === 'object' ? f.name : f))
+                : [],
+            avg_rating: dest.rating,
+            total_reviews: dest.totalReviews,
+            is_featured: dest.isFeatured,
+            activities: dest.activities,
+            images: (images || []).map((img) => ({
+                id: img.id,
+                image_url: img.image_url,
+                alt_text: img.alt_text,
                 sort_order: img.sort_order,
                 is_featured: img.is_featured,
             })),
@@ -164,15 +161,6 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], DestinationController.prototype, "getDestinations", null);
 __decorate([
-    (0, common_1.Get)(':id'),
-    (0, common_1.HttpCode)(200),
-    (0, response_decorator_1.ResponseMessage)('Berhasil mengambil data destinasi {name}'),
-    __param(0, (0, common_1.Param)('id')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", Promise)
-], DestinationController.prototype, "getDestinationById", null);
-__decorate([
     (0, common_1.Get)('slug/:slug'),
     (0, common_1.HttpCode)(200),
     (0, response_decorator_1.ResponseMessage)('Berhasil mengambil data destinasi {name}'),
@@ -181,6 +169,15 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], DestinationController.prototype, "getDestinationBySlug", null);
+__decorate([
+    (0, common_1.Get)(':id'),
+    (0, common_1.HttpCode)(200),
+    (0, response_decorator_1.ResponseMessage)('Berhasil mengambil data destinasi {name}'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], DestinationController.prototype, "getDestinationById", null);
 exports.DestinationController = DestinationController = __decorate([
     (0, common_1.Controller)('destination'),
     __param(1, (0, common_1.Inject)('SUPABASE_CLIENT')),

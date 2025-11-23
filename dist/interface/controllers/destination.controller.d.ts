@@ -5,7 +5,7 @@ export declare class DestinationController {
     private readonly supabase;
     constructor(destinationUseCase: DestinationUseCase, supabase: any);
     getDestinations(query: GetDestinationsQueryDto): Promise<GetDestinationsResponseDto>;
-    getDestinationById(id: string): Promise<{
+    getDestinationBySlug(slug: string): Promise<{
         id: string;
         name: string;
         slug: string;
@@ -26,7 +26,7 @@ export declare class DestinationController {
         activities: import("../../core/domain/destination.entity").Activity[];
         images: any;
     }>;
-    getDestinationBySlug(slug: string): Promise<{
+    getDestinationById(id: string): Promise<{
         id: string;
         name: string;
         slug: string;

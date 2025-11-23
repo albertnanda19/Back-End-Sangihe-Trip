@@ -22,7 +22,7 @@ export declare class LandingPageController {
             location: string;
             rating: number;
             price: string;
-            image: string;
+            images: any;
         }[];
         articles: {
             id: any;

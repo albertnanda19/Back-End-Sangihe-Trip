@@ -12,7 +12,6 @@ declare class ActivityDto {
 declare class ImageDto {
     url: string;
     alt?: string;
-    caption?: string;
     isFeatured?: boolean;
 }
 export declare class CreateAdminDestinationDto {

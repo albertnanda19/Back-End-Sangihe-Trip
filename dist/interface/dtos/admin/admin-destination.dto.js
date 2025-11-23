@@ -54,7 +54,6 @@ __decorate([
 class ImageDto {
     url;
     alt;
-    caption;
     isFeatured;
 }
 __decorate([
@@ -66,11 +65,6 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], ImageDto.prototype, "alt", void 0);
-__decorate([
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], ImageDto.prototype, "caption", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsBoolean)(),

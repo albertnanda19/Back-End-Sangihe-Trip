@@ -9,6 +9,8 @@ export class LandingPageUseCase {
     private readonly destinationRepo: DestinationRepositoryPort,
     @Inject('ArticleRepository')
     private readonly articleRepo: ArticleRepositoryPort,
+    @Inject('SUPABASE_CLIENT')
+    private readonly supabase: any,
   ) {}
 
   async execute(category?: string) {
@@ -55,14 +57,42 @@ export class LandingPageUseCase {
         ? `Rp ${value.toLocaleString('id-ID')}`
         : 'Rp -';
 
-    const destinations = destRes.data.map((d) => ({
-      id: d.id,
-      name: d.name,
-      location: d.location.address,
-      rating: d.rating ?? 0,
-      price: toRupiah(d.price),
-      image: d.images?.[0] ?? '',
-    }));
+    const destinationIds = destRes.data.map((d) => d.id);
+    const { data: allImages } = await this.supabase
+      .from('destination_images')
+      .select('*')
+      .in('destination_id', destinationIds)
+      .order('sort_order', { ascending: true });
+
+    // Group images by destination_id
+    const imagesByDestination = (allImages || []).reduce(
+      (acc: any, img: any) => {
+        if (!acc[img.destination_id]) {
+          acc[img.destination_id] = [];
+        }
+        acc[img.destination_id].push(img);
+        return acc;
+      },
+      {},
+    );
+
+    const destinations = destRes.data.map((d) => {
+      const images = imagesByDestination[d.id] || [];
+      return {
+        id: d.id,
+        name: d.name,
+        location: d.location.address,
+        rating: d.rating ?? 0,
+        price: toRupiah(d.price),
+        images: images.map((img: any) => ({
+          id: img.id,
+          image_url: img.image_url,
+          alt_text: img.alt_text,
+          sort_order: img.sort_order,
+          is_featured: img.is_featured,
+        })),
+      };
+    });
 
     const articles = artRes.data.map((a: any) => ({
       id: a.id,

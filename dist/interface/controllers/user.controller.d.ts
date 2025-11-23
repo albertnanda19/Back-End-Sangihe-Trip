@@ -51,11 +51,8 @@ export declare class UserController {
         id: string;
         email: string;
         firstName: string | undefined;
-        first_name: string | undefined;
         lastName: string | undefined;
-        last_name: string | undefined;
-        avatar: string | undefined;
-        avatar_url: string | undefined;
+        avatarUrl: string | undefined;
     }>;
     updateMyPassword(req: AuthenticatedRequest, dto: UpdatePasswordDto): Promise<null>;
     getMyTrips(req: AuthenticatedRequest, query: MyTripsQueryDto): Promise<import("../../core/application/list-user-trips.use-case").ListUserTripsResult>;

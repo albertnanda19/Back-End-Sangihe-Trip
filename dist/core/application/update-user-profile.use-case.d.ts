@@ -2,11 +2,8 @@ import { UserRepositoryPort } from '../domain/user.repository.port';
 import { ActivityLoggerService } from './activity-logger.service';
 interface UpdateProfileData {
     firstName?: string;
-    first_name?: string;
     lastName?: string;
-    last_name?: string;
-    avatar?: string;
-    avatar_url?: string;
+    avatarUrl?: string;
 }
 export declare class UpdateUserProfileUseCase {
     private readonly userRepository;
@@ -16,11 +13,8 @@ export declare class UpdateUserProfileUseCase {
         id: string;
         email: string;
         firstName: string | undefined;
-        first_name: string | undefined;
         lastName: string | undefined;
-        last_name: string | undefined;
-        avatar: string | undefined;
-        avatar_url: string | undefined;
+        avatarUrl: string | undefined;
     }>;
 }
 export {};

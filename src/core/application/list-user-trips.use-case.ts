@@ -50,11 +50,10 @@ export class ListUserTripsUseCase {
           peopleCount: plan.peopleCount,
           tripType: plan.tripType,
           destinationCount: plan.destinations.length,
-          coverImage: plan.destinations?.[0] ?? null, // placeholder / TODO
           totalBudget,
           isPublic: plan.isPublic,
           createdAt: plan.createdAt.toISOString(),
-          updatedAt: plan.createdAt.toISOString(), // no updatedAt in entity, fallback
+          updatedAt: plan.createdAt.toISOString(),
         };
       });
 

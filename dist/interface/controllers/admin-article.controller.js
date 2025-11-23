@@ -14,6 +14,10 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AdminArticleController = void 0;
 const common_1 = require("@nestjs/common");
+const crypto_1 = require("crypto");
+const storage_1 = require("firebase/storage");
+const firebase_provider_1 = require("../../infrastructure/firebase/firebase.provider");
+const create_article_use_case_1 = require("../../core/application/create-article.use-case");
 const jwt_admin_guard_1 = require("../../common/guards/jwt-admin.guard");
 const response_decorator_1 = require("../../common/decorators/response.decorator");
 const admin_article_use_case_1 = require("../../core/application/admin-article.use-case");
@@ -21,8 +25,12 @@ const admin_article_query_dto_1 = require("../dtos/admin/admin-article-query.dto
 const admin_article_dto_1 = require("../dtos/admin/admin-article.dto");
 let AdminArticleController = class AdminArticleController {
     adminArticleUseCase;
-    constructor(adminArticleUseCase) {
+    createArticleUc;
+    storage;
+    constructor(adminArticleUseCase, createArticleUc, storage) {
         this.adminArticleUseCase = adminArticleUseCase;
+        this.createArticleUc = createArticleUc;
+        this.storage = storage;
     }
     async list(query) {
         const result = await this.adminArticleUseCase.list(query);
@@ -31,6 +39,57 @@ let AdminArticleController = class AdminArticleController {
     async getById(id) {
         const result = await this.adminArticleUseCase.getById(id);
         return result;
+    }
+    async createWithUpload(req) {
+        const parts = req.parts();
+        const fields = {};
+        let featuredImageUrl = '';
+        const uploadedRefs = [];
+        try {
+            for await (const part of parts) {
+                if (part.type === 'file' && part.fieldname === 'featuredImage') {
+                    const buffer = await part.toBuffer();
+                    if (buffer.length > 2 * 1024 * 1024) {
+                        throw new common_1.HttpException({ status: 400, message: 'Ukuran gambar maksimal 2MB' }, common_1.HttpStatus.BAD_REQUEST);
+                    }
+                    const ext = (part.filename?.split('.').pop() ?? '').toLowerCase();
+                    const filename = `${(0, crypto_1.randomUUID)()}.${ext}`;
+                    const storageRef = (0, storage_1.ref)(this.storage, `articles/${filename}`);
+                    await (0, storage_1.uploadBytes)(storageRef, buffer, { contentType: part.mimetype });
+                    uploadedRefs.push(storageRef);
+                    featuredImageUrl = await (0, storage_1.getDownloadURL)(storageRef);
+                }
+                else if (part.type === 'field') {
+                    fields[part.fieldname] = part.value;
+                }
+            }
+            const { title, category, readingTime, content, slug } = fields;
+            if (!title ||
+                !category ||
+                !readingTime ||
+                !content ||
+                !featuredImageUrl) {
+                throw new common_1.HttpException({ status: 400, message: 'Data wajib tidak lengkap' }, common_1.HttpStatus.BAD_REQUEST);
+            }
+            const tagsRaw = fields['tags[]'];
+            const tags = Array.isArray(tagsRaw) ? tagsRaw : tagsRaw ? [tagsRaw] : [];
+            const authorId = req.user?.id;
+            const article = await this.createArticleUc.execute({
+                title,
+                category,
+                authorId,
+                readingTime: Number(readingTime),
+                content,
+                tags,
+                featuredImageUrl,
+                slug,
+            });
+            return article;
+        }
+        catch (e) {
+            await Promise.all(uploadedRefs.map((r) => (0, storage_1.deleteObject)(r).catch(() => { })));
+            throw e;
+        }
     }
     async create(dto, req) {
         const adminId = req.user.id;
@@ -80,6 +139,14 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], AdminArticleController.prototype, "getById", null);
 __decorate([
+    (0, common_1.Post)('upload'),
+    (0, response_decorator_1.ResponseMessage)('Berhasil membuat artikel baru'),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AdminArticleController.prototype, "createWithUpload", null);
+__decorate([
     (0, common_1.Post)(),
     (0, response_decorator_1.ResponseMessage)('Berhasil membuat artikel baru'),
     __param(0, (0, common_1.Body)()),
@@ -119,6 +186,8 @@ __decorate([
 exports.AdminArticleController = AdminArticleController = __decorate([
     (0, common_1.Controller)('admin/articles'),
     (0, common_1.UseGuards)(jwt_admin_guard_1.JwtAdminGuard),
-    __metadata("design:paramtypes", [admin_article_use_case_1.AdminArticleUseCase])
+    __param(2, (0, common_1.Inject)(firebase_provider_1.FIREBASE_STORAGE)),
+    __metadata("design:paramtypes", [admin_article_use_case_1.AdminArticleUseCase,
+        create_article_use_case_1.CreateArticleUseCase, Object])
 ], AdminArticleController);
 //# sourceMappingURL=admin-article.controller.js.map

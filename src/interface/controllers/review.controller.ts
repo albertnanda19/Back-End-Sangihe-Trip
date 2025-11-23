@@ -26,7 +26,7 @@ export class ReviewController {
 
   @Post()
   @UseGuards(JwtAccessGuard)
-  @ResponseMessage('Review submitted successfully')
+  @ResponseMessage('Berhasil mengirim review')
   async submitReview(
     @Body() createReviewDto: CreateReviewDto,
     @Request() req: any,
@@ -36,7 +36,7 @@ export class ReviewController {
   }
 
   @Get('destination/:destinationId')
-  @ResponseMessage('Reviews fetched successfully')
+  @ResponseMessage('Berhasil mengambil daftar review')
   async getDestinationReviews(
     @Param('destinationId') destinationId: string,
     @Query() query: GetReviewsDto,
@@ -56,7 +56,7 @@ export class ReviewController {
 
   @Post(':reviewId/like')
   @UseGuards(JwtAccessGuard)
-  @ResponseMessage('Review like toggled successfully')
+  @ResponseMessage('Berhasil toggle like review')
   async likeReview(
     @Param('reviewId') reviewId: string,
     @Request() req: any,

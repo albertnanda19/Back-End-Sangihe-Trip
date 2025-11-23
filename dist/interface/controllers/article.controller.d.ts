@@ -1,15 +1,10 @@
-import { CreateArticleUseCase } from '../../core/application/create-article.use-case';
-import { FirebaseStorage } from 'firebase/storage';
 import { ListArticlesUseCase } from '../../core/application/list-articles.use-case';
 import { GetArticleUseCase } from '../../core/application/get-article.use-case';
 import { ArticleQueryDto } from '../dtos/article-query.dto';
-import { Article } from '../../core/domain/article.entity';
 export declare class ArticleController {
-    private readonly createArticleUc;
     private readonly listArticlesUc;
     private readonly getArticleUc;
-    private readonly storage;
-    constructor(createArticleUc: CreateArticleUseCase, listArticlesUc: ListArticlesUseCase, getArticleUc: GetArticleUseCase, storage: FirebaseStorage);
+    constructor(listArticlesUc: ListArticlesUseCase, getArticleUc: GetArticleUseCase);
     list(query: ArticleQueryDto): Promise<{
         featured: {
             id: string;
@@ -41,9 +36,4 @@ export declare class ArticleController {
         }[];
     }>;
     detail(id: string): Promise<any>;
-    create(req: any): Promise<{
-        status: number;
-        message: string;
-        data: Article;
-    }>;
 }

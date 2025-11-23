@@ -14,14 +14,14 @@ import { CreateTripDto } from '../dtos/trip/create-trip.dto';
 import { JwtAccessGuard } from '../../common/guards/jwt-access.guard';
 import { ResponseMessage } from '../../common/decorators/response.decorator';
 
-@Controller()
+@Controller('trips')
 export class TripController {
   constructor(
     private readonly createTripUc: CreateTripUseCase,
     private readonly getTripUc: GetTripUseCase,
   ) {}
 
-  @Post('trips')
+  @Post()
   @UseGuards(JwtAccessGuard)
   @ResponseMessage('Berhasil menambah rencana perjalanan baru')
   async create(@Body() dto: CreateTripDto, @Req() req: any) {
@@ -35,7 +35,7 @@ export class TripController {
     return null;
   }
 
-  @Get('trip/:id')
+  @Get(':id')
   @HttpCode(200)
   @ResponseMessage('Berhasil mendapatkan data trip {name}')
   async getTripDetail(@Param('id') id: string) {

@@ -72,7 +72,6 @@ export class DestinationListItemDto {
     id: string;
     image_url: string;
     alt_text: string;
-    image_type: string;
     sort_order: number;
     is_featured: boolean;
   }[];

@@ -3,7 +3,8 @@ import { ArticleRepositoryPort } from '../domain/article.repository.port';
 export declare class LandingPageUseCase {
     private readonly destinationRepo;
     private readonly articleRepo;
-    constructor(destinationRepo: DestinationRepositoryPort, articleRepo: ArticleRepositoryPort);
+    private readonly supabase;
+    constructor(destinationRepo: DestinationRepositoryPort, articleRepo: ArticleRepositoryPort, supabase: any);
     execute(category?: string): Promise<{
         hero: {
             title: string;
@@ -23,7 +24,7 @@ export declare class LandingPageUseCase {
             location: string;
             rating: number;
             price: string;
-            image: string;
+            images: any;
         }[];
         articles: {
             id: any;

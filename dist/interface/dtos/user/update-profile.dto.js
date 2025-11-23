@@ -13,11 +13,8 @@ exports.UpdateProfileDto = void 0;
 const class_validator_1 = require("class-validator");
 class UpdateProfileDto {
     firstName;
-    first_name;
     lastName;
-    last_name;
-    avatar;
-    avatar_url;
+    avatarUrl;
 }
 exports.UpdateProfileDto = UpdateProfileDto;
 __decorate([
@@ -31,29 +28,11 @@ __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.MaxLength)(100),
     __metadata("design:type", String)
-], UpdateProfileDto.prototype, "first_name", void 0);
-__decorate([
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.MaxLength)(100),
-    __metadata("design:type", String)
 ], UpdateProfileDto.prototype, "lastName", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
-    (0, class_validator_1.MaxLength)(100),
-    __metadata("design:type", String)
-], UpdateProfileDto.prototype, "last_name", void 0);
-__decorate([
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsString)(),
     (0, class_validator_1.MaxLength)(500),
     __metadata("design:type", String)
-], UpdateProfileDto.prototype, "avatar", void 0);
-__decorate([
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.MaxLength)(500),
-    __metadata("design:type", String)
-], UpdateProfileDto.prototype, "avatar_url", void 0);
+], UpdateProfileDto.prototype, "avatarUrl", void 0);
 //# sourceMappingURL=update-profile.dto.js.map
