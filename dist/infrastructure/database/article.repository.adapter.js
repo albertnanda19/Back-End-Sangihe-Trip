@@ -26,12 +26,12 @@ let ArticleRepositoryAdapter = class ArticleRepositoryAdapter {
             id: article.id,
             title: article.title,
             slug: article.slug,
-            category_id: typeof article.category === 'string'
+            category: typeof article.category === 'string'
                 ? parseInt(article.category, 10)
                 : article.category,
             author_id: article.authorId,
             content: article.content,
-            featured_image_url: article.featuredImageUrl,
+            featured_image: article.featuredImageUrl,
             status: article.status,
             created_at: article.createdAt.toISOString(),
             updated_at: new Date().toISOString(),
@@ -50,28 +50,28 @@ let ArticleRepositoryAdapter = class ArticleRepositoryAdapter {
         const { page = 1, perPage = 10, search, category, tag, sort = 'latest', includeFeatured = true, includeSidebar = true, } = query;
         let supa = this.client
             .from('articles')
-            .select(`id, slug, title, excerpt, category_id, author_id, publish_date, reading_time, featured_image_url`, { count: 'exact' });
+            .select(`id, slug, title, excerpt, category, author_id, published_at, read_time_minutes, featured_image`, { count: 'exact' });
         if (search) {
             supa = supa.textSearch('title', search, {
                 type: 'websearch',
             });
         }
         if (category) {
-            supa = supa.eq('category_id', category);
+            supa = supa.eq('category', category);
         }
         if (tag) {
             supa = supa.contains('tags', [tag]);
         }
         switch (sort) {
             case 'oldest':
-                supa = supa.order('publish_date', { ascending: true });
+                supa = supa.order('published_at', { ascending: true });
                 break;
             case 'popular':
-                supa = supa.order('publish_date', { ascending: false });
+                supa = supa.order('published_at', { ascending: false });
                 break;
             case 'latest':
             default:
-                supa = supa.order('publish_date', { ascending: false });
+                supa = supa.order('published_at', { ascending: false });
         }
         const limit = Math.min(Math.max(perPage, 1), 100);
         const from = (page - 1) * limit;
@@ -80,7 +80,7 @@ let ArticleRepositoryAdapter = class ArticleRepositoryAdapter {
         const { data, count, error } = await supa;
         if (error)
             throw new Error(error.message);
-        const categoryIds = Array.from(new Set((data || []).map((r) => r.category_id).filter(Boolean)));
+        const categoryIds = Array.from(new Set((data || []).map((r) => r.category).filter(Boolean)));
         const authorIds = Array.from(new Set((data || []).map((r) => r.author_id).filter(Boolean)));
         const [catMap, authorMap] = await Promise.all([
             categoryIds.length
@@ -107,7 +107,7 @@ let ArticleRepositoryAdapter = class ArticleRepositoryAdapter {
                 : Promise.resolve({}),
         ]);
         const articles = (data || []).map((row) => {
-            const art = new article_entity_1.Article(row.title, catMap[row.category_id] ?? row.category_id, row.author_id, row.reading_time, '', [], row.featured_image_url, row.slug, row.id, row.publish_date ? new Date(row.publish_date) : undefined);
+            const art = new article_entity_1.Article(row.title, catMap[row.category] ?? row.category, row.author_id, row.read_time_minutes, '', [], row.featured_image, row.slug, row.id, row.published_at ? new Date(row.published_at) : undefined);
             art.excerpt = row.excerpt;
             art.author = authorMap[row.author_id] ?? null;
             return art;
@@ -119,8 +119,8 @@ let ArticleRepositoryAdapter = class ArticleRepositoryAdapter {
             if (includeFeatured) {
                 promises.push(this.client
                     .from('articles')
-                    .select('id, slug, title, excerpt, category_id, author_id, publish_date, reading_time, featured_image_url')
-                    .order('publish_date', { ascending: false })
+                    .select('id, slug, title, excerpt, category, author_id, published_at, read_time_minutes, featured_image')
+                    .order('published_at', { ascending: false })
                     .limit(1)
                     .single());
             }
@@ -128,13 +128,13 @@ let ArticleRepositoryAdapter = class ArticleRepositoryAdapter {
                 promises.push(Promise.all([
                     this.client
                         .from('articles')
-                        .select('id, title, publish_date, featured_image_url')
-                        .order('publish_date', { ascending: false })
+                        .select('id, title, published_at, featured_image')
+                        .order('published_at', { ascending: false })
                         .limit(5),
                     this.client
                         .from('articles')
                         .select('title')
-                        .order('publish_date', { ascending: false })
+                        .order('published_at', { ascending: false })
                         .limit(5),
                     this.client
                         .from('categories')
@@ -150,7 +150,7 @@ let ArticleRepositoryAdapter = class ArticleRepositoryAdapter {
             if (includeFeatured) {
                 const { data: feat } = results[idx++];
                 if (feat) {
-                    featured = new article_entity_1.Article(feat.title, catMap[feat.category_id] ?? feat.category_id, feat.author_id ?? '', feat.reading_time, '', [], feat.featured_image_url, feat.slug, feat.id, feat.publish_date ? new Date(feat.publish_date) : undefined);
+                    featured = new article_entity_1.Article(feat.title, catMap[feat.category] ?? feat.category, feat.author_id ?? '', feat.read_time_minutes, '', [], feat.featured_image, feat.slug, feat.id, feat.published_at ? new Date(feat.published_at) : undefined);
                     featured.excerpt = feat.excerpt;
                     featured.author = authorMap[feat.author_id] ?? null;
                 }

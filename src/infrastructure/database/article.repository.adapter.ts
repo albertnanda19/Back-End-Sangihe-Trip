@@ -17,14 +17,14 @@ export class ArticleRepositoryAdapter implements ArticleRepositoryPort {
       id: article.id,
       title: article.title,
       slug: article.slug,
-      category_id:
+      category:
         typeof article.category === 'string'
           ? parseInt(article.category, 10)
           : article.category,
       author_id: article.authorId,
 
       content: article.content,
-      featured_image_url: article.featuredImageUrl,
+      featured_image: article.featuredImageUrl,
 
       status: article.status,
       created_at: article.createdAt.toISOString(),
@@ -64,7 +64,7 @@ export class ArticleRepositoryAdapter implements ArticleRepositoryPort {
     let supa = this.client
       .from('articles')
       .select(
-        `id, slug, title, excerpt, category_id, author_id, publish_date, reading_time, featured_image_url`,
+        `id, slug, title, excerpt, category, author_id, published_at, read_time_minutes, featured_image`,
         { count: 'exact' },
       );
     if (search) {
@@ -73,7 +73,7 @@ export class ArticleRepositoryAdapter implements ArticleRepositoryPort {
       });
     }
     if (category) {
-      supa = supa.eq('category_id', category);
+      supa = supa.eq('category', category);
     }
     if (tag) {
       supa = supa.contains('tags', [tag]);
@@ -82,15 +82,15 @@ export class ArticleRepositoryAdapter implements ArticleRepositoryPort {
     // sort
     switch (sort) {
       case 'oldest':
-        supa = supa.order('publish_date', { ascending: true });
+        supa = supa.order('published_at', { ascending: true });
         break;
       case 'popular':
-        // Fallback to publish_date if views column is not available
-        supa = supa.order('publish_date', { ascending: false });
+        // Fallback to published_at if views column is not available
+        supa = supa.order('published_at', { ascending: false });
         break;
       case 'latest':
       default:
-        supa = supa.order('publish_date', { ascending: false });
+        supa = supa.order('published_at', { ascending: false });
     }
 
     const limit = Math.min(Math.max(perPage, 1), 100);
@@ -103,7 +103,7 @@ export class ArticleRepositoryAdapter implements ArticleRepositoryPort {
 
     // Build lookup maps for categories & authors
     const categoryIds = Array.from(
-      new Set((data || []).map((r: any) => r.category_id).filter(Boolean)),
+      new Set((data || []).map((r: any) => r.category).filter(Boolean)),
     );
     const authorIds = Array.from(
       new Set((data || []).map((r: any) => r.author_id).filter(Boolean)),
@@ -140,15 +140,15 @@ export class ArticleRepositoryAdapter implements ArticleRepositoryPort {
     const articles = (data || []).map((row: any) => {
       const art = new Article(
         row.title,
-        catMap[row.category_id] ?? row.category_id,
+        catMap[row.category] ?? row.category,
         row.author_id,
-        row.reading_time,
+        row.read_time_minutes,
         '',
         [],
-        row.featured_image_url,
+        row.featured_image,
         row.slug,
         row.id,
-        row.publish_date ? new Date(row.publish_date) : undefined,
+        row.published_at ? new Date(row.published_at) : undefined,
       );
       // Attach additional metadata used by the interface layer
       (art as any).excerpt = row.excerpt;
@@ -167,9 +167,9 @@ export class ArticleRepositoryAdapter implements ArticleRepositoryPort {
           this.client
             .from('articles')
             .select(
-              'id, slug, title, excerpt, category_id, author_id, publish_date, reading_time, featured_image_url',
+              'id, slug, title, excerpt, category, author_id, published_at, read_time_minutes, featured_image',
             )
-            .order('publish_date', { ascending: false })
+            .order('published_at', { ascending: false })
             .limit(1)
             .single() as unknown as Promise<any>,
         );
@@ -180,13 +180,13 @@ export class ArticleRepositoryAdapter implements ArticleRepositoryPort {
           Promise.all([
             this.client
               .from('articles')
-              .select('id, title, publish_date, featured_image_url')
-              .order('publish_date', { ascending: false })
+              .select('id, title, published_at, featured_image')
+              .order('published_at', { ascending: false })
               .limit(5) as unknown as Promise<any>,
             this.client
               .from('articles')
               .select('title')
-              .order('publish_date', { ascending: false })
+              .order('published_at', { ascending: false })
               .limit(5) as unknown as Promise<any>,
             this.client
               .from('categories')
@@ -206,15 +206,15 @@ export class ArticleRepositoryAdapter implements ArticleRepositoryPort {
         if (feat) {
           featured = new Article(
             feat.title,
-            catMap[feat.category_id] ?? feat.category_id,
+            catMap[feat.category] ?? feat.category,
             feat.author_id ?? '',
-            feat.reading_time,
+            feat.read_time_minutes,
             '',
             [],
-            feat.featured_image_url,
+            feat.featured_image,
             feat.slug,
             feat.id,
-            feat.publish_date ? new Date(feat.publish_date) : undefined,
+            feat.published_at ? new Date(feat.published_at) : undefined,
           );
           // Attach metadata
           (featured as any).excerpt = feat.excerpt;
